@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		916115A12C98DEB800352967 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916115A02C98DEB800352967 /* Extensions.swift */; };
 		916E06332C98CDA80051C53F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916E06322C98CDA80051C53F /* AppDelegate.swift */; };
 		916E06352C98CDA80051C53F /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916E06342C98CDA80051C53F /* SceneDelegate.swift */; };
-		916E06372C98CDA80051C53F /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916E06362C98CDA80051C53F /* ViewController.swift */; };
 		916E063A2C98CDA80051C53F /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 916E06392C98CDA80051C53F /* Base */; };
 		916E063D2C98CDA80051C53F /* flotipios.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 916E063B2C98CDA80051C53F /* flotipios.xcdatamodeld */; };
 		916E063F2C98CDA90051C53F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 916E063E2C98CDA90051C53F /* Assets.xcassets */; };
@@ -17,6 +17,7 @@
 		916E064D2C98CDAA0051C53F /* flotipiosTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916E064C2C98CDAA0051C53F /* flotipiosTests.swift */; };
 		916E06572C98CDAA0051C53F /* flotipiosUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916E06562C98CDAA0051C53F /* flotipiosUITests.swift */; };
 		916E06592C98CDAA0051C53F /* flotipiosUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916E06582C98CDAA0051C53F /* flotipiosUITestsLaunchTests.swift */; };
+		91A7AAEB2C98DC6D00F78D52 /* LoginVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A7AAEA2C98DC6D00F78D52 /* LoginVC.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -37,10 +38,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		916115A02C98DEB800352967 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		916E062F2C98CDA80051C53F /* flotipios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = flotipios.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		916E06322C98CDA80051C53F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		916E06342C98CDA80051C53F /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		916E06362C98CDA80051C53F /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		916E06392C98CDA80051C53F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		916E063C2C98CDA80051C53F /* flotipios.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = flotipios.xcdatamodel; sourceTree = "<group>"; };
 		916E063E2C98CDA90051C53F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -51,6 +52,7 @@
 		916E06522C98CDAA0051C53F /* flotipiosUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = flotipiosUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		916E06562C98CDAA0051C53F /* flotipiosUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = flotipiosUITests.swift; sourceTree = "<group>"; };
 		916E06582C98CDAA0051C53F /* flotipiosUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = flotipiosUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		91A7AAEA2C98DC6D00F78D52 /* LoginVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginVC.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,6 +80,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		9161159F2C98DE7E00352967 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				916115A02C98DEB800352967 /* Extensions.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
 		916E06262C98CDA80051C53F = {
 			isa = PBXGroup;
 			children = (
@@ -101,9 +111,12 @@
 		916E06312C98CDA80051C53F /* flotipios */ = {
 			isa = PBXGroup;
 			children = (
+				9161159F2C98DE7E00352967 /* Utils */,
+				91A7AAE92C98DBF600F78D52 /* Controller */,
+				91A7AAE82C98DBEB00F78D52 /* View */,
+				91A7AAE72C98DBE100F78D52 /* Model */,
 				916E06322C98CDA80051C53F /* AppDelegate.swift */,
 				916E06342C98CDA80051C53F /* SceneDelegate.swift */,
-				916E06362C98CDA80051C53F /* ViewController.swift */,
 				916E06382C98CDA80051C53F /* Main.storyboard */,
 				916E063E2C98CDA90051C53F /* Assets.xcassets */,
 				916E06402C98CDA90051C53F /* LaunchScreen.storyboard */,
@@ -128,6 +141,28 @@
 				916E06582C98CDAA0051C53F /* flotipiosUITestsLaunchTests.swift */,
 			);
 			path = flotipiosUITests;
+			sourceTree = "<group>";
+		};
+		91A7AAE72C98DBE100F78D52 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		91A7AAE82C98DBEB00F78D52 /* View */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = View;
+			sourceTree = "<group>";
+		};
+		91A7AAE92C98DBF600F78D52 /* Controller */ = {
+			isa = PBXGroup;
+			children = (
+				91A7AAEA2C98DC6D00F78D52 /* LoginVC.swift */,
+			);
+			path = Controller;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -261,10 +296,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				916E06372C98CDA80051C53F /* ViewController.swift in Sources */,
+				916115A12C98DEB800352967 /* Extensions.swift in Sources */,
 				916E06332C98CDA80051C53F /* AppDelegate.swift in Sources */,
 				916E06352C98CDA80051C53F /* SceneDelegate.swift in Sources */,
 				916E063D2C98CDA80051C53F /* flotipios.xcdatamodeld in Sources */,
+				91A7AAEB2C98DC6D00F78D52 /* LoginVC.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
