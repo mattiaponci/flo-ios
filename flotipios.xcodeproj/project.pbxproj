@@ -9,8 +9,6 @@
 /* Begin PBXBuildFile section */
 		916115A12C98DEB800352967 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916115A02C98DEB800352967 /* Extensions.swift */; };
 		916E06332C98CDA80051C53F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916E06322C98CDA80051C53F /* AppDelegate.swift */; };
-		916E06352C98CDA80051C53F /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916E06342C98CDA80051C53F /* SceneDelegate.swift */; };
-		916E063A2C98CDA80051C53F /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 916E06392C98CDA80051C53F /* Base */; };
 		916E063D2C98CDA80051C53F /* flotipios.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 916E063B2C98CDA80051C53F /* flotipios.xcdatamodeld */; };
 		916E063F2C98CDA90051C53F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 916E063E2C98CDA90051C53F /* Assets.xcassets */; };
 		916E06422C98CDA90051C53F /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 916E06412C98CDA90051C53F /* Base */; };
@@ -41,8 +39,6 @@
 		916115A02C98DEB800352967 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		916E062F2C98CDA80051C53F /* flotipios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = flotipios.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		916E06322C98CDA80051C53F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		916E06342C98CDA80051C53F /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		916E06392C98CDA80051C53F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		916E063C2C98CDA80051C53F /* flotipios.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = flotipios.xcdatamodel; sourceTree = "<group>"; };
 		916E063E2C98CDA90051C53F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		916E06412C98CDA90051C53F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -116,8 +112,6 @@
 				91A7AAE82C98DBEB00F78D52 /* View */,
 				91A7AAE72C98DBE100F78D52 /* Model */,
 				916E06322C98CDA80051C53F /* AppDelegate.swift */,
-				916E06342C98CDA80051C53F /* SceneDelegate.swift */,
-				916E06382C98CDA80051C53F /* Main.storyboard */,
 				916E063E2C98CDA90051C53F /* Assets.xcassets */,
 				916E06402C98CDA90051C53F /* LaunchScreen.storyboard */,
 				916E06432C98CDA90051C53F /* Info.plist */,
@@ -271,7 +265,6 @@
 			files = (
 				916E063F2C98CDA90051C53F /* Assets.xcassets in Resources */,
 				916E06422C98CDA90051C53F /* Base in Resources */,
-				916E063A2C98CDA80051C53F /* Base in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -298,7 +291,6 @@
 			files = (
 				916115A12C98DEB800352967 /* Extensions.swift in Sources */,
 				916E06332C98CDA80051C53F /* AppDelegate.swift in Sources */,
-				916E06352C98CDA80051C53F /* SceneDelegate.swift in Sources */,
 				916E063D2C98CDA80051C53F /* flotipios.xcdatamodeld in Sources */,
 				91A7AAEB2C98DC6D00F78D52 /* LoginVC.swift in Sources */,
 			);
@@ -337,14 +329,6 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
-		916E06382C98CDA80051C53F /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				916E06392C98CDA80051C53F /* Base */,
-			);
-			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
 		916E06402C98CDA90051C53F /* LaunchScreen.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -487,7 +471,6 @@
 				INFOPLIST_FILE = flotipios/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -515,7 +498,6 @@
 				INFOPLIST_FILE = flotipios/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (

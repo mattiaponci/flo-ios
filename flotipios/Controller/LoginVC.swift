@@ -1,32 +1,41 @@
-//
-//  LoginVCViewController.swift
-//  flotipios
-//
-//  Created by mattia poncini on 16.09.2024.
-//
-
 import UIKit
 
 class LoginVC: UIViewController {
 
+    let emailTextField: UITextField = {
+        let tf = UITextField()
+        tf.placeholder = "Email"
+        tf.backgroundColor = UIColor(white: 0, alpha: 0.03)
+        tf.borderStyle = .roundedRect
+        tf.font = UIFont.systemFont(ofSize: 14)
+        tf.heightAnchor.constraint(equalToConstant: 40).isActive = true
+        return tf
+    }()
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Do any additional setup after loading the view.
+        // colourß® background
+        view.backgroundColor = .white
         
-       
-        
+        print("hello")
+
+        // add textField
+       view.addSubview(emailTextField)
+
+        // Auto Layout
+        setupConstraints()
     }
-    
 
-    /*
-    // MARK: - Navigation
+    func setupConstraints() {
+        emailTextField.translatesAutoresizingMaskIntoConstraints = false
 
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
+        // Imposta le ancore (utilizzando NSLayoutConstraint)
+        NSLayoutConstraint.activate([
+            emailTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 40),
+            emailTextField.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 20),
+            emailTextField.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -20),
+            emailTextField.heightAnchor.constraint(equalToConstant: 40)
+        ])
     }
-    */
-
 }
