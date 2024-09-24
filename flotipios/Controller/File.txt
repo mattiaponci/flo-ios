@@ -1,0 +1,8 @@
+// Aggiungi forgotPassword sotto il loginButton
+    view.addSubview(forgotPassword)
+    forgotPassword.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+        forgotPassword.topAnchor.constraint(equalTo: loginButton.bottomAnchor, constant: 10),
+        forgotPassword.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+        forgotPassword.heightAnchor.constraint(equalToConstant: 30)
+    ])
