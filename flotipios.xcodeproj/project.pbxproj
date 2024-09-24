@@ -16,6 +16,7 @@
 		916E06572C98CDAA0051C53F /* flotipiosUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916E06562C98CDAA0051C53F /* flotipiosUITests.swift */; };
 		916E06592C98CDAA0051C53F /* flotipiosUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916E06582C98CDAA0051C53F /* flotipiosUITestsLaunchTests.swift */; };
 		91A7AAEB2C98DC6D00F78D52 /* LoginVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A7AAEA2C98DC6D00F78D52 /* LoginVC.swift */; };
+		91AA5D3F2CA3440A00ED4B07 /* ForgotPasswordVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91AA5D3E2CA3440A00ED4B07 /* ForgotPasswordVC.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +50,7 @@
 		916E06562C98CDAA0051C53F /* flotipiosUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = flotipiosUITests.swift; sourceTree = "<group>"; };
 		916E06582C98CDAA0051C53F /* flotipiosUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = flotipiosUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		91A7AAEA2C98DC6D00F78D52 /* LoginVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginVC.swift; sourceTree = "<group>"; };
+		91AA5D3E2CA3440A00ED4B07 /* ForgotPasswordVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgotPasswordVC.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -155,6 +157,7 @@
 			isa = PBXGroup;
 			children = (
 				91A7AAEA2C98DC6D00F78D52 /* LoginVC.swift */,
+				91AA5D3E2CA3440A00ED4B07 /* ForgotPasswordVC.swift */,
 			);
 			path = Controller;
 			sourceTree = "<group>";
@@ -293,6 +296,7 @@
 				916E06332C98CDA80051C53F /* AppDelegate.swift in Sources */,
 				916E063D2C98CDA80051C53F /* flotipios.xcdatamodeld in Sources */,
 				91A7AAEB2C98DC6D00F78D52 /* LoginVC.swift in Sources */,
+				91AA5D3F2CA3440A00ED4B07 /* ForgotPasswordVC.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -469,6 +473,7 @@
 				DEVELOPMENT_TEAM = A3LZG7RDC6;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = flotipios/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Flotip;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -496,6 +501,7 @@
 				DEVELOPMENT_TEAM = A3LZG7RDC6;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = flotipios/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = flotip;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";

@@ -10,8 +10,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         window = UIWindow(frame: UIScreen.main.bounds)
         
         // Imposta il view controller iniziale
-        let initialViewController = LoginVC()
-        window?.rootViewController = initialViewController
+        let loginVC = LoginVC()
+        let navController = UINavigationController(rootViewController: loginVC)
+
+        window?.rootViewController = navController
         
         // Rendi la finestra visibile
         window?.makeKeyAndVisible()
