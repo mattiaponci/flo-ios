@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		80C0439960B34646DA0C2431 /* Pods_flotipios.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66EDE123437DC9DB0089ACE7 /* Pods_flotipios.framework */; };
 		916115A12C98DEB800352967 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916115A02C98DEB800352967 /* Extensions.swift */; };
 		916E06332C98CDA80051C53F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916E06322C98CDA80051C53F /* AppDelegate.swift */; };
 		916E063D2C98CDA80051C53F /* flotipios.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 916E063B2C98CDA80051C53F /* flotipios.xcdatamodeld */; };
@@ -17,6 +18,7 @@
 		916E06592C98CDAA0051C53F /* flotipiosUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916E06582C98CDAA0051C53F /* flotipiosUITestsLaunchTests.swift */; };
 		91A7AAEB2C98DC6D00F78D52 /* LoginVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A7AAEA2C98DC6D00F78D52 /* LoginVC.swift */; };
 		91AA5D3F2CA3440A00ED4B07 /* ForgotPasswordVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91AA5D3E2CA3440A00ED4B07 /* ForgotPasswordVC.swift */; };
+		91AA5D412CA3514A00ED4B07 /* SignUpVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91AA5D402CA3514A00ED4B07 /* SignUpVC.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -37,6 +39,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		34554ABCA9D47732C833AD4C /* Pods-flotipios.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-flotipios.debug.xcconfig"; path = "Target Support Files/Pods-flotipios/Pods-flotipios.debug.xcconfig"; sourceTree = "<group>"; };
+		66EDE123437DC9DB0089ACE7 /* Pods_flotipios.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_flotipios.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		916115A02C98DEB800352967 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		916E062F2C98CDA80051C53F /* flotipios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = flotipios.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		916E06322C98CDA80051C53F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -51,6 +55,8 @@
 		916E06582C98CDAA0051C53F /* flotipiosUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = flotipiosUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		91A7AAEA2C98DC6D00F78D52 /* LoginVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginVC.swift; sourceTree = "<group>"; };
 		91AA5D3E2CA3440A00ED4B07 /* ForgotPasswordVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgotPasswordVC.swift; sourceTree = "<group>"; };
+		91AA5D402CA3514A00ED4B07 /* SignUpVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignUpVC.swift; sourceTree = "<group>"; };
+		93CCF4FB9D5D3C5B2EC12170 /* Pods-flotipios.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-flotipios.release.xcconfig"; path = "Target Support Files/Pods-flotipios/Pods-flotipios.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +64,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				80C0439960B34646DA0C2431 /* Pods_flotipios.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +85,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0220F17BB7D21920D8280CD4 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				66EDE123437DC9DB0089ACE7 /* Pods_flotipios.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		9161159F2C98DE7E00352967 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
@@ -93,6 +108,8 @@
 				916E064B2C98CDAA0051C53F /* flotipiosTests */,
 				916E06552C98CDAA0051C53F /* flotipiosUITests */,
 				916E06302C98CDA80051C53F /* Products */,
+				9A8F6382AC62C4196624E05B /* Pods */,
+				0220F17BB7D21920D8280CD4 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -158,8 +175,18 @@
 			children = (
 				91A7AAEA2C98DC6D00F78D52 /* LoginVC.swift */,
 				91AA5D3E2CA3440A00ED4B07 /* ForgotPasswordVC.swift */,
+				91AA5D402CA3514A00ED4B07 /* SignUpVC.swift */,
 			);
 			path = Controller;
+			sourceTree = "<group>";
+		};
+		9A8F6382AC62C4196624E05B /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				34554ABCA9D47732C833AD4C /* Pods-flotipios.debug.xcconfig */,
+				93CCF4FB9D5D3C5B2EC12170 /* Pods-flotipios.release.xcconfig */,
+			);
+			path = Pods;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -169,9 +196,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 916E065C2C98CDAA0051C53F /* Build configuration list for PBXNativeTarget "flotipios" */;
 			buildPhases = (
+				221FAD6DA1A3EB9F47F7AAC7 /* [CP] Check Pods Manifest.lock */,
 				916E062B2C98CDA80051C53F /* Sources */,
 				916E062C2C98CDA80051C53F /* Frameworks */,
 				916E062D2C98CDA80051C53F /* Resources */,
+				18FBC92730E819D544EE5F1A /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -287,6 +316,48 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		18FBC92730E819D544EE5F1A /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-flotipios/Pods-flotipios-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-flotipios/Pods-flotipios-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-flotipios/Pods-flotipios-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		221FAD6DA1A3EB9F47F7AAC7 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-flotipios-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		916E062B2C98CDA80051C53F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -296,6 +367,7 @@
 				916E06332C98CDA80051C53F /* AppDelegate.swift in Sources */,
 				916E063D2C98CDA80051C53F /* flotipios.xcdatamodeld in Sources */,
 				91A7AAEB2C98DC6D00F78D52 /* LoginVC.swift in Sources */,
+				91AA5D412CA3514A00ED4B07 /* SignUpVC.swift in Sources */,
 				91AA5D3F2CA3440A00ED4B07 /* ForgotPasswordVC.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -381,7 +453,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -396,7 +468,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -444,7 +516,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -453,7 +525,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -465,6 +537,7 @@
 		};
 		916E065D2C98CDAA0051C53F /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 34554ABCA9D47732C833AD4C /* Pods-flotipios.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -493,6 +566,7 @@
 		};
 		916E065E2C98CDAA0051C53F /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 93CCF4FB9D5D3C5B2EC12170 /* Pods-flotipios.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;

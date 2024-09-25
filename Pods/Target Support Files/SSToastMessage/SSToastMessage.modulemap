@@ -1,0 +1,6 @@
+framework module SSToastMessage {
+  umbrella header "SSToastMessage-umbrella.h"
+
+  export *
+  module * { export * }
+}

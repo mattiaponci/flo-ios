@@ -10,7 +10,7 @@ class LoginVC: UIViewController {
         let logoImageView = UIImageView(image: #imageLiteral(resourceName: "Flotip_Helvetia"))
         logoImageView.contentMode = .scaleAspectFit
         view.addSubview(logoImageView)
-        logoImageView.anchor(top: nil, left: nil, bottom: nil, right: nil, paddingTop: 0, paddingLeft: 0, paddingBottom: 0, paddingRight: 0, width: 200, height: 120)
+        logoImageView.anchor(top: nil, left: nil, bottom: nil, right: nil, paddingTop: 0, paddingLeft: 0, paddingBottom: 0, paddingRight: 0, width: 350, height: 250)
         logoImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
         logoImageView.centerYAnchor.constraint(equalTo: view.centerYAnchor).isActive = true
         view.backgroundColor = UIColor.white
@@ -71,7 +71,7 @@ class LoginVC: UIViewController {
         let button = UIButton(type: .system)
         let attributedTitle = NSMutableAttributedString(string: "Don't have an account?  ", attributes: [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 14), NSAttributedString.Key.foregroundColor: UIColor.lightGray])
         attributedTitle.append(NSAttributedString(string: "Sign Up", attributes: [NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 14), NSAttributedString.Key.foregroundColor: UIColor(red: 17/255, green: 154/255, blue: 237/255, alpha: 1)]))
-      //  button.addTarget(self, action: #selector(handleShowSignUp), for: .touchUpInside)
+        button.addTarget(self, action: #selector(handleShowSignUp), for: .touchUpInside)
         button.isEnabled = true
 
         button.setAttributedTitle(attributedTitle, for: .normal)
@@ -96,7 +96,7 @@ class LoginVC: UIViewController {
         
         //add logo
         view.addSubview(logoContainerView)
-        logoContainerView.anchor(top: view.topAnchor, left: view.leftAnchor, bottom: nil, right: view.rightAnchor, paddingTop: 50, paddingLeft: 0, paddingBottom: 0, paddingRight: 0, width: 500, height: 100)
+        logoContainerView.anchor(top: view.topAnchor, left: view.leftAnchor, bottom: nil, right: view.rightAnchor, paddingTop: 80, paddingLeft: 0, paddingBottom: 0, paddingRight: 0, width: 600, height: 100)
 
         // add textField
         configureViewComponents()
@@ -135,6 +135,10 @@ class LoginVC: UIViewController {
             let forgotPasswordVC = ForgotPasswordVC()
             navigationController?.pushViewController(forgotPasswordVC, animated: true)
         }
+    @objc func handleShowSignUp() {
+        let signUpVC = SignUpVC()
+        navigationController?.pushViewController(signUpVC, animated: true)
+    }
 
     
     func configureViewComponents() {
