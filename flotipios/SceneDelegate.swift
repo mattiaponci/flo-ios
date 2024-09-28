@@ -22,13 +22,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
-        print("scenedelegate")
         let window = UIWindow(windowScene: windowScene)
-        let loginVC = MainTabVC()
-        let navigationController = UINavigationController(rootViewController: loginVC) // Embed in navigation controller
-        window.rootViewController = navigationController
+        window.rootViewController = MainTabVC() // Assicurati che LoginVC sia configurato
         self.window = window
         window.makeKeyAndVisible()
+        
     }
     
     func sceneDidDisconnect(_ scene: UIScene) {

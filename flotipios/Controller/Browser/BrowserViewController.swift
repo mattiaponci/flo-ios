@@ -7,6 +7,7 @@ class BrowserViewController: UIViewController, WKNavigationDelegate {
     var webView: WKWebView!
     var toolBar: UIToolbar!
     var refreshControl: UIRefreshControl!
+    var progressView: UIProgressView! // Barra di caricamento
     var initialURL: URL?
     var pendingURL: URL?
     
@@ -19,7 +20,7 @@ class BrowserViewController: UIViewController, WKNavigationDelegate {
         // Configura il web view con una configurazione ottimizzata
         let webConfiguration = WKWebViewConfiguration()
         webConfiguration.allowsInlineMediaPlayback = true
-        webConfiguration.suppressesIncrementalRendering = true // Carica la pagina solo quando il contenuto è completo
+        webConfiguration.suppressesIncrementalRendering = true
         webView = WKWebView(frame: .zero, configuration: webConfiguration)
         webView.translatesAutoresizingMaskIntoConstraints = false
         webView.navigationDelegate = self
@@ -27,6 +28,9 @@ class BrowserViewController: UIViewController, WKNavigationDelegate {
         webView.backgroundColor = .white
         view.addSubview(webView)
         view.backgroundColor = .white
+
+        // Osserva il progresso del caricamento della WebView
+        webView.addObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), options: .new, context: nil)
 
         // Configura il pull-to-refresh
         refreshControl = UIRefreshControl()
@@ -39,9 +43,12 @@ class BrowserViewController: UIViewController, WKNavigationDelegate {
         // Configura la navigation bar
         configureNavigationBar()
 
+        // Configura la barra di progresso (sotto la tab bar)
+        configureProgressBar()
+
         // Configura i constraints per la web view e la barra degli strumenti
         setupConstraints()
-        
+
         tabBarController?.tabBar.isTranslucent = false
         tabBarController?.tabBar.barTintColor = .white
 
@@ -51,33 +58,57 @@ class BrowserViewController: UIViewController, WKNavigationDelegate {
         }
     }
 
+    // Configura la barra di caricamento
+    func configureProgressBar() {
+        progressView = UIProgressView(progressViewStyle: .default)
+        progressView.translatesAutoresizingMaskIntoConstraints = false
+        progressView.trackTintColor = UIColor.lightGray
+        progressView.progressTintColor = UIColor.blue
+        view.addSubview(progressView)
+
+        // Imposta i constraints per la progressView
+        NSLayoutConstraint.activate([
+            progressView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            progressView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            progressView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+        ])
+    }
+
+    // Osserva il cambiamento del progresso di caricamento
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if keyPath == "estimatedProgress" {
+            progressView.progress = Float(webView.estimatedProgress)
+            progressView.isHidden = webView.estimatedProgress >= 1.0
+        }
+    }
+
+    // Configura la barra degli strumenti
     func configureToolbar() {
-        // Configura la barra degli strumenti
         toolBar = UIToolbar()
         toolBar.translatesAutoresizingMaskIntoConstraints = false
+        toolBar.barTintColor = .white
+        toolBar.isTranslucent = false
         view.addSubview(toolBar)
 
-        // Pulsante "Back"
         backButton = UIBarButtonItem(title: "<", style: .plain, target: self, action: #selector(backButtonTapped))
-        backButton.isEnabled = false
-
-        // Pulsante "Forward"
         forwardButton = UIBarButtonItem(title: ">", style: .plain, target: self, action: #selector(forwardButtonTapped))
         forwardButton.isEnabled = false
+        backButton.isEnabled = false
 
-        // Pulsante "Action"
         let actionButton = UIBarButtonItem(image: UIImage(named: "flag"), style: .plain, target: self, action: #selector(toolbarAction))
 
-        // Spaziatore flessibile
         let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
-
-        // Aggiungi i pulsanti alla barra degli strumenti
         toolBar.setItems([backButton, flexibleSpace, actionButton, flexibleSpace, forwardButton], animated: false)
     }
 
+    // Configura la navigation bar
     func configureNavigationBar() {
         guard let navigationController = navigationController else { return }
-
+        
+        // Disabilita large titles
+        navigationController.navigationBar.prefersLargeTitles = false
+        
+        // Configura l'aspetto della navigation bar
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = .white
@@ -87,7 +118,9 @@ class BrowserViewController: UIViewController, WKNavigationDelegate {
         navigationController.navigationBar.scrollEdgeAppearance = appearance
         navigationController.navigationBar.isTranslucent = false
 
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(named: "folder"), style: .plain, target: self, action: #selector(handleShowMessages))
+        // Aggiungi il pulsante "Folder" e imposta il titolo
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(named: "Folder"), style: .plain, target: self, action: #selector(handleShowMessages))
+       // self.navigationItem.rightBarButtonItem?.tintColor = .red
         self.navigationItem.title = "Surf"
     }
 
@@ -106,7 +139,6 @@ class BrowserViewController: UIViewController, WKNavigationDelegate {
             webView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             webView.bottomAnchor.constraint(equalTo: toolBar.topAnchor)
         ])
-        
     }
 
     @objc func toolbarAction() {
@@ -131,7 +163,8 @@ class BrowserViewController: UIViewController, WKNavigationDelegate {
     }
 
     @objc func handleShowMessages() {
-        // Implementazione di una funzione che mostra un altro controller
+        // Implementazione per il pulsante "Folder"
+        print("Folder button tapped")
     }
 
     func load(url: URL) {
@@ -153,8 +186,17 @@ class BrowserViewController: UIViewController, WKNavigationDelegate {
     // Funzione per catturare screenshot del WebView
     func captureWebViewScreenshot() {
         let snapshotConfiguration = WKSnapshotConfiguration()
+        
+        // Definisci l'area da catturare (intera pagina)
+        snapshotConfiguration.rect = webView.bounds
+        snapshotConfiguration.afterScreenUpdates = true
+
         webView.takeSnapshot(with: snapshotConfiguration) { [weak self] image, error in
-            guard let image = image else { return }
+            guard let image = image else {
+                print("Errore durante lo screenshot: \(String(describing: error))")
+                return
+            }
+            
             let cropViewController = CropViewController(croppingStyle: .default, image: image)
             cropViewController.delegate = self
             let cropSquareSize = CGSize(width: self?.view.frame.width ?? 0, height: self?.view.frame.width ?? 0)
@@ -167,11 +209,11 @@ class BrowserViewController: UIViewController, WKNavigationDelegate {
             cropViewController.toolbar.rotateButton.isHidden = true
             cropViewController.toolbar.rotateClockwiseButton?.isHidden = true
             cropViewController.toolbar.resetButton.isHidden = true
+
             self?.present(cropViewController, animated: true, completion: nil)
         }
     }
-    
-    // Aggiorna i pulsanti di navigazione
+
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         backButton.isEnabled = webView.canGoBack
         forwardButton.isEnabled = webView.canGoForward
@@ -181,7 +223,6 @@ class BrowserViewController: UIViewController, WKNavigationDelegate {
 extension BrowserViewController: CropViewControllerDelegate {
     func cropViewController(_ cropViewController: CropViewController, didCropToImage image: UIImage, withRect cropRect: CGRect, angle: Int) {
         cropViewController.dismiss(animated: true, completion: nil)
-        // Gestione dell'immagine croppata
     }
 
     func cropViewController(_ cropViewController: CropViewController, didFinishCancelled cancelled: Bool) {
