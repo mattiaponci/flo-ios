@@ -1,4 +1,6 @@
 import UIKit
+import Firebase
+
 
 class LoginVC: UIViewController {
     
@@ -36,22 +38,21 @@ class LoginVC: UIViewController {
     let passwordTextField: UITextField = {
         let tf = UITextField()
         tf.placeholder = "Password"
-        tf.attributedPlaceholder = NSAttributedString(string: "Password", attributes: [NSAttributedString.Key.foregroundColor: UIColor.lightGray])  // Colore del placeholder
-
         tf.isSecureTextEntry = true
         tf.backgroundColor = UIColor(white: 0, alpha: 0.03)
+        tf.attributedPlaceholder = NSAttributedString(string: "Password", attributes: [NSAttributedString.Key.foregroundColor: UIColor.lightGray])  // Colore del placeholder
+        tf.textColor = .black  // Imposta il colore del testo
         tf.borderStyle = .roundedRect
         tf.font = UIFont.systemFont(ofSize: 14)
-      //  tf.addTarget(self, action: #selector(formValidation), for: .editingChanged)
-        tf.heightAnchor.constraint(equalToConstant: 40).isActive = true
+        tf.textColor = .black  // Imposta il colore del testo
+
+        tf.addTarget(self, action: #selector(formValidation), for: .editingChanged)
         let showHideButton = UIButton(type: .custom)
         showHideButton.setImage(UIImage(systemName: "eye"), for: .normal)
         showHideButton.setImage(UIImage(systemName: "eye.slash"), for: .selected)
-      //  showHideButton.addTarget(self, action: #selector(togglePasswordVisibility), for: .touchUpInside)
+        showHideButton.addTarget(self, action: #selector(togglePasswordVisibility), for: .touchUpInside)
         tf.rightView = showHideButton
         tf.rightViewMode = .always
-        tf.textColor = .black  // Imposta il colore del testo
-
         return tf
     }()
     
@@ -63,7 +64,7 @@ class LoginVC: UIViewController {
         button.layer.cornerRadius = 5
         button.isEnabled = false
         button.heightAnchor.constraint(equalToConstant: 40).isActive = true
-       // button.addTarget(self, action: #selector(handleLogin), for: .touchUpInside)
+       button.addTarget(self, action: #selector(handleLogin), for: .touchUpInside)
         return button
     }()
     
@@ -115,7 +116,55 @@ class LoginVC: UIViewController {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         view.addGestureRecognizer(tapGesture)
     }
-
+    
+    
+    @objc func togglePasswordVisibility(_ sender: UIButton) {
+        sender.isSelected.toggle()
+        passwordTextField.isSecureTextEntry.toggle()
+    }
+    
+    @objc func handleLogin() {
+        
+        // properties
+        guard
+            let email = emailTextField.text,
+            let password = passwordTextField.text else { return }
+        
+        // sign user in with email and password
+        Auth.auth().signIn(withEmail: email, password: password) { (user, error) in
+            
+            // handle error
+            if let error = error {
+                print("Unable to sign user in with error", error.localizedDescription)
+                
+                
+                return
+            }
+            
+            guard let mainTabVC = UIApplication.shared.keyWindow?.rootViewController as? MainTabVC else { return }
+            
+            mainTabVC.configureViewControllers()
+            self.dismiss(animated: true, completion: nil)
+        }
+    }
+    
+    @objc func formValidation() {
+        
+        // ensures that email and password text fields have text
+        guard
+            emailTextField.hasText,
+            passwordTextField.hasText else {
+                
+                // handle case for above conditions not met
+                loginButton.isEnabled = false
+                loginButton.backgroundColor = UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1)
+                return
+        }
+        
+        // handle case for conditions were met
+        loginButton.isEnabled = true
+        loginButton.backgroundColor = UIColor(red: 17/255, green: 154/255, blue: 237/255, alpha: 1)
+    }
     func setupConstraints() {
         emailTextField.translatesAutoresizingMaskIntoConstraints = false
 

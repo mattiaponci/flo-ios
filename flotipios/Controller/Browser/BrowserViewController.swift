@@ -1,7 +1,9 @@
 import UIKit
 import WebKit
 import CropViewController
-
+protocol YourViewControllerDelegate: AnyObject {
+    func didSelectWebsite(url: URL)
+}
 class BrowserViewController: UIViewController, WKNavigationDelegate {
 
     var webView: WKWebView!
@@ -63,7 +65,7 @@ class BrowserViewController: UIViewController, WKNavigationDelegate {
         progressView = UIProgressView(progressViewStyle: .default)
         progressView.translatesAutoresizingMaskIntoConstraints = false
         progressView.trackTintColor = UIColor.lightGray
-        progressView.progressTintColor = UIColor.blue
+        progressView.progressTintColor = UIColor.gray
         view.addSubview(progressView)
 
         // Imposta i constraints per la progressView
@@ -164,7 +166,10 @@ class BrowserViewController: UIViewController, WKNavigationDelegate {
 
     @objc func handleShowMessages() {
         // Implementazione per il pulsante "Folder"
-        print("Folder button tapped")
+        
+        let messagesController = YourViewController()
+       // messagesController.delegate = self  // Imposta 'self' come delegato
+        navigationController?.pushViewController(messagesController, animated: true)
     }
 
     func load(url: URL) {
@@ -223,9 +228,26 @@ class BrowserViewController: UIViewController, WKNavigationDelegate {
 extension BrowserViewController: CropViewControllerDelegate {
     func cropViewController(_ cropViewController: CropViewController, didCropToImage image: UIImage, withRect cropRect: CGRect, angle: Int) {
         cropViewController.dismiss(animated: true, completion: nil)
+        
+        // Configura e presenta ScreenshotViewController
+        let screenshotVC = SecondViewController()
+        screenshotVC.screenshotImage = image
+        screenshotVC.pageURL = webView.url  // Passa l'URL corrente della web view
+        screenshotVC.modalPresentationStyle = .fullScreen
+        self.present(screenshotVC, animated: true, completion: nil)
     }
-
+    
     func cropViewController(_ cropViewController: CropViewController, didFinishCancelled cancelled: Bool) {
         cropViewController.dismiss(animated: true, completion: nil)
     }
+}
+
+extension BrowserViewController: YourViewControllerDelegate {
+    func didSelectWebsite(url: URL) {
+        navigationController?.popViewController(animated: true)  // Torna indietro
+        webView.load(URLRequest(url: url))  // Carica l'URL
+    }
+    
+    
+    
 }

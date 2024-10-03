@@ -6,12 +6,17 @@
 //
 
 import UIKit
+//protocol YourViewControllerDelegate: AnyObject {
+   // func didSelectWebsite(url: URL)
+//}
 
 class YourViewController: UIViewController {
+   // weak var delegate: YourViewControllerDelegate?
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        view.backgroundColor = .gray
         // Do any additional setup after loading the view.
     }
     

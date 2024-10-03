@@ -6,83 +6,175 @@
 //
 
 import UIKit
+import Firebase
 
-private let reuseIdentifier = "Cell"
+private let reuseIdentifer = "CommentCell"
 
-class CommentVC: UICollectionViewController {
-
+class CommentVC: UICollectionViewController, UICollectionViewDelegateFlowLayout {
+    
+    // MARK: - Properties
+    
+    var comments = [Comment]()
+    var post: Post?
+    
+    lazy var containerView: CommentInputAccesoryView = {
+        let frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 50)
+        let containerView = CommentInputAccesoryView(frame: frame)
+        
+        containerView.delegate = self
+        
+        return containerView
+    }()
+    
+    // MARK: - Init
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        // Uncomment the following line to preserve selection between presentations
-        // self.clearsSelectionOnViewWillAppear = false
-
-        // Register cell classes
-        self.collectionView!.register(UICollectionViewCell.self, forCellWithReuseIdentifier: reuseIdentifier)
-
-        // Do any additional setup after loading the view.
+        
+        // configure collection view
+        collectionView?.backgroundColor = .white
+        collectionView?.alwaysBounceVertical = true
+        collectionView?.keyboardDismissMode = .interactive
+        collectionView?.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: -50, right: 0)
+        collectionView?.scrollIndicatorInsets = UIEdgeInsets(top: 0, left: 0, bottom: -50, right: 0)
+        
+        // navigation title
+        navigationItem.title = "Comments"
+        
+        // register cell class
+        collectionView?.register(CommentCell.self, forCellWithReuseIdentifier: reuseIdentifer)
+        
+        // fetch comments
+        fetchComments()
     }
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using [segue destinationViewController].
-        // Pass the selected object to the new view controller.
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        tabBarController?.tabBar.isHidden = true
     }
-    */
-
-    // MARK: UICollectionViewDataSource
-
-    override func numberOfSections(in collectionView: UICollectionView) -> Int {
-        // #warning Incomplete implementation, return the number of sections
-        return 0
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        tabBarController?.tabBar.isHidden = false
     }
-
-
+    
+    override var inputAccessoryView: UIView? {
+        get {
+            return containerView
+        }
+    }
+    
+    override var canBecomeFirstResponder: Bool {
+        return true
+    }
+    
+    // MARK: - UICollectionView
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        
+        let frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 50)
+        let dummyCell = CommentCell(frame: frame)
+        dummyCell.comment = comments[indexPath.item]
+        dummyCell.layoutIfNeeded()
+        
+        let targetSize = CGSize(width: view.frame.width, height: 1000)
+        let estimatedSize = dummyCell.systemLayoutSizeFitting(targetSize)
+        
+        let height = max(40 + 8 + 8, estimatedSize.height)
+        return CGSize(width: view.frame.width, height: height)
+    }
+    
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        // #warning Incomplete implementation, return the number of items
-        return 0
+        return comments.count
     }
-
+    
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath)
-    
-        // Configure the cell
-    
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifer, for: indexPath) as! CommentCell
+        
+        handleHashtagTapped(forCell: cell)
+        
+        handleMentionTapped(forCell: cell)
+        
+        cell.comment = comments[indexPath.item]
+        
         return cell
     }
-
-    // MARK: UICollectionViewDelegate
-
-    /*
-    // Uncomment this method to specify if the specified item should be highlighted during tracking
-    override func collectionView(_ collectionView: UICollectionView, shouldHighlightItemAt indexPath: IndexPath) -> Bool {
-        return true
-    }
-    */
-
-    /*
-    // Uncomment this method to specify if the specified item should be selected
-    override func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
-        return true
-    }
-    */
-
-    /*
-    // Uncomment these methods to specify if an action menu should be displayed for the specified item, and react to actions performed on the item
-    override func collectionView(_ collectionView: UICollectionView, shouldShowMenuForItemAt indexPath: IndexPath) -> Bool {
-        return false
-    }
-
-    override func collectionView(_ collectionView: UICollectionView, canPerformAction action: Selector, forItemAt indexPath: IndexPath, withSender sender: Any?) -> Bool {
-        return false
-    }
-
-    override func collectionView(_ collectionView: UICollectionView, performAction action: Selector, forItemAt indexPath: IndexPath, withSender sender: Any?) {
     
+    // MARK: - Handlers
+    
+    func handleHashtagTapped(forCell cell: CommentCell) {
+        cell.commentLabel.handleHashtagTap { (hashtag) in
+            let hashtagController = HashtagController(collectionViewLayout: UICollectionViewFlowLayout())
+            hashtagController.hashtag = hashtag.lowercased()
+            self.navigationController?.pushViewController(hashtagController, animated: true)
+        }
     }
-    */
+    
+    func handleMentionTapped(forCell cell: CommentCell) {
+        cell.commentLabel.handleMentionTap { (username) in
+            self.getMentionedUser(withUsername: username)
+        }
+    }
+    
+    // MARK: - API
+    
+    func fetchComments() {
+        guard let postId = self.post?.postId else { return }
 
+        COMMENT_REF.child(postId).observe(.childAdded) { (snapshot) in
+            
+            guard let dictionary = snapshot.value as? Dictionary<String, AnyObject> else { return }
+            guard let uid = dictionary["uid"] as? String else { return }
+            
+            Database.fetchUser(with: uid, completion: { (user) in
+                let comment = Comment(user: user, dictionary: dictionary)
+                self.comments.append(comment)
+                self.collectionView?.reloadData()
+            })
+        }
+    }
+    
+    func uploadCommentNotificationToServer() {
+        
+        guard let currentUid = Auth.auth().currentUser?.uid else { return }
+        guard let postId = self.post?.postId else { return }
+        guard let uid = post?.user?.uid else { return }
+        let creationDate = Int(NSDate().timeIntervalSince1970)
+        
+        // notification values
+        let values = ["checked": 0,
+                      "creationDate": creationDate,
+                      "uid": currentUid,
+                      "type": COMMENT_INT_VALUE,
+                      "postId": postId] as [String : Any]
+        
+        // upload comment notification to server
+        if uid != currentUid {
+            NOTIFICATIONS_REF.child(uid).childByAutoId().updateChildValues(values)
+        }
+    }
+}
+
+extension CommentVC: CommentInputAccesoryViewDelegate {
+    
+    func didSubmit(forComment comment: String) {
+        
+        guard let postId = self.post?.postId else { return }
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let creationDate = Int(NSDate().timeIntervalSince1970)
+        
+        let values = ["commentText": comment,
+                      "creationDate": creationDate,
+                      "uid": uid] as [String : Any]
+        
+        COMMENT_REF.child(postId).childByAutoId().updateChildValues(values) { (err, ref) in
+            self.uploadCommentNotificationToServer()
+            
+            if comment.contains("@") {
+                self.uploadMentionNotification(forPostId: postId, withText: comment, isForComment: true)
+            }
+            
+            self.containerView.clearCommentTextView()
+        }
+    }
 }

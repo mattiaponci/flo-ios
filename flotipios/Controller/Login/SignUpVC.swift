@@ -6,12 +6,14 @@
 //
 
 import UIKit
-//import Firebase
+import Firebase
+import SafariServices
+
 
 class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     // MARK: - Properties
-    
+    var isTermsAccepted = false
     var imageSelected = false
     
     let plusPhotoBtn: UIButton = {
@@ -155,6 +157,37 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         return button
     }()
     
+    // Checkbox for accepting Terms & Conditions
+        let checkbox: UISwitch = {
+            let checkbox = UISwitch()
+            checkbox.onTintColor = .systemBlue
+            checkbox.addTarget(self, action: #selector(handleCheckboxToggle), for: .valueChanged)
+            return checkbox
+        }()
+        
+    let termsLabel: UILabel = {
+        let label = UILabel()
+        let attributedText = NSMutableAttributedString(string: "I accept the ", attributes: [
+            NSAttributedString.Key.foregroundColor: UIColor.black,
+            NSAttributedString.Key.font: UIFont.systemFont(ofSize: 14)
+        ])
+        
+        attributedText.append(NSAttributedString(string: "Terms & Conditions", attributes: [
+            NSAttributedString.Key.foregroundColor: UIColor.systemBlue,
+            NSAttributedString.Key.underlineStyle: NSUnderlineStyle.single.rawValue,
+            NSAttributedString.Key.font: UIFont.systemFont(ofSize: 14)
+        ]))
+        
+        label.attributedText = attributedText
+        label.isUserInteractionEnabled = true
+        
+        // Aggiungi il tap gesture recognizer
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTermsTapped))
+        label.addGestureRecognizer(tapGesture)
+        
+        return label
+    }()
+    
   /*  let alreadyHaveAccountButton: UIButton = {
         let button = UIButton(type: .system)
         
@@ -181,9 +214,26 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
        /* view.addSubview(alreadyHaveAccountButton)
         alreadyHaveAccountButton.anchor(top: nil, left: view.leftAnchor, bottom: view.bottomAnchor, right: view.rightAnchor, paddingTop: 0, paddingLeft: 0, paddingBottom: 0, paddingRight: 0, width: 0, height: 50)*/
         
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        view.addGestureRecognizer(tapGesture)
+        
+        // Aggiungi il gesto dopo l'aggiunta della label alla gerarchia
+           let tapGestureLabel = UITapGestureRecognizer(target: self, action: #selector(handleTermsTapped))
+           termsLabel.addGestureRecognizer(tapGestureLabel)
+        
     }
-    
-    // MARK: - UIImagePickerController
+    @objc func handleCheckboxToggle() {
+            isTermsAccepted = checkbox.isOn
+            updateSignUpButtonState()
+        }
+
+        @objc func handleTermsTapped() {
+            
+            print("Terms tapped")
+            guard let url = URL(string: "https://www.flotip.com/terms.html") else { return }
+            let safariVC = SFSafariViewController(url: url)
+            present(safariVC, animated: true, completion: nil)
+        }    // MARK: - UIImagePickerController
     
     /// function that handles selecting image from camera roll
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
@@ -224,7 +274,22 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
     @objc func handleShowLogin() {
         _ = navigationController?.popViewController(animated: true)
     }
+    @objc func dismissKeyboard() {
+        view.endEditing(true)
+    }
     
+    func updateSignUpButtonState() {
+          let isFormValid = firstNameTextField.hasText &&
+                            lastNameTextField.hasText &&
+                            usernameTextField.hasText &&
+                            emailTextField.hasText &&
+                            passwordTextField.hasText &&
+                            repasswordTextField.hasText &&
+                            isTermsAccepted
+
+          signUpButton.isEnabled = isFormValid
+          signUpButton.backgroundColor = isFormValid ? UIColor(red: 17/255, green: 154/255, blue: 237/255, alpha: 1) : UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1)
+      }
     
     @objc func formValidation() {
         guard
@@ -293,7 +358,7 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
     }
     
     @objc func handleSignUp() {
-       /* guard let firstName = firstNameTextField.text else { return }
+        guard let firstName = firstNameTextField.text else { return }
         guard let lastName = lastNameTextField.text else { return }
         guard let username = usernameTextField.text?.lowercased() else { return }
         guard let email = emailTextField.text else { return }
@@ -343,21 +408,27 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
                     })
                 })
             })
-        }*/
+        }
     }
     
-  //  func showAlert(title: String, message: String) {
-   //     let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
-  //      let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
- //       alertController.addAction(okAction)
-   //     present(alertController, animated: true, completion: nil)
-  //  }
+    func showAlert(title: String, message: String) {
+       let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
+       let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
+       alertController.addAction(okAction)
+        present(alertController, animated: true, completion: nil)
+   }
     
     func configureViewComponents() {
         let nameStackView = UIStackView(arrangedSubviews: [firstNameTextField, lastNameTextField])
         nameStackView.axis = .horizontal
         nameStackView.spacing = 10
         nameStackView.distribution = .fillEqually
+        
+        // Crea lo stack per checkbox e label Terms & Conditions
+           let termsStackView = UIStackView(arrangedSubviews: [checkbox, termsLabel])
+           termsStackView.axis = .horizontal
+           termsStackView.spacing = 10
+           termsStackView.distribution = .fillProportionally
         
         let stackView = UIStackView(arrangedSubviews: [
             nameStackView,
@@ -368,7 +439,8 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
             passwordValidationLabel,
             repasswordTextField,
             passwordMismatchLabel,
-            signUpButton
+            signUpButton,
+            termsStackView
         ])
         
         stackView.axis = .vertical

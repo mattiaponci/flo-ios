@@ -8,7 +8,7 @@
 import Foundation
 
 protocol FeedCellDelegate {
-  /*  func handleUsernameTapped(for cell: FeedCell)
+    func handleUsernameTapped(for cell: FeedCell)
     func handleOptionsTapped(for cell: FeedCell)
     func handleLikeTapped(for cell: FeedCell, isDoubleTap: Bool)
     func handleCommentTapped(for cell: FeedCell)
@@ -38,8 +38,8 @@ protocol UserProfileHeaderDelegate {
 }
 
 protocol NotificationCellDelegate {
-    //func handleFollowTapped(for cell: NotificationCell)
-    //func handlePostTapped(for cell: NotificationCell)
+    func handleFollowTapped(for cell: NotificationCell)
+    func handlePostTapped(for cell: NotificationCell)
 }
 
 protocol CommentInputAccesoryViewDelegate {
@@ -51,7 +51,7 @@ protocol MessageInputAccesoryViewDelegate {
     func handleSelectImage()
 }
 
-/*protocol FollowCellDelegate {
+protocol FollowCellDelegate {
     func handleFollowTapped(for cell: FollowLikeCell)
 }
 
@@ -61,7 +61,7 @@ protocol ChatCellDelegate {
 
 protocol MessageCellDelegate {
     func configureUserData(for cell: MessageCell)
-}*/
+}
 
 protocol Printable {
     var description: String { get }
