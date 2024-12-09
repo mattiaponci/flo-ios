@@ -216,7 +216,6 @@ class HomeViewController: UICollectionViewController, UICollectionViewDelegateFl
         Database.fetchPhoto(with: photoId) { [weak self] photo in
             guard let self = self else { return }
             
-            // Log per verificare i dati ricevuti
             print("Richiesta completata per photoId: \(photoId)")
             if let photo = photo {
                 print("Foto ricevuta: \(photo)")
