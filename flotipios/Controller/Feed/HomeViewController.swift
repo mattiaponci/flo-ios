@@ -3,6 +3,8 @@
 //  flotipios
 //
 //  Created by mattia poncini on 09.12.2024.
+
+//HomeViewController
 //
 import UIKit
 import Firebase
@@ -193,7 +195,25 @@ class HomeViewController: UICollectionViewController, UICollectionViewDelegateFl
         }
     }
     
-
+/*    func fetchPostDetails(withPostId postId: String, shouldClear: Bool) {
+        Database.fetchPost(with: postId) { [weak self] post in
+            guard let self = self else { return }
+            
+            // Rimuovi il guard let perché 'post' è non opzionale
+            let fetchedPost = post
+            
+            if shouldClear {
+                self.posts.removeAll()
+            }
+            self.posts.append(fetchedPost)
+            print("Post aggiunto: \(fetchedPost.postId)")
+            
+            DispatchQueue.main.async {
+                self.collectionView.reloadData()
+                self.collectionView.refreshControl?.endRefreshing()
+            }
+        }
+    }*/
     func fetchPhotoDetails(withPhotoId photoId: String, shouldClear: Bool) {
         Database.fetchPhoto(with: photoId) { [weak self] photo in
             guard let self = self else { return }
