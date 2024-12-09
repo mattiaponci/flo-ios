@@ -18,15 +18,20 @@ class UserPostCell: UICollectionViewCell {
     
     var post: Post? {
         didSet {
-            guard let ownerUid = post?.ownerUid else { return }
-            guard let imageUrl = post?.imageUrl else { return }
-            guard let likes = post?.likes else { return }
+            guard let ownerUid = post?.ownerUid,
+                  let imageUrl = post?.imageUrl,
+                  let likes = post?.likes else {
+                print("Error: One of the post properties is nil")
+                return
+            }
             
+            // Procede in modo sicuro dato che tutti i valori sono garantiti non nil
             Database.fetchUser(with: ownerUid) { (user) in
-                //self.profileImageView.loadImage(with: user.profileImageUrl)
+                self.profileImageView.loadImage(with: user.profileImageUrl)
                 self.usernameButton.setTitle(user.username, for: .normal)
                 self.configurePostCaption(user: user)
             }
+            
             postImageView.loadImage(with: imageUrl)
             
             likesLabel.text = "\(likes) likes"
@@ -37,21 +42,24 @@ class UserPostCell: UICollectionViewCell {
     
     // MARK: - UI Components
     
-  //  lazy var savePostButton: UIButton = {
-    //      let button = UIButton(type: .system)
-    //      button.setImage(#imageLiteral(resourceName: "flag"), for: .normal)
-    //      button.tintColor = .black
-    //      button.addTarget(self, action: #selector(handleSaveTapped), for: .touchUpInside)
-    //     return button
-    //   }()
+    lazy var savePostButton: UIButton = {
+        let button = UIButton(type: .system)
+        let image = UIImage(named: "flag") ?? UIImage(systemName: "flag.fill") // Fallback to system image if not found
+        button.setImage(image, for: .normal)
+        button.tintColor = .black
+        button.addTarget(self, action: #selector(handleSaveTapped), for: .touchUpInside)
+        return button
+    }()
     
-    //  let profileImageView: CustomImageView = {
-    //     let iv = CustomImageView()
-    //     iv.contentMode = .scaleAspectFill
-    //     iv.clipsToBounds = true
-    //     iv.backgroundColor = .lightGray
-    //     return iv
-    //  }()
+    let profileImageView: CustomImageView = {
+        let iv = CustomImageView()
+        iv.contentMode = .scaleAspectFill
+        iv.clipsToBounds = true
+        iv.backgroundColor = .lightGray
+        iv.isUserInteractionEnabled = false // Ensure no interaction
+        return iv
+    }()
+
     
     lazy var usernameButton: UIButton = {
         let button = UIButton(type: .system)
@@ -84,7 +92,7 @@ class UserPostCell: UICollectionViewCell {
     
     lazy var likeButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setImage(#imageLiteral(resourceName: "like_unselected"), for: .normal)
+        button.setImage(#imageLiteral(resourceName: "star"), for: .normal)
         button.tintColor = .black
         button.addTarget(self, action: #selector(handleLikeTapped), for: .touchUpInside)
         return button
@@ -151,15 +159,15 @@ class UserPostCell: UICollectionViewCell {
         postImageView.anchor(top: containerView.topAnchor, left: containerView.leftAnchor, bottom: nil, right: containerView.rightAnchor, paddingTop: 0, paddingLeft: 0, paddingBottom: 0, paddingRight: 0, width: 0, height: 0)
         postImageView.heightAnchor.constraint(equalTo: containerView.widthAnchor, multiplier: 1).isActive = true
         
-        //containerView.addSubview(profileImageView)
-      //  profileImageView.anchor(top: postImageView.topAnchor, left: postImageView.leftAnchor, bottom: nil, right: nil, paddingTop: 8, paddingLeft: 8, paddingBottom: 0, paddingRight: 0, width: 40, height: 40)
-      //  profileImageView.layer.cornerRadius = 40 / 2
+        containerView.addSubview(profileImageView)
+        profileImageView.anchor(top: postImageView.topAnchor, left: postImageView.leftAnchor, bottom: nil, right: nil, paddingTop: 8, paddingLeft: 8, paddingBottom: 0, paddingRight: 0, width: 40, height: 40)
+        profileImageView.layer.cornerRadius = 40 / 2
         
         containerView.addSubview(usernameButton)
-       // usernameButton.anchor(top: profileImageView.bottomAnchor, left: postImageView.leftAnchor, bottom: nil, right: nil, paddingTop: 4, paddingLeft: 8, paddingBottom: 0, paddingRight: 0, width: 0, height: 0)
+       usernameButton.anchor(top: profileImageView.bottomAnchor, left: postImageView.leftAnchor, bottom: nil, right: nil, paddingTop: 4, paddingLeft: 8, paddingBottom: 0, paddingRight: 0, width: 0, height: 0)
         
         containerView.addSubview(optionsButton)
-       // optionsButton.anchor(top: profileImageView.bottomAnchor, left: nil, bottom: nil, right: containerView.rightAnchor, paddingTop: 4, paddingLeft: 0, paddingBottom: 0, paddingRight: 8, width: 0, height: 0)
+        optionsButton.anchor(top: profileImageView.bottomAnchor, left: nil, bottom: nil, right: containerView.rightAnchor, paddingTop: 4, paddingLeft: 0, paddingBottom: 0, paddingRight: 8, width: 0, height: 0)
         
         configureActionButtons()
     }
@@ -179,11 +187,11 @@ class UserPostCell: UICollectionViewCell {
     }
   
     @objc func handleLikeTapped() {
-      //  delegate?.handleLikeTapped(for: self, isDoubleTap:xxx false)
+        delegate?.handleLikeTapped(for: self, isDoubleTap: false)
     }
     
     @objc func handleCommentTapped() {
-       // delegate?.handleCommentTapped(for: self)
+       delegate?.handleCommentTapped(for: self)
     }
     
     @objc func handleShowLikes() {
@@ -251,14 +259,25 @@ class UserPostCell: UICollectionViewCell {
         postTimeLabel.text = post.creationDate.timeAgoToDisplay()
     }
     
+ 
+    
     func configureActionButtons() {
-        stackView = UIStackView(arrangedSubviews: [likeButton, commentButton])
+        // Adding profileImageView, likeButton, and commentButton in the same row
+        stackView = UIStackView(arrangedSubviews: [profileImageView, likeButton, commentButton])
         
         stackView.axis = .horizontal
+        stackView.spacing = 8
         stackView.distribution = .fillEqually
         
         containerView.addSubview(stackView)
-        stackView.anchor(top: postImageView.bottomAnchor, left: containerView.leftAnchor, bottom: containerView.bottomAnchor, right: nil, paddingTop: 0, paddingLeft: 8, paddingBottom: 8, paddingRight: 0, width: 120, height: 50)
+        stackView.anchor(top: postImageView.bottomAnchor, left: containerView.leftAnchor, bottom: containerView.bottomAnchor, right: nil, paddingTop: 8, paddingLeft: 8, paddingBottom: 8, paddingRight: 0, width: 0, height: 50)
+        
+        // Update profileImageView constraints for consistent display
+        profileImageView.widthAnchor.constraint(equalToConstant: 40).isActive = true
+        profileImageView.heightAnchor.constraint(equalToConstant: 40).isActive = true
+        profileImageView.layer.cornerRadius = 20 // make it circular if needed
+    
+
                 
        // containerView.addSubview(savePostButton)
        // savePostButton.anchor(top: postImageView.bottomAnchor, left: nil, bottom: nil, right: containerView.rightAnchor, paddingTop: 12, paddingLeft: 0, paddingBottom: 0, paddingRight: 8, width: 20, height: 24)

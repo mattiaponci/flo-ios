@@ -10,15 +10,14 @@ import Firebase
 
 private let reuseIdentifer = "FollowCell"
 
-class FollowLikeVC: UITableViewController, FollowCellDelegate {
-    
+class FollowLikeVC: UITableViewController {
+
     // MARK: - Properties
     
     var followCurrentKey: String?
     var likeCurrentKey: String?
     
     enum ViewingMode: Int {
-        
         case Following
         case Followers
         case Likes
@@ -41,22 +40,25 @@ class FollowLikeVC: UITableViewController, FollowCellDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // register cell class
+        // Register cell class
         tableView.register(FollowLikeCell.self, forCellReuseIdentifier: reuseIdentifer)
         
-        // configure nav titles
+        // Configure nav titles
         configureNavigationTitle()
         
-        // fetch users
+        // Fetch users
         fetchUsers()
         
-        // clear separator lines
+        // Clear separator lines
         tableView.separatorColor = .clear
+        
+        // Imposta il colore di sfondo della tableView su bianco
+        tableView.backgroundColor = .white
     }
     
     // MARK: - UITableView
     
-   override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 60
     }
     
@@ -78,52 +80,19 @@ class FollowLikeVC: UITableViewController, FollowCellDelegate {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifer, for: indexPath) as! FollowLikeCell
-        
-        cell.delegate = self
-                
         cell.user = users[indexPath.row]
+        
+        // Imposta il colore di sfondo della cella su bianco
+        cell.backgroundColor = .white
         
         return cell
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
         let user = users[indexPath.row]
-        
         let userProfileVC = UserProfileVC(collectionViewLayout: UICollectionViewFlowLayout())
-        
         userProfileVC.user = user
-        
         navigationController?.pushViewController(userProfileVC, animated: true)
-    }
-    
-    // MARK: - FollowCellDelegate Protocol
-    
-    func handleFollowTapped(for cell: FollowLikeCell) {
-        
-        guard let user = cell.user else { return }
-        
-        if user.isFollowed {
-            
-            user.unfollow()
-            
-            // configure follow button for non followed user
-            cell.followButton.setTitle("Follow", for: .normal)
-            cell.followButton.setTitleColor(.white, for: .normal)
-            cell.followButton.layer.borderWidth = 0
-            cell.followButton.backgroundColor = UIColor(red: 17/255, green: 154/255, blue: 237/255, alpha: 1)
-            
-        } else {
-            
-            user.follow()
-            
-            // configure follow button for followed user
-            cell.followButton.setTitle("Following", for: .normal)
-            cell.followButton.setTitleColor(.black, for: .normal)
-            cell.followButton.layer.borderWidth = 0.5
-            cell.followButton.layer.borderColor = UIColor.lightGray.cgColor
-            cell.followButton.backgroundColor = .white
-        }
     }
     
     // MARK: - Handlers
@@ -152,11 +121,12 @@ class FollowLikeVC: UITableViewController, FollowCellDelegate {
     
     func fetchUser(withUid uid: String) {
         Database.fetchUser(with: uid, completion: { (user) in
+            print("Utente recuperato: \(user.username ?? "Sconosciuto")") // Debug: controlla se l'utente è stato recuperato
             self.users.append(user)
             self.tableView.reloadData()
         })
     }
-    
+
     func fetchUsers() {
         guard let ref = getDatabaseReference() else { return }
         guard let viewingMode = self.viewingMode else { return }
@@ -179,7 +149,6 @@ class FollowLikeVC: UITableViewController, FollowCellDelegate {
                     self.followCurrentKey = first.key
                 })
             } else {
-                
                 ref.child(uid).queryOrderedByKey().queryEnding(atValue: self.followCurrentKey).queryLimited(toLast: 5).observeSingleEvent(of: .value, with: { (snapshot) in
                     
                     guard let first = snapshot.children.allObjects.first as? DataSnapshot else { return }

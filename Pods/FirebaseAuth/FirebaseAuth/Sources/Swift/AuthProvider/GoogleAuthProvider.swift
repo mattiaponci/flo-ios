@@ -36,7 +36,8 @@ import Foundation
 }
 
 @available(iOS 13, tvOS 13, macOS 10.15, macCatalyst 13, watchOS 7, *)
-@objc(FIRGoogleAuthCredential) class GoogleAuthCredential: AuthCredential, NSSecureCoding {
+@objc(FIRGoogleAuthCredential) class GoogleAuthCredential: AuthCredential, NSSecureCoding,
+  @unchecked Sendable {
   let idToken: String
   let accessToken: String
 
@@ -53,7 +54,7 @@ import Foundation
 
   // MARK: Secure Coding
 
-  static var supportsSecureCoding = true
+  static let supportsSecureCoding = true
 
   func encode(with coder: NSCoder) {
     coder.encode(idToken, forKey: "idToken")

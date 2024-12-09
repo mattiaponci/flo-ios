@@ -1,17 +1,18 @@
 import UIKit
 import WebKit
 import CropViewController
-protocol YourViewControllerDelegate: AnyObject {
-    func didSelectWebsite(url: URL)
-}
-class BrowserViewController: UIViewController, WKNavigationDelegate {
+
+
+class BrowserViewController: UIViewController, WKNavigationDelegate{
 
     var webView: WKWebView!
     var toolBar: UIToolbar!
     var refreshControl: UIRefreshControl!
     var progressView: UIProgressView! // Barra di caricamento
     var initialURL: URL?
-    var pendingURL: URL?
+    var pendingURL: URL?    
+
+    
     
     var backButton: UIBarButtonItem!
     var forwardButton: UIBarButtonItem!
@@ -28,6 +29,7 @@ class BrowserViewController: UIViewController, WKNavigationDelegate {
         webView.navigationDelegate = self
         webView.isOpaque = false
         webView.backgroundColor = .white
+        webView.scrollView.showsVerticalScrollIndicator = false
         view.addSubview(webView)
         view.backgroundColor = .white
 
@@ -168,7 +170,7 @@ class BrowserViewController: UIViewController, WKNavigationDelegate {
         // Implementazione per il pulsante "Folder"
         
         let messagesController = YourViewController()
-       // messagesController.delegate = self  // Imposta 'self' come delegato
+        messagesController.delegate = self  // Imposta 'self' come delegato
         navigationController?.pushViewController(messagesController, animated: true)
     }
 
@@ -245,6 +247,7 @@ extension BrowserViewController: CropViewControllerDelegate {
 extension BrowserViewController: YourViewControllerDelegate {
     func didSelectWebsite(url: URL) {
         navigationController?.popViewController(animated: true)  // Torna indietro
+        print("the url is \(url)")
         webView.load(URLRequest(url: url))  // Carica l'URL
     }
     

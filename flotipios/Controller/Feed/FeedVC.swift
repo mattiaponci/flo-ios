@@ -9,6 +9,7 @@ import UIKit
 import Firebase
 import ActiveLabel
 
+
 protocol FeedVCDelegate: AnyObject {
     func didSelectWebsiteInFeed(url: URL)
 }
@@ -27,6 +28,9 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
     var userProfileController: UserProfileVC?
     var isFlagged: Bool = false // Stato iniziale, non flaggato
     var postSaved: Bool = false
+    var isFetching = false
+
+
 
     var messageNotificationView: MessageNotificationView = {
         let view = MessageNotificationView()
@@ -52,11 +56,11 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
 
         // Configure logout button
         configureNavigationBar()
-        self.collectionView!.register(FeedCell.self, forCellWithReuseIdentifier: reuseIdentifier)
 
         // Fetch posts
         if !viewSinglePost {
-            fetchSitesSavePosts()
+           // fetchSitesSavePosts()
+            fetchRandomUserPost()
         }
     }
 
@@ -73,15 +77,16 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
     }
 
     // MARK: - UICollectionViewDataSource
-    override func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+   /* override func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         print("indexPath.item: \(indexPath.item), posts.count: \(posts.count)")
 
         if posts.count > 4 {
             if indexPath.item == posts.count - 1 {
-                fetchSitesSavePosts()
+                //fetchSitesSavePosts()
+               // fetchRandomUserPost()
             }
         }
-    }
+    }*/
 
     override func numberOfSections(in collectionView: UICollectionView) -> Int {
         return 1
@@ -238,9 +243,9 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
 
         COMMENT_REF.child(postId).observeSingleEvent(of: .value) { (snapshot) in
             if snapshot.exists() {
-                cell.addCommentIndicatorView(toStackView: cell.stackView)
+           //     cell.addCommentIndicatorView(toStackView: cell.stackView)
             } else {
-                cell.commentIndicatorView.isHidden = true
+            //    cell.commentIndicatorView.isHidden = true
             }
         }
     }
@@ -262,7 +267,8 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
     @objc func handleRefresh() {
         posts.removeAll(keepingCapacity: false)
         self.currentKey = nil
-        fetchSitesSavePosts()
+        //fetchSitesSavePosts()
+        fetchRandomUserPost()
         collectionView?.reloadData()
     }
 
@@ -326,6 +332,15 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
     func configureNavigationBar() {
         if !viewSinglePost {
             self.navigationItem.title = "Feed"
+
+            // Aggiungi il pulsante Logout nella barra di navigazione
+            let logoutButton = UIBarButtonItem(
+                title: "Logout",
+                style: .plain,
+                target: self,
+                action: #selector(handleLogout)
+            )
+            self.navigationItem.rightBarButtonItem = logoutButton
         }
     }
 
@@ -340,28 +355,34 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
             }
         }
     }
-
     @objc func handleLogout() {
-        let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-        alertController.addAction(UIAlertAction(title: "Log Out", style: .destructive, handler: { (_) in
+        let alertController = UIAlertController(
+            title: "Log Out",
+            message: "Are you sure you want to log out?",
+            preferredStyle: .actionSheet
+        )
 
+        alertController.addAction(UIAlertAction(title: "Log Out", style: .destructive, handler: { _ in
             do {
                 try Auth.auth().signOut()
+
                 let loginVC = LoginVC()
                 let navController = UINavigationController(rootViewController: loginVC)
 
-                // UPDATE: - iOS 13 presentation fix
+                // Modalità presentazione a schermo intero per iOS 13+
                 navController.modalPresentationStyle = .fullScreen
 
                 self.present(navController, animated: true, completion: nil)
             } catch {
-                print("Failed to sign out")
+                print("Failed to sign out: \(error.localizedDescription)")
             }
         }))
 
         alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+
         present(alertController, animated: true, completion: nil)
     }
+    
 
     // MARK: - API
     func setUserFCMToken() {
@@ -372,8 +393,95 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
 
         USER_REF.child(currentUid).updateChildValues(values)
     }
+    
+    
+    
+    func fetchRandomUserPost() {
+        Auth.auth().currentUser?.getIDToken { token, error in
+            if let error = error {
+                print("Errore nel recuperare il token ID: \(error.localizedDescription)")
+                return
+            }
 
-    func fetchSitesSavePosts() {
+            guard let token = token else {
+                print("Nessun token disponibile.")
+                return
+            }
+
+            print("Token ottenuto: \(token)")
+
+            guard let url = URL(string: "https://us-central1-flotip-3aa4d.cloudfunctions.net/getRandomPostFromAllUsers") else {
+                print("URL non valida.")
+                return
+            }
+
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                if let error = error {
+                    print("Errore durante la richiesta: \(error.localizedDescription)")
+                    return
+                }
+
+                if let httpResponse = response as? HTTPURLResponse {
+                    print("HTTP Response Status Code: \(httpResponse.statusCode)")
+                    if httpResponse.statusCode != 200 {
+                        print("Errore dal server: \(httpResponse.statusCode)")
+                        return
+                    }
+                }
+
+                guard let data = data else {
+                    print("Nessun dato ricevuto dal server.")
+                    return
+                }
+
+                do {
+                    if let jsonResponse = try JSONSerialization.jsonObject(with: data, options: []) as? [String: String],
+                       let postId = jsonResponse["postId"] {
+                        print("Post ID ricevuto: \(postId)")
+                        self.posts.removeAll()
+
+                        // Qui recuperi effettivamente il post corrispondente all’ID ottenuto
+                        self.fetchPost(withPostId: postId) { [weak self] post in
+                            guard let self = self else { return }
+
+                            if let fetchedPost = post {
+                                
+                          //  self.userPostsSites.insert(fetchedPost, at: 0)
+
+
+                                self.posts.append(fetchedPost)
+                              print("i'm here")
+
+                                // Ricarica la collection view sul main thread
+                                DispatchQueue.main.async {
+
+                                }
+                            } else {
+                                print("Nessun post trovato per l'ID: \(postId)")
+                            }
+                        }
+
+                    } else {
+                        print("Parsing JSON fallito.")
+                    }
+                } catch {
+                    print("Errore durante il parsing JSON: \(error.localizedDescription)")
+                }
+            }.resume()
+        }
+    }
+
+    func fetchPost(withPostId postId: String, completion: @escaping (Post?) -> Void) {
+        Database.fetchPost(with: postId) { post in
+            print(post != nil ? "Post recuperato con successo: \(post.postId)" : "Errore nel recuperare il post con ID: \(postId)")
+            completion(post)
+        }
+    }/*    func fetchSitesSavePosts() {
         guard let currentUid = Auth.auth().currentUser?.uid else {
             print("No current user ID found")
             return
@@ -417,13 +525,9 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
         }) { error in
             print("Failed to fetch saved posts: \(error.localizedDescription)")
         }
-    }
+    }*/
 
-    func fetchPost(withPostId postId: String, completion: @escaping (Post) -> Void) {
-        Database.fetchPost(with: postId) { (post) in
-            completion(post)
-        }
-    }
+    
 
     func getUnreadMessageCount(withCompletion completion: @escaping(Int) -> ()) {
         guard let currentUid = Auth.auth().currentUser?.uid else { return }

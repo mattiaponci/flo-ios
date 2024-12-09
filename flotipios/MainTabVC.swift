@@ -30,10 +30,10 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
         configureViewControllers()
         
         // Configure notification dot
-        configureNotificationDot()
+      //  configureNotificationDot()
         
         // Observe notifications
-        observeNotifications()
+     //  observeNotifications()
         
         // User validation
         checkIfUserIsLoggedIn()
@@ -41,29 +41,42 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
         self.selectedIndex = 2  // Index of the BrowserViewController
         
         view.backgroundColor = UIColor.white
+        
+
 
     }
     
     // MARK: - Handlers
     
     func configureViewControllers() {
-        let feedVC = FeedVC(collectionViewLayout: UICollectionViewFlowLayout())
-        feedVC.delegate = self
+       // let feedVC = FeedVC(collectionViewLayout: UICollectionViewFlowLayout())
+      //  feedVC.delegate = self
         
         let userProfileVC = UserProfileVC(collectionViewLayout: UICollectionViewFlowLayout())
         userProfileVC.delegate = self
+     
+        
+     
+      
 
-        let feedNavController = constructNavController(unselectedImage: #imageLiteral(resourceName: "home_unselected"), selectedImage: #imageLiteral(resourceName: "home_selected"), rootViewController: feedVC)
+        //let feedNavController = constructNavController(unselectedImage: #imageLiteral(resourceName: "home_unselected"), selectedImage: #imageLiteral(resourceName: "home_selected"), rootViewController: feedVC)
+        
+      //  let homeVC = constructNavController(unselectedImage: #imageLiteral(resourceName: "search_unselected"), selectedImage: #imageLiteral(resourceName: "comment"), rootViewController: HomeViewController())
+        let homeVC = constructNavController(
+                    unselectedImage: #imageLiteral(resourceName: "search_unselected"),
+                    selectedImage: #imageLiteral(resourceName: "comment"),
+                    rootViewController: HomeViewController(collectionViewLayout: UICollectionViewFlowLayout())
+                )
 
         let searchVC = constructNavController(unselectedImage: #imageLiteral(resourceName: "search_unselected"), selectedImage: #imageLiteral(resourceName: "comment"), rootViewController: SearchVC())
         
         let browserVC = constructNavController(unselectedImage: #imageLiteral(resourceName: "grid"), selectedImage: #imageLiteral(resourceName: "grid"), rootViewController: BrowserViewController())
 
-        let notificationVC = constructNavController(unselectedImage: #imageLiteral(resourceName: "like_unselected"), selectedImage: #imageLiteral(resourceName: "like_selected"), rootViewController: NotificationsVC())
+        let notificationVC = constructNavController(unselectedImage: #imageLiteral(resourceName: "profile_unselected"), selectedImage: #imageLiteral(resourceName: "profile_selected"), rootViewController: NotificationsVC())
 
         let userNavProfileVC = constructNavController(unselectedImage: #imageLiteral(resourceName: "profile_unselected"), selectedImage: #imageLiteral(resourceName: "profile_selected"), rootViewController: userProfileVC)
 
-        viewControllers = [feedNavController, searchVC, browserVC, notificationVC, userNavProfileVC]
+        viewControllers = [homeVC, searchVC, browserVC, notificationVC, userNavProfileVC]
 
         tabBar.tintColor = .white
     }
@@ -114,17 +127,21 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
     // MARK: - API
     
     func checkIfUserIsLoggedIn() {
-        if Auth.auth().currentUser == nil {
+        if let user = Auth.auth().currentUser {
+            print("User logged in with UID: \(user.uid)")
+            if let email = user.email {
+                print("User email: \(email)")
+            } else {
+                print("No email associated with this account.")
+            }
+        } else {
+            print("No user is logged in. Redirecting to login screen...")
             DispatchQueue.main.async {
                 let loginVC = LoginVC()
                 let navController = UINavigationController(rootViewController: loginVC)
-                
-                // UPDATE: iOS 13 presentation fix
                 navController.modalPresentationStyle = .fullScreen
-                
                 self.present(navController, animated: true, completion: nil)
             }
-            return
         }
     }
     

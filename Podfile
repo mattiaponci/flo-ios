@@ -14,6 +14,10 @@ target 'flotipios' do
     pod 'SSToastMessage'
     pod 'CropViewController'
     pod 'SDWebImage'
+    pod 'Firebase/Functions'
+    pod "PromiseKit", "~> 8"
+    pod 'Alamofire'
+
 
 
 end

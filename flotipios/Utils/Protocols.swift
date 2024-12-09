@@ -21,11 +21,23 @@ protocol FeedCellDelegate {
 
 
 }
-
-protocol UserCellDelegate {
-    
-    
+protocol PhotoCellDelegate {
+    func handleUsernameTapped(for cell: PhotoCell)
+    func handleOptionsTapped(for cell: PhotoCell)
+    func handleLikeTapped(for cell: PhotoCell, isDoubleTap: Bool)
+    func handleCommentTapped(for cell: PhotoCell)
+    func handleConfigureLikeButton(for cell: PhotoCell)
+    func handleShowLikes(for cell: PhotoCell)
+    func configureCommentIndicatorView(for cell: PhotoCell)
+    func handleSaveTapped(for cell: PhotoCell)  // Metodo aggiunto al protocollo
+    func handleImageTapped(url: URL)  // Metodo aggiunto al protocollo
+}
+protocol UserCellDelegate{
+    func handleCommentTapped(for cell: UserPostCell)
     func handleImageclicked(url: URL)  // Aggiungi questo metodo
+    func handleLikeTapped(for cell: UserPostCell, isDoubleTap: Bool)
+  
+
 
 }
 

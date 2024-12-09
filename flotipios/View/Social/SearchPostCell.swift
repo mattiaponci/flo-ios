@@ -12,7 +12,11 @@ class SearchPostCell: UICollectionViewCell {
     var post: Post? {
         
         didSet {
-            guard let imageUrl = post?.imageUrl else { return }
+            guard let imageUrl = post?.imageUrl, !imageUrl.isEmpty else {
+                print("Error: Image URL is nil or empty")
+                return
+            }
+
             postImageView.loadImage(with: imageUrl)
         }
     }

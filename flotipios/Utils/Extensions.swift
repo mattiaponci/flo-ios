@@ -119,9 +119,9 @@ extension UIViewController {
                 
                 if username == dictionary["username"] as? String {
                     Database.fetchUser(with: uid, completion: { (user) in
-                    /*    let userProfileController = UserProfileVC(collectionViewLayout: UICollectionViewFlowLayout())
+                       let userProfileController = UserProfileVC(collectionViewLayout: UICollectionViewFlowLayout())
                         userProfileController.user = user
-                        self.navigationController?.pushViewController(userProfileController, animated: true)*/
+                        self.navigationController?.pushViewController(userProfileController, animated: true)
                         return
                     })
                 }
@@ -171,19 +171,17 @@ extension UIViewController {
 }
 
 extension Database {
-    
+
     static func fetchUser(with uid: String, completion: @escaping(User) -> ()) {
-        
         USER_REF.child(uid).observeSingleEvent(of: .value) { (snapshot) in
             guard let dictionary = snapshot.value as? Dictionary<String, AnyObject> else { return }
             let user = User(uid: uid, dictionary: dictionary)
             completion(user)
         }
     }
-    
+
     static func fetchPost(with postId: String, completion: @escaping(Post) -> ()) {
-        
-        POSTS_REF.child(postId).observeSingleEvent(of: .value) { (snapshot) in
+        USER_SAVED_SITES_REF.child(postId).observeSingleEvent(of: .value) { (snapshot) in
             guard let dictionary = snapshot.value as? Dictionary<String, AnyObject> else { return }
             guard let ownerUid = dictionary["ownerUid"] as? String else { return }
             
@@ -191,6 +189,39 @@ extension Database {
                 let post = Post(postId: postId, user: user, dictionary: dictionary)
                 completion(post)
             })
+        }
+    }
+
+    static func fetchPhoto(with photoId: String, completion: @escaping(Photo?) -> ()) {
+        POSTS_REF.child(photoId).observeSingleEvent(of: .value) { (snapshot) in
+            guard snapshot.exists() else {
+                print("Errore: il nodo per \(photoId) non esiste.")
+                completion(nil)
+                return
+            }
+
+            if let rawValue = snapshot.value {
+                print("Raw value per \(photoId): \(rawValue)")
+            } else {
+                print("Nessun valore trovato per \(photoId)")
+            }
+
+            guard let dictionary = snapshot.value as? [String: AnyObject] else {
+                print("Errore: il valore recuperato non è un dizionario valido per \(photoId).")
+                completion(nil)
+                return
+            }
+
+            guard let ownerUid = dictionary["ownerUid"] as? String else {
+                print("Errore: ownerUid non trovato.")
+                completion(nil)
+                return
+            }
+
+            Database.fetchUser(with: ownerUid) { user in
+                let photo = Photo(photoId: photoId, user: user, dictionary: dictionary)
+                completion(photo)
+            }
         }
     }
 }

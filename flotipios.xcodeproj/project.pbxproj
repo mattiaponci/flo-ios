@@ -8,10 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		80C0439960B34646DA0C2431 /* Pods_flotipios.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66EDE123437DC9DB0089ACE7 /* Pods_flotipios.framework */; };
+		9139553B2D065F7900C2A5BE /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9139553A2D065F7300C2A5BE /* HomeViewController.swift */; };
+		9139553E2D0769D400C2A5BE /* Photo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9139553D2D0769CE00C2A5BE /* Photo.swift */; };
+		913955402D077C5B00C2A5BE /* PhotoCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9139553F2D077C4600C2A5BE /* PhotoCell.swift */; };
 		91454DC62CAC928B00D2FEED /* ChatController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91454DC52CAC928800D2FEED /* ChatController.swift */; };
 		91454DC82CAC928F00D2FEED /* NewMessageController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91454DC72CAC928E00D2FEED /* NewMessageController.swift */; };
 		91454DCA2CAC929C00D2FEED /* MessagesController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91454DC92CAC929200D2FEED /* MessagesController.swift */; };
 		91454DCD2CAC945500D2FEED /* UploadPostVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91454DCC2CAC945500D2FEED /* UploadPostVC.swift */; };
+		91454DCF2CB3476C00D2FEED /* ImageCollectionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91454DCE2CB3476C00D2FEED /* ImageCollectionController.swift */; };
 		916115A12C98DEB800352967 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916115A02C98DEB800352967 /* Extensions.swift */; };
 		916E06332C98CDA80051C53F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916E06322C98CDA80051C53F /* AppDelegate.swift */; };
 		916E063D2C98CDA80051C53F /* flotipios.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 916E063B2C98CDA80051C53F /* flotipios.xcdatamodeld */; };
@@ -65,6 +69,8 @@
 		91D5E4C82CAB3D06001A2B9B /* FollowLikeVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91D5E4C72CAB3CFA001A2B9B /* FollowLikeVC.swift */; };
 		91D5E4CC2CAB3D9F001A2B9B /* EditProfileController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91D5E4CB2CAB3D9F001A2B9B /* EditProfileController.swift */; };
 		91D5E4CE2CAB3E06001A2B9B /* UserPostCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91D5E4CD2CAB3E06001A2B9B /* UserPostCell.swift */; };
+		91ECAC3F2CC41E950052A10E /* AlermManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91ECAC3E2CC41E7F0052A10E /* AlermManager.swift */; };
+		91F8D7562D02665D0043F74E /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91F8D7552D0266590043F74E /* Database.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -87,10 +93,16 @@
 /* Begin PBXFileReference section */
 		34554ABCA9D47732C833AD4C /* Pods-flotipios.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-flotipios.debug.xcconfig"; path = "Target Support Files/Pods-flotipios/Pods-flotipios.debug.xcconfig"; sourceTree = "<group>"; };
 		66EDE123437DC9DB0089ACE7 /* Pods_flotipios.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_flotipios.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		9139553A2D065F7300C2A5BE /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
+		9139553D2D0769CE00C2A5BE /* Photo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Photo.swift; sourceTree = "<group>"; };
+		9139553F2D077C4600C2A5BE /* PhotoCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoCell.swift; sourceTree = "<group>"; };
 		91454DC52CAC928800D2FEED /* ChatController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatController.swift; sourceTree = "<group>"; };
 		91454DC72CAC928E00D2FEED /* NewMessageController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewMessageController.swift; sourceTree = "<group>"; };
 		91454DC92CAC929200D2FEED /* MessagesController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesController.swift; sourceTree = "<group>"; };
 		91454DCC2CAC945500D2FEED /* UploadPostVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadPostVC.swift; sourceTree = "<group>"; };
+		91454DCE2CB3476C00D2FEED /* ImageCollectionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCollectionController.swift; sourceTree = "<group>"; };
+		91454DD02CB44D8400D2FEED /* flotipios.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = flotipios.entitlements; sourceTree = "<group>"; };
+		91454E172CB4875300D2FEED /* flotipiosRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = flotipiosRelease.entitlements; sourceTree = "<group>"; };
 		916115A02C98DEB800352967 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		916E062F2C98CDA80051C53F /* flotipios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = flotipios.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		916E06322C98CDA80051C53F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -148,6 +160,8 @@
 		91D5E4C72CAB3CFA001A2B9B /* FollowLikeVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowLikeVC.swift; sourceTree = "<group>"; };
 		91D5E4CB2CAB3D9F001A2B9B /* EditProfileController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileController.swift; sourceTree = "<group>"; };
 		91D5E4CD2CAB3E06001A2B9B /* UserPostCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPostCell.swift; sourceTree = "<group>"; };
+		91ECAC3E2CC41E7F0052A10E /* AlermManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlermManager.swift; sourceTree = "<group>"; };
+		91F8D7552D0266590043F74E /* Database.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Database.swift; sourceTree = "<group>"; };
 		93CCF4FB9D5D3C5B2EC12170 /* Pods-flotipios.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-flotipios.release.xcconfig"; path = "Target Support Files/Pods-flotipios/Pods-flotipios.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -206,6 +220,8 @@
 		9161159F2C98DE7E00352967 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				91F8D7552D0266590043F74E /* Database.swift */,
+				91ECAC3E2CC41E7F0052A10E /* AlermManager.swift */,
 				91821C482CA602010095147E /* Protocols.swift */,
 				916115A02C98DEB800352967 /* Extensions.swift */,
 				91821C502CA9DC3F0095147E /* Constants.swift */,
@@ -239,6 +255,8 @@
 		916E06312C98CDA80051C53F /* flotipios */ = {
 			isa = PBXGroup;
 			children = (
+				91454E172CB4875300D2FEED /* flotipiosRelease.entitlements */,
+				91454DD02CB44D8400D2FEED /* flotipios.entitlements */,
 				91821C542CA9DC950095147E /* Model */,
 				9161159F2C98DE7E00352967 /* Utils */,
 				9172AE832CA5DE2A00E14005 /* View */,
@@ -287,6 +305,7 @@
 				91D5E4A22CAB3083001A2B9B /* Comments */,
 				91821C612CA9E99D0095147E /* UserProfileHeader.swift */,
 				91821C632CA9E9E80095147E /* SearchUserCell.swift */,
+				9139553F2D077C4600C2A5BE /* PhotoCell.swift */,
 				91821C672CA9EAB90095147E /* FeedCell.swift */,
 				91D5E4A02CA9FA9D001A2B9B /* FollowLikeCell.swift */,
 				91D5E4A92CAB3146001A2B9B /* NotificationCell.swift */,
@@ -324,6 +343,7 @@
 			isa = PBXGroup;
 			children = (
 				9172AE882CA5DED300E14005 /* FeedVC.swift */,
+				9139553A2D065F7300C2A5BE /* HomeViewController.swift */,
 				91D5E4C32CAB3AC9001A2B9B /* CommentVC.swift */,
 				91D5E4C52CAB3AE7001A2B9B /* HashtagController.swift */,
 			);
@@ -365,6 +385,7 @@
 				91D5E4BD2CAB3A12001A2B9B /* SettingsModels.swift */,
 				91D5E4BF2CAB3A3A001A2B9B /* SecondViewController.swift */,
 				91D5E4C12CAB3A68001A2B9B /* ImageCell.swift */,
+				91454DCE2CB3476C00D2FEED /* ImageCollectionController.swift */,
 			);
 			path = Browser;
 			sourceTree = "<group>";
@@ -372,6 +393,7 @@
 		91821C542CA9DC950095147E /* Model */ = {
 			isa = PBXGroup;
 			children = (
+				9139553D2D0769CE00C2A5BE /* Photo.swift */,
 				91821C552CA9DCB30095147E /* User.swift */,
 				91821C592CA9DCEA0095147E /* Post.swift */,
 				91821C5B2CA9DD330095147E /* Comment.swift */,
@@ -590,6 +612,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9139553E2D0769D400C2A5BE /* Photo.swift in Sources */,
 				91821C492CA602060095147E /* Protocols.swift in Sources */,
 				91821C532CA9DC650095147E /* CustomImageView.swift in Sources */,
 				91D5E4A62CAB30CD001A2B9B /* InputTextView.swift in Sources */,
@@ -614,6 +637,7 @@
 				91A7AAEB2C98DC6D00F78D52 /* LoginVC.swift in Sources */,
 				91D5E4B02CAB3215001A2B9B /* MessageInputAccesoryView.swift in Sources */,
 				91D5E4A12CA9FA9D001A2B9B /* FollowLikeCell.swift in Sources */,
+				91F8D7562D02665D0043F74E /* Database.swift in Sources */,
 				91821C4B2CA606E90095147E /* UserProfileVC.swift in Sources */,
 				91821C642CA9E9E80095147E /* SearchUserCell.swift in Sources */,
 				91D5E4A42CAB30AC001A2B9B /* CommentInputAccesoryView.swift in Sources */,
@@ -623,11 +647,13 @@
 				91D5E4CE2CAB3E06001A2B9B /* UserPostCell.swift in Sources */,
 				91D5E4AC2CAB3170001A2B9B /* SearchPostCell.swift in Sources */,
 				91D5E4B62CAB387B001A2B9B /* NewMessageCell.swift in Sources */,
+				91454DCF2CB3476C00D2FEED /* ImageCollectionController.swift in Sources */,
 				9172AE8E2CA5DF6400E14005 /* SearchVC.swift in Sources */,
 				91821C602CA9DD6F0095147E /* Message.swift in Sources */,
 				91454DCA2CAC929C00D2FEED /* MessagesController.swift in Sources */,
 				91D5E4CC2CAB3D9F001A2B9B /* EditProfileController.swift in Sources */,
 				91AA5D412CA3514A00ED4B07 /* SignUpVC.swift in Sources */,
+				9139553B2D065F7900C2A5BE /* HomeViewController.swift in Sources */,
 				91B4932E2CA5CEB000CB8122 /* MainTabVC.swift in Sources */,
 				91454DCD2CAC945500D2FEED /* UploadPostVC.swift in Sources */,
 				91D5E4C82CAB3D06001A2B9B /* FollowLikeVC.swift in Sources */,
@@ -635,10 +661,12 @@
 				91AA5D3F2CA3440A00ED4B07 /* ForgotPasswordVC.swift in Sources */,
 				91D5E4BA2CAB3931001A2B9B /* MessageNotificationView.swift in Sources */,
 				91D5E4C42CAB3AC9001A2B9B /* CommentVC.swift in Sources */,
+				913955402D077C5B00C2A5BE /* PhotoCell.swift in Sources */,
 				91454DC82CAC928F00D2FEED /* NewMessageController.swift in Sources */,
 				91821C562CA9DCB30095147E /* User.swift in Sources */,
 				91D5E4B42CAB37E3001A2B9B /* MessageCell.swift in Sources */,
 				91D5E4AA2CAB3146001A2B9B /* NotificationCell.swift in Sources */,
+				91ECAC3F2CC41E950052A10E /* AlermManager.swift in Sources */,
 				91D5E4C62CAB3AE7001A2B9B /* HashtagController.swift in Sources */,
 				91821C5A2CA9DCEA0095147E /* Post.swift in Sources */,
 			);
@@ -813,12 +841,17 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = flotipios/flotipios.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = A3LZG7RDC6;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = flotipios/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Flotip;
+				INFOPLIST_KEY_CFBundleDisplayName = flotip;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
+				INFOPLIST_KEY_NSCameraUsageDescription = "App needs access to the camera.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "App needs access to the photo library.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -829,11 +862,16 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.flotip.flotipios;
+				PRODUCT_BUNDLE_IDENTIFIER = com.flotip.mattiaponcini;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -843,12 +881,17 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = flotipios/flotipiosRelease.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = A3LZG7RDC6;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = flotipios/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = flotip;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
+				INFOPLIST_KEY_NSCameraUsageDescription = "App needs access to the camera.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "App needs access to the photo library.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -861,9 +904,14 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.flotip.flotipios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -878,7 +926,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.flotip.flotipiosTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.flotip.Tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -898,7 +946,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.flotip.flotipiosTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.flotip.Tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -953,7 +1001,7 @@
 				916E065B2C98CDAA0051C53F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		916E065C2C98CDAA0051C53F /* Build configuration list for PBXNativeTarget "flotipios" */ = {
 			isa = XCConfigurationList;
@@ -962,7 +1010,7 @@
 				916E065E2C98CDAA0051C53F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		916E065F2C98CDAA0051C53F /* Build configuration list for PBXNativeTarget "flotipiosTests" */ = {
 			isa = XCConfigurationList;
@@ -971,7 +1019,7 @@
 				916E06612C98CDAA0051C53F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		916E06622C98CDAA0051C53F /* Build configuration list for PBXNativeTarget "flotipiosUITests" */ = {
 			isa = XCConfigurationList;
@@ -980,7 +1028,7 @@
 				916E06642C98CDAA0051C53F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 

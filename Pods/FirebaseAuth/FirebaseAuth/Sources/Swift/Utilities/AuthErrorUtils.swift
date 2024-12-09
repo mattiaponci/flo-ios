@@ -31,7 +31,7 @@ private let kFIRAuthErrorMessageMalformedJWT =
   "Failed to parse JWT. Check the userInfo dictionary for the full token."
 
 @available(iOS 13, tvOS 13, macOS 10.15, macCatalyst 13, watchOS 7, *)
-class AuthErrorUtils: NSObject {
+class AuthErrorUtils {
   static let internalErrorDomain = "FIRAuthInternalErrorDomain"
   static let userInfoDeserializedResponseKey = "FIRAuthErrorUserInfoDeserializedResponseKey"
   static let userInfoDataKey = "FIRAuthErrorUserInfoDataKey"
@@ -203,6 +203,10 @@ class AuthErrorUtils: NSObject {
     error(code: .missingAndroidPackageName, message: message)
   }
 
+  static func invalidRecaptchaTokenError() -> Error {
+    error(code: .invalidRecaptchaToken)
+  }
+
   static func unauthorizedDomainError(message: String?) -> Error {
     error(code: .unauthorizedDomain, message: message)
   }
@@ -371,7 +375,8 @@ class AuthErrorUtils: NSObject {
   }
 
   static func keychainError(function: String, status: OSStatus) -> Error {
-    let reason = "\(function) (\(status))"
+    let message = SecCopyErrorMessageString(status, nil) as String? ?? ""
+    let reason = "\(function) (\(status)) \(message)"
     return error(code: .keychainError, userInfo: [NSLocalizedFailureReasonErrorKey: reason])
   }
 
@@ -562,5 +567,3 @@ class AuthErrorUtils: NSObject {
     return error(code: .recaptchaActionCreationFailed, message: message)
   }
 }
-
-protocol MultiFactorResolverWrapper: NSObjectProtocol {}

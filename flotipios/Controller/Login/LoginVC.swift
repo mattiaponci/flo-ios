@@ -1,11 +1,11 @@
 import UIKit
 import Firebase
 
-
 class LoginVC: UIViewController {
-    
-    
-    
+
+    var failedLoginAttempts = 0 // Track number of failed login attempts
+    let lockDuration: TimeInterval = 3600 // Lock duration in seconds (1 hour)
+
     let logoContainerView: UIView = {
         let view = UIView()
         view.backgroundColor = .white
@@ -19,22 +19,20 @@ class LoginVC: UIViewController {
         return view
     }()
     
-
     let emailTextField: UITextField = {
         let tf = UITextField()
         tf.placeholder = "Email"
         tf.attributedPlaceholder = NSAttributedString(string: "Email", attributes: [NSAttributedString.Key.foregroundColor: UIColor.lightGray])  // Colore del placeholder
-
         tf.backgroundColor = UIColor(white: 0, alpha: 0.03)
         tf.borderStyle = .roundedRect
         tf.font = UIFont.systemFont(ofSize: 14)
         tf.heightAnchor.constraint(equalToConstant: 40).isActive = true
         tf.textColor = .black  // Imposta il colore del testo
         tf.keyboardType = .emailAddress
-
-
+        tf.autocapitalizationType = .none
         return tf
     }()
+    
     let passwordTextField: UITextField = {
         let tf = UITextField()
         tf.placeholder = "Password"
@@ -44,9 +42,8 @@ class LoginVC: UIViewController {
         tf.textColor = .black  // Imposta il colore del testo
         tf.borderStyle = .roundedRect
         tf.font = UIFont.systemFont(ofSize: 14)
-        tf.textColor = .black  // Imposta il colore del testo
-
         tf.addTarget(self, action: #selector(formValidation), for: .editingChanged)
+        tf.autocapitalizationType = .none
         let showHideButton = UIButton(type: .custom)
         showHideButton.setImage(UIImage(systemName: "eye"), for: .normal)
         showHideButton.setImage(UIImage(systemName: "eye.slash"), for: .selected)
@@ -64,7 +61,7 @@ class LoginVC: UIViewController {
         button.layer.cornerRadius = 5
         button.isEnabled = false
         button.heightAnchor.constraint(equalToConstant: 40).isActive = true
-       button.addTarget(self, action: #selector(handleLogin), for: .touchUpInside)
+        button.addTarget(self, action: #selector(handleLogin), for: .touchUpInside)
         return button
     }()
     
@@ -74,17 +71,16 @@ class LoginVC: UIViewController {
         attributedTitle.append(NSAttributedString(string: "Sign Up", attributes: [NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 14), NSAttributedString.Key.foregroundColor: UIColor(red: 17/255, green: 154/255, blue: 237/255, alpha: 1)]))
         button.addTarget(self, action: #selector(handleShowSignUp), for: .touchUpInside)
         button.isEnabled = true
-
         button.setAttributedTitle(attributedTitle, for: .normal)
         return button
     }()
+    
     let forgotPassword: UIButton = {
         let button = UIButton(type: .system)
         let attributedTitle = NSMutableAttributedString(string: "Forgot  ", attributes: [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 14), NSAttributedString.Key.foregroundColor: UIColor.lightGray])
         attributedTitle.append(NSAttributedString(string: "Password?", attributes: [NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 14), NSAttributedString.Key.foregroundColor: UIColor(red: 17/255, green: 154/255, blue: 237/255, alpha: 1)]))
         button.addTarget(self, action: #selector(handleForgotPassword), for: .touchUpInside)
         button.isEnabled = true
-
         button.setAttributedTitle(attributedTitle, for: .normal)
         return button
     }()
@@ -92,31 +88,20 @@ class LoginVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // colourß® background
         view.backgroundColor = .white
-        
-        //add logo
         view.addSubview(logoContainerView)
         logoContainerView.anchor(top: view.topAnchor, left: view.leftAnchor, bottom: nil, right: view.rightAnchor, paddingTop: 80, paddingLeft: 0, paddingBottom: 0, paddingRight: 0, width: 600, height: 100)
 
-        // add textField
         configureViewComponents()
         
         view.addSubview(dontHaveAccountButton)
         dontHaveAccountButton.anchor(top: nil, left: view.leftAnchor, bottom: view.bottomAnchor, right: view.rightAnchor, paddingTop: 0, paddingLeft: 0, paddingBottom: 0, paddingRight: 0, width: 0, height: 50)
         
-        //button forgot password
-      //  view.addSubview(forgotPassword)
-       // forgotPassword.anchor(top: loginButton.topAnchor, left: view.leftAnchor, bottom: view.bottomAnchor, right: view.rightAnchor, paddingTop: 10, paddingLeft: 0, paddingBottom: 0, paddingRight: 0, width: 0, height: 50)
-
-        // Auto Layout
-      //  setupConstraints()
-        
-        // dismiss keyboard
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         view.addGestureRecognizer(tapGesture)
+        
+        checkIfLockedOut()
     }
-    
     
     @objc func togglePasswordVisibility(_ sender: UIButton) {
         sender.isSelected.toggle()
@@ -124,78 +109,76 @@ class LoginVC: UIViewController {
     }
     
     @objc func handleLogin() {
+        // Check if locked out
+        if isLockedOut() {
+            AlertManager.showPopup()
+            return
+        }
         
         // properties
-        guard
-            let email = emailTextField.text,
-            let password = passwordTextField.text else { return }
+        guard let email = emailTextField.text, let password = passwordTextField.text else { return }
         
         // sign user in with email and password
-        Auth.auth().signIn(withEmail: email, password: password) { (user, error) in
+        Auth.auth().signIn(withEmail: email, password: password) { (result, error) in
             
             // handle error
             if let error = error {
                 print("Unable to sign user in with error", error.localizedDescription)
+                self.failedLoginAttempts += 1
                 
+                // If user fails once or twice, show top alert
+                if self.failedLoginAttempts <= 2 {
+                    AlertManager.showTopAlert()
+                }
                 
+                // If user fails three times, lock out
+                if self.failedLoginAttempts == 3 {
+                    self.lockOutUser()
+                    AlertManager.showTopAlert()
+                    self.failedLoginAttempts = 0 // Reset after showing alert
+                }
                 return
             }
             
-            guard let mainTabVC = UIApplication.shared.keyWindow?.rootViewController as? MainTabVC else { return }
+            // Reset failed attempts on successful login
+            self.failedLoginAttempts = 0
             
+            guard let mainTabVC = UIApplication.shared.keyWindow?.rootViewController as? MainTabVC else { return }
             mainTabVC.configureViewControllers()
             self.dismiss(animated: true, completion: nil)
         }
     }
     
     @objc func formValidation() {
-        
         // ensures that email and password text fields have text
-        guard
-            emailTextField.hasText,
-            passwordTextField.hasText else {
-                
-                // handle case for above conditions not met
-                loginButton.isEnabled = false
-                loginButton.backgroundColor = UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1)
-                return
+        guard emailTextField.hasText, passwordTextField.hasText else {
+            loginButton.isEnabled = false
+            loginButton.backgroundColor = UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1)
+            return
         }
         
-        // handle case for conditions were met
         loginButton.isEnabled = true
         loginButton.backgroundColor = UIColor(red: 17/255, green: 154/255, blue: 237/255, alpha: 1)
     }
-    func setupConstraints() {
-        emailTextField.translatesAutoresizingMaskIntoConstraints = false
-
-        // Imposta le ancore (utilizzando NSLayoutConstraint)
-        NSLayoutConstraint.activate([
-            emailTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 40),
-            emailTextField.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 20),
-            emailTextField.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -20),
-            emailTextField.heightAnchor.constraint(equalToConstant: 40)
-        ])
-    }
+    
     @objc func dismissKeyboard() {
         view.endEditing(true)
     }
     
     @objc func handleForgotPassword() {
-            let forgotPasswordVC = ForgotPasswordVC()
-            navigationController?.pushViewController(forgotPasswordVC, animated: true)
-        }
+        let forgotPasswordVC = ForgotPasswordVC()
+        navigationController?.pushViewController(forgotPasswordVC, animated: true)
+    }
+    
     @objc func handleShowSignUp() {
         let signUpVC = SignUpVC()
         navigationController?.pushViewController(signUpVC, animated: true)
     }
-
     
     func configureViewComponents() {
         let stackView = UIStackView(arrangedSubviews: [
             emailTextField,
-            // emailValidationLabel,
             passwordTextField,
-            // passwordValidationLabel,
             loginButton
         ])
         stackView.axis = .vertical
@@ -206,7 +189,6 @@ class LoginVC: UIViewController {
         view.addSubview(stackView)
         stackView.anchor(top: logoContainerView.bottomAnchor, left: view.leftAnchor, bottom: nil, right: view.rightAnchor, paddingTop: 40, paddingLeft: 40, paddingBottom: 50, paddingRight: 40, width: 0, height: 0)
         
-        // Aggiungi forgotPassword sotto il loginButton
         view.addSubview(forgotPassword)
         forgotPassword.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -214,6 +196,29 @@ class LoginVC: UIViewController {
             forgotPassword.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             forgotPassword.heightAnchor.constraint(equalToConstant: 30)
         ])
-        
+    }
+
+    func lockOutUser() {
+        let lockOutTime = Date().addingTimeInterval(lockDuration)
+        UserDefaults.standard.set(lockOutTime, forKey: "lockOutTime")
+    }
+    
+    func isLockedOut() -> Bool {
+        if let lockOutTime = UserDefaults.standard.object(forKey: "lockOutTime") as? Date {
+            if Date() < lockOutTime {
+                return true
+            } else {
+                UserDefaults.standard.removeObject(forKey: "lockOutTime")
+                return false
+            }
+        }
+        return false
+    }
+    
+    func checkIfLockedOut() {
+        if isLockedOut() {
+            AlertManager.showPopup()
+            print("")
+        }
     }
 }
