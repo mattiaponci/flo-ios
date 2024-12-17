@@ -22,28 +22,37 @@ class LoginVC: UIViewController {
     let emailTextField: UITextField = {
         let tf = UITextField()
         tf.placeholder = "Email"
-        tf.attributedPlaceholder = NSAttributedString(string: "Email", attributes: [NSAttributedString.Key.foregroundColor: UIColor.lightGray])  // Colore del placeholder
+        tf.attributedPlaceholder = NSAttributedString(string: "Email", attributes: [NSAttributedString.Key.foregroundColor: UIColor.lightGray])
         tf.backgroundColor = UIColor(white: 0, alpha: 0.03)
         tf.borderStyle = .roundedRect
         tf.font = UIFont.systemFont(ofSize: 14)
-        tf.heightAnchor.constraint(equalToConstant: 40).isActive = true
-        tf.textColor = .black  // Imposta il colore del testo
+        tf.textColor = .black
         tf.keyboardType = .emailAddress
         tf.autocapitalizationType = .none
         return tf
     }()
+
     
+    let emailErrorLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .red
+        label.font = UIFont.systemFont(ofSize: 12)
+        label.text = "Wrong e-mail"
+        label.isHidden = true // Nascondere di default
+        return label
+    }()
     let passwordTextField: UITextField = {
         let tf = UITextField()
         tf.placeholder = "Password"
         tf.isSecureTextEntry = true
         tf.backgroundColor = UIColor(white: 0, alpha: 0.03)
-        tf.attributedPlaceholder = NSAttributedString(string: "Password", attributes: [NSAttributedString.Key.foregroundColor: UIColor.lightGray])  // Colore del placeholder
-        tf.textColor = .black  // Imposta il colore del testo
+        tf.attributedPlaceholder = NSAttributedString(string: "Password", attributes: [NSAttributedString.Key.foregroundColor: UIColor.lightGray])
+        tf.textColor = .black
         tf.borderStyle = .roundedRect
         tf.font = UIFont.systemFont(ofSize: 14)
         tf.addTarget(self, action: #selector(formValidation), for: .editingChanged)
         tf.autocapitalizationType = .none
+        
         let showHideButton = UIButton(type: .custom)
         showHideButton.setImage(UIImage(systemName: "eye"), for: .normal)
         showHideButton.setImage(UIImage(systemName: "eye.slash"), for: .selected)
@@ -149,14 +158,30 @@ class LoginVC: UIViewController {
         }
     }
     
+    func isValidEmail(_ email: String) -> Bool {
+        let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegEx)
+        return emailPredicate.evaluate(with: email)
+    }
+
     @objc func formValidation() {
-        // ensures that email and password text fields have text
-        guard emailTextField.hasText, passwordTextField.hasText else {
+        guard let email = emailTextField.text else { return }
+
+        // Validazione dell'email
+        if !isValidEmail(email) {
+            emailErrorLabel.isHidden = false
+        } else {
+            emailErrorLabel.isHidden = true
+        }
+
+        // Validazione per login button
+        guard emailTextField.hasText, passwordTextField.hasText, isValidEmail(email) else {
             loginButton.isEnabled = false
             loginButton.backgroundColor = UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1)
             return
         }
-        
+
+        emailErrorLabel.isHidden = true
         loginButton.isEnabled = true
         loginButton.backgroundColor = UIColor(red: 17/255, green: 154/255, blue: 237/255, alpha: 1)
     }
@@ -178,21 +203,34 @@ class LoginVC: UIViewController {
     func configureViewComponents() {
         let stackView = UIStackView(arrangedSubviews: [
             emailTextField,
+            emailErrorLabel, // Aggiungi la label
             passwordTextField,
             loginButton
         ])
         stackView.axis = .vertical
         stackView.spacing = 10
-        stackView.distribution = .fill
+        stackView.distribution = .fill // Assicura che il contenuto si adatti
+        stackView.alignment = .fill    // Allinea tutti gli elementi alla larghezza massima
         stackView.translatesAutoresizingMaskIntoConstraints = false
-        
+
+        // Aggiungi lo stackView alla view principale
         view.addSubview(stackView)
-        stackView.anchor(top: logoContainerView.bottomAnchor, left: view.leftAnchor, bottom: nil, right: view.rightAnchor, paddingTop: 40, paddingLeft: 40, paddingBottom: 50, paddingRight: 40, width: 0, height: 0)
-        
+        stackView.anchor(top: logoContainerView.bottomAnchor,
+                         left: view.leftAnchor,
+                         bottom: nil,
+                         right: view.rightAnchor,
+                         paddingTop: 40,
+                         paddingLeft: 40,
+                         paddingBottom: 0,
+                         paddingRight: 40,
+                         width: 0,
+                         height: 0)
+
+        // Aggiungi il bottone 'forgotPassword' separatamente
         view.addSubview(forgotPassword)
         forgotPassword.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            forgotPassword.topAnchor.constraint(equalTo: loginButton.bottomAnchor, constant: 10),
+            forgotPassword.topAnchor.constraint(equalTo: stackView.bottomAnchor, constant: 10),
             forgotPassword.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             forgotPassword.heightAnchor.constraint(equalToConstant: 30)
         ])
