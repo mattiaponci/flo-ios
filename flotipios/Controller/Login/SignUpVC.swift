@@ -226,7 +226,7 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         view.backgroundColor = .white
         
         view.addSubview(plusPhotoBtn)
-        plusPhotoBtn.anchor(top: view.topAnchor, left: nil, bottom: nil, right: nil, paddingTop: 60, paddingLeft: 0, paddingBottom: 0, paddingRight: 0, width: 140, height: 140)
+        plusPhotoBtn.anchor(top: view.topAnchor, left: nil, bottom: nil, right: nil, paddingTop: 60, paddingLeft: 0, paddingBottom: 0, paddingRight: 0, width: 90, height: 90)
         plusPhotoBtn.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
         
         configureViewComponents()
@@ -250,9 +250,16 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         present(safariVC, animated: true, completion: nil)
     }
 
+   /* @objc func handleDateOfBirthChange() {
+        formValidation()
+    }*/
+    
     @objc func handleDateOfBirthChange() {
+        // Ogni volta che l'utente modifica la data, ricalcolo la validità del form
         formValidation()
     }
+
+
     
     @objc func handleEmailBeginEditing() {
         let firstNameEmpty = !(firstNameTextField.hasText)
@@ -275,6 +282,7 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
     }
     
     @objc func formValidation() {
+        // Nascondo tutti gli errori
         emailValidationLabel.isHidden = true
         passwordValidationLabel.isHidden = true
         rePasswordValidationLabel.isHidden = true
@@ -293,7 +301,7 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
             emailValidationLabel.isHidden = false
         }
         
-        // Se l'utente ha focalizzato il campo re-enter password, controlliamo ulteriormente
+        // Se l'utente ha focalizzato il campo re-enter password
         if didFocusOnRepassword {
             // Se la password non rispetta i criteri e non è vuota
             if !passwordIsValid && !password.isEmpty {
@@ -307,12 +315,13 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
             }
         }
 
+        // Controlla se tutti i campi sono presenti, l'email è valida, la password è valida, le password coincidono,
+        // l’utente ha accettato i termini e la data di nascita è valida (più di 16 anni)
         let allFieldsPresent = !email.isEmpty && !password.isEmpty && !repassword.isEmpty
         let allConditionsMet = allFieldsPresent && emailIsValid && passwordIsValid && passwordsMatch && isTermsAccepted && isDateOfBirthValid()
         
         updateSignUpButtonState(isFormValid: allConditionsMet)
     }
-    
     func updateSignUpButtonState(isFormValid: Bool) {
         signUpButton.isEnabled = isFormValid
         signUpButton.backgroundColor = isFormValid ?
@@ -381,6 +390,9 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         termsStackView.axis = .horizontal
         termsStackView.spacing = 10
         termsStackView.distribution = .fillProportionally
+
+
+        signUpButton.heightAnchor.constraint(equalToConstant: 40).isActive = true
 
         let stackView = UIStackView(arrangedSubviews: [
             firstNameTextField,
