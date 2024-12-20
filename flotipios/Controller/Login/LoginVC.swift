@@ -37,7 +37,7 @@ class LoginVC: UIViewController {
         let label = UILabel()
         label.textColor = .red
         label.font = UIFont.systemFont(ofSize: 12)
-        label.text = "Wrong e-mail"
+        label.text = "Insert a valid e-mail"
         label.isHidden = true // Nascondere di default
         return label
     }()
