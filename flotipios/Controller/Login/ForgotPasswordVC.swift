@@ -9,41 +9,39 @@ import UIKit
 
 class ForgotPasswordVC: UIViewController {
     
+    // Creazione del campo email
     let emailTextField: UITextField = {
         let tf = UITextField()
         tf.placeholder = "Enter your email"
-        tf.attributedPlaceholder = NSAttributedString(string: "Enter your email", attributes: [NSAttributedString.Key.foregroundColor: UIColor.lightGray])  // Colore del placeholder
-
+        tf.attributedPlaceholder = NSAttributedString(string: "Enter your email", attributes: [NSAttributedString.Key.foregroundColor: UIColor.lightGray])
         tf.backgroundColor = UIColor(white: 0, alpha: 0.03)
         tf.borderStyle = .roundedRect
         tf.font = UIFont.systemFont(ofSize: 14)
-        tf.heightAnchor.constraint(equalToConstant: 40).isActive = true // Set the height
-        tf.textColor = .black  // Imposta il colore del testo
+        tf.heightAnchor.constraint(equalToConstant: 40).isActive = true
+        tf.textColor = .black
         tf.keyboardType = .emailAddress
-
-
         return tf
     }()
     
+    // Creazione del bottone Reset Password
     let resetPasswordButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Reset Password", for: .normal)
         button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1)
+        // Colore blu più scuro
+        button.backgroundColor = UIColor(red: 50/255, green: 100/255, blue: 200/255, alpha: 1)
         button.layer.cornerRadius = 5
-        button.heightAnchor.constraint(equalToConstant: 40).isActive = true // Set the height
+        button.heightAnchor.constraint(equalToConstant: 40).isActive = true
+        button.addTarget(self, action: #selector(handleResetPassword), for: .touchUpInside)
         return button
     }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
         view.backgroundColor = .white
-        
-        // Set up the layout
         configureViewComponents()
         
-        // Dismiss keyboard on tap outside the text field
+        // Permette di chiudere la tastiera con un tap fuori dal TextField
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         view.addGestureRecognizer(tapGesture)
     }
@@ -52,8 +50,21 @@ class ForgotPasswordVC: UIViewController {
         view.endEditing(true)
     }
     
+    // Azione per il bottone Reset Password
+    @objc func handleResetPassword() {
+        guard let email = emailTextField.text, !email.isEmpty else {
+            print("Error: Email field is empty")
+            return
+        }
+        
+        // Mostra un pop-up di conferma
+        let alertController = UIAlertController(title: "Success", message: "Email send", preferredStyle: .alert)
+        alertController.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+        present(alertController, animated: true, completion: nil)
+    }
+    
     func configureViewComponents() {
-        // Create a vertical stack view with emailTextField and resetPasswordButton
+        // Configurazione dello StackView
         let stackView = UIStackView(arrangedSubviews: [emailTextField, resetPasswordButton])
         stackView.axis = .vertical
         stackView.spacing = 10
@@ -62,12 +73,12 @@ class ForgotPasswordVC: UIViewController {
         
         view.addSubview(stackView)
         
-        // Add constraints
+        // Aggiunta delle constraints
         NSLayoutConstraint.activate([
             stackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 100),
             stackView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 40),
             stackView.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -40),
-            stackView.heightAnchor.constraint(equalToConstant: 90) // Total height: 40 for email + 10 spacing + 40 for button
+            stackView.heightAnchor.constraint(equalToConstant: 90) // Altezza totale: 40 + 10 + 40
         ])
     }
 }

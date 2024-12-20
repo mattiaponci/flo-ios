@@ -1,10 +1,3 @@
-//
-//  SignUpVC.swift
-//  flotipios
-//
-//  Created by mattia poncini on 24.09.2024.
-//
-
 import UIKit
 import Firebase
 import SafariServices
@@ -31,8 +24,18 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         tf.borderStyle = .roundedRect
         tf.font = UIFont.systemFont(ofSize: 14)
         tf.textColor = .black
-        tf.addTarget(self, action: #selector(formValidation), for: .editingChanged)
+        // Non richiamiamo formValidation per non mostrare l'errore in tempo reale
         return tf
+    }()
+    
+    let firstNameValidationLabel: UILabel = {
+        let label = UILabel()
+        label.text = "empty field"
+        label.font = UIFont.systemFont(ofSize: 8)
+        label.textColor = .red
+        label.numberOfLines = 0
+        label.isHidden = true
+        return label
     }()
     
     let lastNameTextField: UITextField = {
@@ -43,8 +46,18 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         tf.textColor = .black
         tf.borderStyle = .roundedRect
         tf.font = UIFont.systemFont(ofSize: 14)
-        tf.addTarget(self, action: #selector(formValidation), for: .editingChanged)
+        // Non richiamiamo formValidation qui
         return tf
+    }()
+    
+    let lastNameValidationLabel: UILabel = {
+        let label = UILabel()
+        label.text = "empty field"
+        label.font = UIFont.systemFont(ofSize: 8)
+        label.textColor = .red
+        label.numberOfLines = 0
+        label.isHidden = true
+        return label
     }()
     
     let usernameTextField: UITextField = {
@@ -55,8 +68,20 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         tf.textColor = .black
         tf.borderStyle = .roundedRect
         tf.font = UIFont.systemFont(ofSize: 14)
+        // Non rimuoviamo del tutto formValidation perché serve ad abilitare/disabilitare il bottone
+        // a seconda che tutti i campi obbligatori siano compilati e validi
         tf.addTarget(self, action: #selector(formValidation), for: .editingChanged)
         return tf
+    }()
+    
+    let usernameValidationLabel: UILabel = {
+        let label = UILabel()
+        label.text = "empty field"
+        label.font = UIFont.systemFont(ofSize: 8)
+        label.textColor = .red
+        label.numberOfLines = 0
+        label.isHidden = true
+        return label
     }()
     
     let dateOfBirthLabel: UILabel = {
@@ -67,14 +92,6 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         return label
     }()
 
-    let dateOfBirthBackgroundView: UIView = {
-        let view = UIView()
-        view.backgroundColor = UIColor(white: 0, alpha: 0.03)
-        view.layer.cornerRadius = 5
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
-    }()
-
     let dateOfBirthPicker: UIDatePicker = {
         let picker = UIDatePicker()
         picker.datePickerMode = .date
@@ -83,7 +100,7 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         picker.addTarget(self, action: #selector(handleDateOfBirthChange), for: .valueChanged)
         return picker
     }()
-
+    
     let emailTextField: UITextField = {
         let tf = UITextField()
         tf.placeholder = "Email"
@@ -92,8 +109,20 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         tf.borderStyle = .roundedRect
         tf.font = UIFont.systemFont(ofSize: 14)
         tf.textColor = .black
+        // Quando l'utente inizia a modificare l'email, verifichiamo se firstName, lastName e username sono vuoti
+        tf.addTarget(self, action: #selector(handleEmailBeginEditing), for: .editingDidBegin)
         tf.addTarget(self, action: #selector(formValidation), for: .editingChanged)
         return tf
+    }()
+    
+    let emailValidationLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Inserisci un'email valida."
+        label.font = UIFont.systemFont(ofSize: 8)
+        label.textColor = .red
+        label.numberOfLines = 0
+        label.isHidden = true
+        return label
     }()
     
     let passwordTextField: UITextField = {
@@ -115,6 +144,16 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         return tf
     }()
     
+    let passwordValidationLabel: UILabel = {
+        let label = UILabel()
+        label.text = "8 caratteri, almeno un maiuscolo e un carattere speciale."
+        label.font = UIFont.systemFont(ofSize: 8)
+        label.textColor = .red
+        label.numberOfLines = 0
+        label.isHidden = true
+        return label
+    }()
+  
     let repasswordTextField: UITextField = {
         let tf = UITextField()
         tf.placeholder = "Re-enter Password"
@@ -134,26 +173,6 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         return tf
     }()
     
-    let emailValidationLabel: UILabel = {
-        let label = UILabel()
-        label.text = "Inserisci un'email valida."
-        label.font = UIFont.systemFont(ofSize: 8)
-        label.textColor = .red
-        label.numberOfLines = 0
-        label.isHidden = true
-        return label
-    }()
-    
-    let passwordValidationLabel: UILabel = {
-        let label = UILabel()
-        label.text = "8 caratteri, almeno un maiuscolo e un carattere speciale."
-        label.font = UIFont.systemFont(ofSize: 8)
-        label.textColor = .red
-        label.numberOfLines = 0
-        label.isHidden = true
-        return label
-    }()
-  
     let passwordMismatchLabel: UILabel = {
         let label = UILabel()
         label.text = "Le password non coincidono."
@@ -165,17 +184,16 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
     }()
   
     let signUpButton: UIButton = {
-           let button = UIButton(type: .system)
-           button.setTitle("Sign Up", for: .normal)
-           button.setTitleColor(.white, for: .normal)
-           button.backgroundColor = UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1)
-           button.layer.cornerRadius = 5
-           button.isEnabled = false
-           button.addTarget(self, action: #selector(handleSignUp), for: .touchUpInside)
-           return button
-       }()
+        let button = UIButton(type: .system)
+        button.setTitle("Sign Up", for: .normal)
+        button.setTitleColor(.white, for: .normal)
+        button.backgroundColor = UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1)
+        button.layer.cornerRadius = 5
+        button.isEnabled = false
+        button.addTarget(self, action: #selector(handleSignUp), for: .touchUpInside)
+        return button
+    }()
     
-    // Checkbox for accepting Terms & Conditions
     let checkbox: UISwitch = {
         let checkbox = UISwitch()
         checkbox.onTintColor = .systemBlue
@@ -198,18 +216,13 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         
         label.attributedText = attributedText
         label.isUserInteractionEnabled = true
-        
-        // Aggiungi il tap gesture recognizer
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTermsTapped))
-        label.addGestureRecognizer(tapGesture)
-        
+
         return label
     }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // background color
         view.backgroundColor = .white
         
         view.addSubview(plusPhotoBtn)
@@ -221,12 +234,9 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         view.addGestureRecognizer(tapGesture)
         Messaging.messaging().delegate = self
-
+        
         let tapGestureLabel = UITapGestureRecognizer(target: self, action: #selector(handleTermsTapped))
         termsLabel.addGestureRecognizer(tapGestureLabel)
-        
-       
-
     }
 
     @objc func handleCheckboxToggle() {
@@ -244,16 +254,26 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         formValidation()
     }
     
+    // Viene chiamato quando l'utente fa tap sull'emailTextField (editingDidBegin)
+    @objc func handleEmailBeginEditing() {
+        let firstNameEmpty = !(firstNameTextField.hasText)
+        let lastNameEmpty = !(lastNameTextField.hasText)
+        let usernameEmpty = !(usernameTextField.hasText)
+        
+        // Mostra i messaggi di errore solo se i campi sono vuoti nel momento in cui si fa tap su email
+        firstNameValidationLabel.isHidden = !firstNameEmpty
+        lastNameValidationLabel.isHidden = !lastNameEmpty
+        usernameValidationLabel.isHidden = !usernameEmpty
+    }
+    
     @objc func formValidation() {
         guard
-            firstNameTextField.hasText,
-            lastNameTextField.hasText,
-            usernameTextField.hasText,
             emailTextField.hasText,
             passwordTextField.hasText,
             repasswordTextField.hasText,
             isTermsAccepted,
             isDateOfBirthValid() else {
+                
             updateSignUpButtonState(isFormValid: false)
             return
         }
@@ -321,16 +341,11 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
     }
     
     func configureViewComponents() {
-        let nameStackView = UIStackView(arrangedSubviews: [firstNameTextField, lastNameTextField])
-        nameStackView.axis = .horizontal
-        nameStackView.spacing = 10
-        nameStackView.distribution = .fillEqually
-
+        
         let dobStackView = UIStackView(arrangedSubviews: [dateOfBirthLabel, dateOfBirthPicker])
         dobStackView.axis = .horizontal
         dobStackView.spacing = 10
         dobStackView.distribution = .fill
-
         dateOfBirthPicker.widthAnchor.constraint(equalToConstant: 140).isActive = true
 
         let termsStackView = UIStackView(arrangedSubviews: [checkbox, termsLabel])
@@ -339,8 +354,12 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         termsStackView.distribution = .fillProportionally
 
         let stackView = UIStackView(arrangedSubviews: [
-            nameStackView,
+            firstNameTextField,
+            firstNameValidationLabel,
+            lastNameTextField,
+            lastNameValidationLabel,
             usernameTextField,
+            usernameValidationLabel,
             dobStackView,
             emailTextField,
             emailValidationLabel,
@@ -354,20 +373,10 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         
         stackView.axis = .vertical
         stackView.spacing = 10
-        stackView.distribution = .fillEqually
-
+        stackView.distribution = .fill
         view.addSubview(stackView)
+        
         stackView.anchor(top: plusPhotoBtn.bottomAnchor, left: view.leftAnchor, bottom: nil, right: view.rightAnchor, paddingTop: 24, paddingLeft: 40, paddingBottom: 0, paddingRight: 40, width: 0, height: 0)
-
-        emailValidationLabel.translatesAutoresizingMaskIntoConstraints = false
-        emailValidationLabel.topAnchor.constraint(equalTo: emailTextField.bottomAnchor, constant: 3).isActive = true
-        emailValidationLabel.leadingAnchor.constraint(equalTo: emailTextField.leadingAnchor).isActive = true
-        emailValidationLabel.trailingAnchor.constraint(equalTo: emailTextField.trailingAnchor).isActive = true
-
-        passwordMismatchLabel.translatesAutoresizingMaskIntoConstraints = false
-        passwordMismatchLabel.topAnchor.constraint(equalTo: repasswordTextField.bottomAnchor, constant: 3).isActive = true
-        passwordMismatchLabel.leadingAnchor.constraint(equalTo: repasswordTextField.leadingAnchor).isActive = true
-        passwordMismatchLabel.trailingAnchor.constraint(equalTo: repasswordTextField.trailingAnchor).isActive = true
     }
     
     // MARK: - UIImagePickerControllerDelegate
@@ -421,9 +430,7 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
                     }
 
                     guard let uid = authResult?.user.uid else { return }
-                   // guard let fcmToken = Messaging.messaging().fcmToken else { return }
 
-                    
                     let dictionaryValues: [String: Any] = [
                         "firstName": firstName,
                         "lastName": lastName,
