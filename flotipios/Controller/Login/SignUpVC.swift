@@ -8,6 +8,7 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
     // MARK: - Properties
     var isTermsAccepted = false
     var imageSelected = false
+    var didFocusOnRepassword = false // variabile per sapere quando l'utente ha selezionato il campo Re-enter Password
     
     let plusPhotoBtn: UIButton = {
         let button = UIButton(type: .system)
@@ -24,7 +25,6 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         tf.borderStyle = .roundedRect
         tf.font = UIFont.systemFont(ofSize: 14)
         tf.textColor = .black
-        // Non richiamiamo formValidation per non mostrare l'errore in tempo reale
         return tf
     }()
     
@@ -46,7 +46,6 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         tf.textColor = .black
         tf.borderStyle = .roundedRect
         tf.font = UIFont.systemFont(ofSize: 14)
-        // Non richiamiamo formValidation qui
         return tf
     }()
     
@@ -68,8 +67,6 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         tf.textColor = .black
         tf.borderStyle = .roundedRect
         tf.font = UIFont.systemFont(ofSize: 14)
-        // Non rimuoviamo del tutto formValidation perché serve ad abilitare/disabilitare il bottone
-        // a seconda che tutti i campi obbligatori siano compilati e validi
         tf.addTarget(self, action: #selector(formValidation), for: .editingChanged)
         return tf
     }()
@@ -109,7 +106,6 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         tf.borderStyle = .roundedRect
         tf.font = UIFont.systemFont(ofSize: 14)
         tf.textColor = .black
-        // Quando l'utente inizia a modificare l'email, verifichiamo se firstName, lastName e username sono vuoti
         tf.addTarget(self, action: #selector(handleEmailBeginEditing), for: .editingDidBegin)
         tf.addTarget(self, action: #selector(formValidation), for: .editingChanged)
         return tf
@@ -117,7 +113,7 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
     
     let emailValidationLabel: UILabel = {
         let label = UILabel()
-        label.text = "Inserisci un'email valida."
+        label.text = "wrong email"
         label.font = UIFont.systemFont(ofSize: 8)
         label.textColor = .red
         label.numberOfLines = 0
@@ -135,6 +131,7 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         tf.borderStyle = .roundedRect
         tf.font = UIFont.systemFont(ofSize: 14)
         tf.addTarget(self, action: #selector(formValidation), for: .editingChanged)
+        
         let showHideButton = UIButton(type: .custom)
         showHideButton.setImage(UIImage(systemName: "eye"), for: .normal)
         showHideButton.setImage(UIImage(systemName: "eye.slash"), for: .selected)
@@ -146,7 +143,7 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
     
     let passwordValidationLabel: UILabel = {
         let label = UILabel()
-        label.text = "8 caratteri, almeno un maiuscolo e un carattere speciale."
+        label.text = "wrong password"
         label.font = UIFont.systemFont(ofSize: 8)
         label.textColor = .red
         label.numberOfLines = 0
@@ -163,7 +160,10 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         tf.textColor = .black
         tf.borderStyle = .roundedRect
         tf.font = UIFont.systemFont(ofSize: 14)
+        // Quando l'utente inizia a modificare Re-enter Password
+        tf.addTarget(self, action: #selector(handleRePasswordBeginEditing), for: .editingDidBegin)
         tf.addTarget(self, action: #selector(formValidation), for: .editingChanged)
+        
         let showHideButton = UIButton(type: .custom)
         showHideButton.setImage(UIImage(systemName: "eye"), for: .normal)
         showHideButton.setImage(UIImage(systemName: "eye.slash"), for: .selected)
@@ -173,16 +173,16 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         return tf
     }()
     
-    let passwordMismatchLabel: UILabel = {
+    let rePasswordValidationLabel: UILabel = {
         let label = UILabel()
-        label.text = "Le password non coincidono."
+        label.text = "passoword don't match"
         label.font = UIFont.systemFont(ofSize: 8)
         label.textColor = .red
         label.numberOfLines = 0
         label.isHidden = true
         return label
     }()
-  
+    
     let signUpButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Sign Up", for: .normal)
@@ -254,44 +254,70 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         formValidation()
     }
     
-    // Viene chiamato quando l'utente fa tap sull'emailTextField (editingDidBegin)
     @objc func handleEmailBeginEditing() {
         let firstNameEmpty = !(firstNameTextField.hasText)
         let lastNameEmpty = !(lastNameTextField.hasText)
         let usernameEmpty = !(usernameTextField.hasText)
         
-        // Mostra i messaggi di errore solo se i campi sono vuoti nel momento in cui si fa tap su email
         firstNameValidationLabel.isHidden = !firstNameEmpty
         lastNameValidationLabel.isHidden = !lastNameEmpty
         usernameValidationLabel.isHidden = !usernameEmpty
     }
     
+    @objc func handleRePasswordBeginEditing() {
+        didFocusOnRepassword = true
+        let password = passwordTextField.text ?? ""
+        let passwordIsValid = isPasswordValid(password)
+        // Se la password non rispetta i criteri e non è vuota, mostra l'errore quando l'utente entra in re-enter password
+        if !passwordIsValid && !password.isEmpty {
+            passwordValidationLabel.isHidden = false
+        }
+    }
+    
     @objc func formValidation() {
-        guard
-            emailTextField.hasText,
-            passwordTextField.hasText,
-            repasswordTextField.hasText,
-            isTermsAccepted,
-            isDateOfBirthValid() else {
-                
-            updateSignUpButtonState(isFormValid: false)
-            return
+        emailValidationLabel.isHidden = true
+        passwordValidationLabel.isHidden = true
+        rePasswordValidationLabel.isHidden = true
+        
+        let email = emailTextField.text ?? ""
+        let password = passwordTextField.text ?? ""
+        let repassword = repasswordTextField.text ?? ""
+        
+        let emailIsValid = isEmailValid(email)
+        let passwordsMatch = (password == repassword)
+        let passwordIsValid = isPasswordValid(password)
+        
+        // Mostra errore email se non valida e non vuota
+        if !email.isEmpty && !emailIsValid {
+            emailValidationLabel.text = "wrong email"
+            emailValidationLabel.isHidden = false
         }
         
-        let isEmailValid = self.isEmailValid(emailTextField.text ?? "")
-        let isPasswordValid = self.isPasswordValid(passwordTextField.text ?? "")
-        let doPasswordsMatch = passwordTextField.text == repasswordTextField.text
-        
-        if isEmailValid && isPasswordValid && doPasswordsMatch && isTermsAccepted && isDateOfBirthValid() {
-            updateSignUpButtonState(isFormValid: true)
-        } else {
-            updateSignUpButtonState(isFormValid: false)
+        // Se l'utente ha focalizzato il campo re-enter password, controlliamo ulteriormente
+        if didFocusOnRepassword {
+            // Se la password non rispetta i criteri e non è vuota
+            if !passwordIsValid && !password.isEmpty {
+                passwordValidationLabel.text = "At least a capital letter, a lowercase letter, a number and a special character"
+                passwordValidationLabel.isHidden = false
+            }
+            
+            // Se l'utente ha scritto almeno 8 caratteri in re-enter password e le due password non coincidono, mostra "non coincidono"
+            if repassword.count >= 8 && !passwordsMatch {
+                rePasswordValidationLabel.isHidden = false
+            }
         }
+
+        let allFieldsPresent = !email.isEmpty && !password.isEmpty && !repassword.isEmpty
+        let allConditionsMet = allFieldsPresent && emailIsValid && passwordIsValid && passwordsMatch && isTermsAccepted && isDateOfBirthValid()
+        
+        updateSignUpButtonState(isFormValid: allConditionsMet)
     }
     
     func updateSignUpButtonState(isFormValid: Bool) {
         signUpButton.isEnabled = isFormValid
-        signUpButton.backgroundColor = isFormValid ? UIColor(red: 17/255, green: 154/255, blue: 237/255, alpha: 1) : UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1)
+        signUpButton.backgroundColor = isFormValid ?
+            UIColor(red: 17/255, green: 154/255, blue: 237/255, alpha: 1) :
+            UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1)
     }
     
     func isDateOfBirthValid() -> Bool {
@@ -336,8 +362,11 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
     func isPasswordValid(_ password: String) -> Bool {
         let minLength = password.count >= 8
         let hasUppercase = password.rangeOfCharacter(from: .uppercaseLetters) != nil
-        let hasSpecialCharacter = password.rangeOfCharacter(from: .symbols) != nil || password.rangeOfCharacter(from: .punctuationCharacters) != nil
-        return minLength && hasUppercase && hasSpecialCharacter
+        let hasDigit = password.rangeOfCharacter(from: .decimalDigits) != nil
+        let hasSpecialCharacter = password.rangeOfCharacter(from: .symbols) != nil ||
+                                  password.rangeOfCharacter(from: .punctuationCharacters) != nil
+        
+        return minLength && hasUppercase && hasDigit && hasSpecialCharacter
     }
     
     func configureViewComponents() {
@@ -366,7 +395,7 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
             passwordTextField,
             passwordValidationLabel,
             repasswordTextField,
-            passwordMismatchLabel,
+            rePasswordValidationLabel,
             signUpButton,
             termsStackView
         ])
