@@ -197,16 +197,19 @@ class SecondViewController: UIViewController, CropViewControllerDelegate, UIText
     // Rest of your code...
 
 
-
-
-
     func handleUploadsavesitePost() {
         guard let caption = textView.text,
               let postImg = imageView.image,
               let currentUid = Auth.auth().currentUser?.uid,
-              let urlString = pageURL?.absoluteString else { return }
+              let urlString = pageURL?.absoluteString else {
+            print("Missing required fields.")
+            return
+        }
 
-        guard let uploadData = postImg.jpegData(compressionQuality: 0.5) else { return }
+        guard let uploadData = postImg.jpegData(compressionQuality: 0.5) else {
+            print("Failed to generate JPEG data.")
+            return
+        }
 
         let creationDate = Int(NSDate().timeIntervalSince1970)
         let filename = NSUUID().uuidString
@@ -219,7 +222,10 @@ class SecondViewController: UIViewController, CropViewControllerDelegate, UIText
             }
 
             storageRef.downloadURL { (url, error) in
-                guard let imageUrl = url?.absoluteString else { return }
+                guard let imageUrl = url?.absoluteString else {
+                    print("Failed to retrieve image URL.")
+                    return
+                }
 
                 let values: [String: Any] = [
                     "caption": caption,
@@ -230,20 +236,17 @@ class SecondViewController: UIViewController, CropViewControllerDelegate, UIText
                     "pageURL": urlString
                 ]
 
-                let postId = Database.database().reference().child("posts").childByAutoId()
-                guard let postKey = postId.key else { return }
-
-                postId.updateChildValues(values) { (error, ref) in
+                // Save to "user_posts_sites"
+                let userPostsRef = Database.database().reference().child("user_posts_sites").child(currentUid).childByAutoId()
+                userPostsRef.setValue(values) { (error, ref) in
                     if let error = error {
-                        print("Failed to save post data: \(error.localizedDescription)")
+                        print("Failed to save post data to 'user_posts_sites': \(error.localizedDescription)")
                         return
                     }
+                    print("Successfully saved post to 'user_posts_sites'.")
 
-                    let userPostsRef = Database.database().reference().child("user_posts_sites").child(currentUid)
-                    userPostsRef.updateChildValues([postKey: 1])
-
-                    self.updateUserFeeds(with: postKey)
-                    self.fetchUserPostsSites() // Fetch and update UI after posting
+                    // Optional: Update user feeds or dismiss UI
+                    self.updateUserFeeds(with: userPostsRef.key ?? "")
                     self.dismiss(animated: true) {
                         self.tabBarController?.selectedIndex = 0
                     }
@@ -252,6 +255,8 @@ class SecondViewController: UIViewController, CropViewControllerDelegate, UIText
         }
     }
 
+
+  
     func updateUserFeeds(with postId: String) {
         guard let currentUid = Auth.auth().currentUser?.uid else { return }
         let values = [postId: 1]
@@ -412,7 +417,7 @@ class SecondViewController: UIViewController, CropViewControllerDelegate, UIText
         NotificationCenter.default.removeObserver(self)
     }
 
-    func fetchUserPostsSites() {
+/*    func fetchUserPostsSites() {
         guard let currentUid = Auth.auth().currentUser?.uid else {
             print("No current user ID found")
             return
@@ -458,7 +463,7 @@ class SecondViewController: UIViewController, CropViewControllerDelegate, UIText
         }) { error in
             print("Failed to fetch user posts sites: \(error.localizedDescription)")
         }
-    }
+    }*/
 
     func fetchPost(withPostId postId: String, completion: @escaping (Post) -> Void) {
         print("Attempting to fetch post with ID: \(postId)")

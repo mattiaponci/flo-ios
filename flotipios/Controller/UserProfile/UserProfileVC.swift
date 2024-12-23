@@ -54,10 +54,10 @@ class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLay
 
         // fetch user data
         // fetch user data
-         if self.user == nil {
+         
              fetchCurrentUserData()
              fetchSitesSavePosts()
-         }
+         
         
         // fetch posts
         
