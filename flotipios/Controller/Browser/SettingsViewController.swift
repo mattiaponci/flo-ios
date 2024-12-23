@@ -24,17 +24,15 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "Settings"
-        view.addSubview(tableView)
-        configureModels()
-        tableView.delegate = self
-        tableView.dataSource = self
-        view.backgroundColor = .systemBackground
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            barButtonSystemItem: .close,
-            target: self,
-            action: #selector(didTapClose)
-        )
+        super.viewDidLoad()
+           setupCloseButton() // Configura il pulsante di chiusura
+           title = "Settings"
+           view.addSubview(tableView)
+           configureModels()
+           tableView.delegate = self
+           tableView.dataSource = self
+           view.backgroundColor = .systemBackground
+       
     }
 
     override func viewDidLayoutSubviews() {
@@ -47,8 +45,6 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
     }
 
     private func configureModels() {
-
-
         sections.append(
             SettingsSection(title: "Information", options: [
                 SettingOption(
@@ -74,58 +70,64 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
                     }
                     let vc = SFSafariViewController(url: url)
                     self?.present(vc, animated: true, completion: nil)
-
-                },
-              
+                }
             ])
         )
+
         sections.append(
-                 SettingsSection(title: "Account", options: [
-                     SettingOption(
-                         title: "Logout",
-                         image: UIImage(systemName: "arrow.turn.up.left"),
-                         color: .systemRed
-                     ) { [weak self] in
-                         self?.handleLogout()
-                     }
-                 ])
-             )
+            SettingsSection(title: "Account", options: [
+                SettingOption(
+                    title: "Logout",
+                    image: UIImage(systemName: "arrow.turn.up.left"),
+                    color: .systemRed
+                ) { [weak self] in
+                    self?.handleLogout()
+                }
+            ])
+        )
+
+        sections.append(
+            SettingsSection(title: "", options: [
+                SettingOption(
+                    title: "Close",
+                    image: UIImage(systemName: "xmark"),
+                    color: .systemBlue
+                ) { [weak self] in
+                    self?.didTapClose()
+                }
+            ])
+        )
     }
 
     // Table
 
     private func handleLogout() {
-           let actionSheet = UIAlertController(title: "Logout", message: "Are you sure you want to logout?", preferredStyle: .actionSheet)
-           actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-           actionSheet.addAction(UIAlertAction(title: "Logout", style: .destructive, handler: { _ in
-               do {
-                 //  try Auth.auth().signOut()
-                   // Reindirizzare all'interfaccia di login dopo il logout
-                   // Questo dipende dalla configurazione del tuo storyboard o della navigazione programmata
-                   
-                      
-                               try Auth.auth().signOut()
-                               let loginVC = LoginVC()
-                               let navController = UINavigationController(rootViewController: loginVC)
-                               
-                               // UPDATE: - iOS 13 presentation fix
-                               navController.modalPresentationStyle = .fullScreen
-                               
-                               self.present(navController, animated: true, completion: nil)
-                         
-                       
-                   
-                   
-                   
-                   
-                   
-                   
-               } catch let signOutError as NSError {
-                   print("Error signing out: %@", signOutError)
-               }
-           }))
-           present(actionSheet, animated: true)
-       }
+        let actionSheet = UIAlertController(
+            title: "Logout",
+            message: "Are you sure you want to logout?",
+            preferredStyle: .actionSheet
+        )
+        actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        actionSheet.addAction(UIAlertAction(title: "Logout", style: .destructive, handler: { [weak self] _ in
+            do {
+                try Auth.auth().signOut()
+                
+                // Chiudi la vista corrente prima di presentare la schermata di login
+                self?.dismiss(animated: true) {
+                    let loginVC = LoginVC()
+                    let navController = UINavigationController(rootViewController: loginVC)
+                    
+                    // iOS 13 presentation fix
+                    navController.modalPresentationStyle = .fullScreen
+                    
+                    UIApplication.shared.windows.first?.rootViewController?.present(navController, animated: true, completion: nil)
+                }
+            } catch let signOutError as NSError {
+                print("Error signing out: %@", signOutError)
+            }
+        }))
+        present(actionSheet, animated: true)
+    }
 
     @objc func didTapSignOut() {
       
@@ -146,6 +148,13 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         cell.imageView?.image = model.image
         cell.imageView?.tintColor = model.color
         cell.accessoryType = .disclosureIndicator
+        // Rimuovere la freccia per "Close"
+        if model.title == "Close" || model.title == "Logout" {
+               cell.accessoryType = .none
+           } else {
+               cell.accessoryType = .disclosureIndicator
+           }
+        
         return cell
     }
 
@@ -157,5 +166,19 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
 
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         return sections[section].title
+    }
+    
+    private func setupCloseButton() {
+        let closeButton = UIButton(type: .system)
+        closeButton.setTitle("X", for: .normal)
+        closeButton.setTitleColor(.red, for: .normal)
+        closeButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 18)
+        closeButton.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
+        view.addSubview(closeButton)
+        closeButton.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            closeButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 15)
+        ])
     }
 }

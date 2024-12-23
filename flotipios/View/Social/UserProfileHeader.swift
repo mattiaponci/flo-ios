@@ -222,7 +222,7 @@ class UserProfileHeader: UICollectionViewCell {
         NSLayoutConstraint.activate([
             // Badge View
             badgeView.centerXAnchor.constraint(equalTo: centerXAnchor),
-            badgeView.topAnchor.constraint(equalTo: topAnchor, constant: 10),
+            badgeView.topAnchor.constraint(equalTo: topAnchor, constant: 25),
             badgeView.widthAnchor.constraint(equalTo: widthAnchor, multiplier: 0.9),
             badgeView.heightAnchor.constraint(equalToConstant: 200),
             

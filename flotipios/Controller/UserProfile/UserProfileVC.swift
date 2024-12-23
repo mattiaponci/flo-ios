@@ -21,9 +21,7 @@ protocol UserVCDelegate: AnyObject {
 }
 
 class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, UserProfileHeaderDelegate, UserCellDelegate {
-    func handleEditFollowTapped(for header: UserProfileHeader) {
-        print("")
-    }
+  
     
     func handleImageclicked(url: URL) {
         print("")
@@ -271,4 +269,14 @@ class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLay
         commentVC.post = post
         navigationController?.pushViewController(commentVC, animated: true)
     }
+    func handleEditFollowTapped(for header: UserProfileHeader) {
+            let settingsVC = SettingsViewController()
+        settingsVC.modalPresentationStyle = .fullScreen // Stile per presentazione dal basso
+            settingsVC.modalTransitionStyle = .coverVertical // Transizione verticale
+            if let topController = UIApplication.shared.keyWindow?.rootViewController {
+                topController.present(settingsVC, animated: true, completion: nil)
+            }
+        
+    }
+    
 }
