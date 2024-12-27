@@ -49,8 +49,8 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
     // MARK: - Handlers
     
     func configureViewControllers() {
-       // let feedVC = FeedVC(collectionViewLayout: UICollectionViewFlowLayout())
-      //  feedVC.delegate = self
+        let feedVC = FeedVC(collectionViewLayout: UICollectionViewFlowLayout())
+        feedVC.delegate = self
         
         let userProfileVC = UserProfileVC(collectionViewLayout: UICollectionViewFlowLayout())
         userProfileVC.delegate = self
@@ -59,14 +59,14 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
      
       
 
-        //let feedNavController = constructNavController(unselectedImage: #imageLiteral(resourceName: "home_unselected"), selectedImage: #imageLiteral(resourceName: "home_selected"), rootViewController: feedVC)
+        let feedNavController = constructNavController(unselectedImage: #imageLiteral(resourceName: "home_unselected"), selectedImage: #imageLiteral(resourceName: "home_selected"), rootViewController: feedVC)
         
       //  let homeVC = constructNavController(unselectedImage: #imageLiteral(resourceName: "search_unselected"), selectedImage: #imageLiteral(resourceName: "comment"), rootViewController: HomeViewController())
-        let homeVC = constructNavController(
+       /* let homeVC = constructNavController(
                     unselectedImage: #imageLiteral(resourceName: "search_unselected"),
                     selectedImage: #imageLiteral(resourceName: "comment"),
                     rootViewController: HomeViewController(collectionViewLayout: UICollectionViewFlowLayout())
-                )
+                )*/
 
         let searchVC = constructNavController(unselectedImage: #imageLiteral(resourceName: "search_unselected"), selectedImage: #imageLiteral(resourceName: "comment"), rootViewController: SearchVC())
         
@@ -76,7 +76,7 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
 
         let userNavProfileVC = constructNavController(unselectedImage: #imageLiteral(resourceName: "profile_unselected"), selectedImage: #imageLiteral(resourceName: "profile_selected"), rootViewController: userProfileVC)
 
-        viewControllers = [homeVC, searchVC, browserVC, notificationVC, userNavProfileVC]
+        viewControllers = [feedNavController, searchVC, browserVC, notificationVC, userNavProfileVC]
 
         tabBar.tintColor = .white
     }

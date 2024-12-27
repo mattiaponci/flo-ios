@@ -42,14 +42,7 @@ class UserPostCell: UICollectionViewCell {
     
     // MARK: - UI Components
     
-    lazy var savePostButton: UIButton = {
-        let button = UIButton(type: .system)
-        let image = UIImage(named: "flag") ?? UIImage(systemName: "flag.fill") // Fallback to system image if not found
-        button.setImage(image, for: .normal)
-        button.tintColor = .black
-        button.addTarget(self, action: #selector(handleSaveTapped), for: .touchUpInside)
-        return button
-    }()
+    
     
     let profileImageView: CustomImageView = {
         let iv = CustomImageView()
@@ -97,7 +90,13 @@ class UserPostCell: UICollectionViewCell {
         button.addTarget(self, action: #selector(handleLikeTapped), for: .touchUpInside)
         return button
     }()
-    
+    lazy var savePostButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(#imageLiteral(resourceName: "flag"), for: .normal)
+        button.tintColor = .black
+        button.addTarget(self, action: #selector(handleFlagToLike), for: .touchUpInside)
+        return button
+    }()
     lazy var commentButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(#imageLiteral(resourceName: "comment"), for: .normal)
@@ -152,25 +151,46 @@ class UserPostCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        addSubview(containerView)
-        containerView.anchor(top: topAnchor, left: leftAnchor, bottom: bottomAnchor, right: rightAnchor, paddingTop: 0, paddingLeft: 0, paddingBottom: 0, paddingRight: 0, width: 0, height: 0)
-        
-        containerView.addSubview(postImageView)
-        postImageView.anchor(top: containerView.topAnchor, left: containerView.leftAnchor, bottom: nil, right: containerView.rightAnchor, paddingTop: 0, paddingLeft: 0, paddingBottom: 0, paddingRight: 0, width: 0, height: 0)
-        postImageView.heightAnchor.constraint(equalTo: containerView.widthAnchor, multiplier: 1).isActive = true
-        
-        containerView.addSubview(profileImageView)
-        profileImageView.anchor(top: postImageView.topAnchor, left: postImageView.leftAnchor, bottom: nil, right: nil, paddingTop: 8, paddingLeft: 8, paddingBottom: 0, paddingRight: 0, width: 40, height: 40)
-        profileImageView.layer.cornerRadius = 40 / 2
-        
-        containerView.addSubview(usernameButton)
-       usernameButton.anchor(top: profileImageView.bottomAnchor, left: postImageView.leftAnchor, bottom: nil, right: nil, paddingTop: 4, paddingLeft: 8, paddingBottom: 0, paddingRight: 0, width: 0, height: 0)
-        
-        containerView.addSubview(optionsButton)
-        optionsButton.anchor(top: profileImageView.bottomAnchor, left: nil, bottom: nil, right: containerView.rightAnchor, paddingTop: 4, paddingLeft: 0, paddingBottom: 0, paddingRight: 8, width: 0, height: 0)
-        
-        configureActionButtons()
-    }
+   
+            
+            // Configura ombreggiatura
+            layer.shadowColor = UIColor.black.cgColor
+            layer.shadowOpacity = 0.1
+            layer.shadowOffset = CGSize(width: 0, height: 2)
+            layer.shadowRadius = 4
+            layer.masksToBounds = false
+
+            // Configura containerView
+            containerView.layer.cornerRadius = 10
+            containerView.layer.masksToBounds = true
+
+            // Aggiungi la containerView come subview
+            addSubview(containerView)
+            containerView.anchor(top: topAnchor, left: leftAnchor, bottom: bottomAnchor, right: rightAnchor, paddingTop: 10, paddingLeft: 10, paddingBottom: 10, paddingRight: 10, width: 0, height: 0)
+
+            // Configura l'immagine del post
+            containerView.addSubview(postImageView)
+            postImageView.anchor(top: containerView.topAnchor, left: containerView.leftAnchor, bottom: nil, right: containerView.rightAnchor, paddingTop: 0, paddingLeft: 0, paddingBottom: 20, paddingRight: 0, width: 0, height: 0)
+            postImageView.heightAnchor.constraint(equalTo: containerView.widthAnchor, multiplier: 1).isActive = true
+
+            // Configura immagine profilo e username
+            containerView.addSubview(profileImageView)
+            profileImageView.anchor(top: postImageView.bottomAnchor, left: containerView.leftAnchor, bottom: nil, right: nil, paddingTop: 8, paddingLeft: 10, paddingBottom: 0, paddingRight: 0, width: 40, height: 40)
+            profileImageView.layer.cornerRadius = 20 // Arrotonda i bordi del profilo
+            profileImageView.layer.masksToBounds = true
+
+            containerView.addSubview(usernameButton)
+            usernameButton.anchor(top: postImageView.bottomAnchor, left: profileImageView.rightAnchor, bottom: nil, right: nil, paddingTop: 15, paddingLeft: 10, paddingBottom: 0, paddingRight: 0, width: 0, height: 20)
+            usernameButton.setTitleColor(.black, for: .normal) // Testo nero
+
+            // Configura il pulsante delle azioni (flag, like, comment)
+            let actionStackView = UIStackView(arrangedSubviews: [savePostButton, likeButton, commentButton])
+            actionStackView.axis = .horizontal
+            actionStackView.spacing = 12
+            actionStackView.alignment = .center
+            containerView.addSubview(actionStackView)
+            actionStackView.anchor(top: nil, left: nil, bottom: containerView.bottomAnchor, right: containerView.rightAnchor, paddingTop: 0, paddingLeft: 0, paddingBottom: 10, paddingRight: 10, width: 0, height: 24)
+        }
     
     // MARK: - Handlers
     
@@ -199,9 +219,11 @@ class UserPostCell: UICollectionViewCell {
     }
     
     @objc func handleDoubleTapToLike() {
-      //  delegate?.handleLikeTapped(for: self, isDoubleTap: true)
+        delegate?.handleLikeTapped(for: self, isDoubleTap: true)
     }
-    
+    @objc func handleFlagToLike() {
+        delegate?.handleFlagToLike(for: self, isDoubleTap: true)
+    }
     @objc func handleImageTap() {
         guard let post = post else { return }
         print("kava")

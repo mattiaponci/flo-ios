@@ -22,6 +22,7 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
 
     // MARK: - Properties
     var posts = [Post]()
+    var user: User?
     var viewSinglePost = false
     var post: Post?
     var currentKey: String?
@@ -53,20 +54,27 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(handleRefresh), for: .valueChanged)
         collectionView?.refreshControl = refreshControl
-
+        // Adjust section insets
+            if let layout = collectionView?.collectionViewLayout as? UICollectionViewFlowLayout {
+                layout.sectionInset = UIEdgeInsets(top: 30, left: 0, bottom: 0, right: 0)  // Adjust top inset as needed
+            }
         // Configure logout button
         configureNavigationBar()
 
         // Fetch posts
-        if !viewSinglePost {
            // fetchSitesSavePosts()
-            fetchRandomUserPost()
-        }
+            fetchSitesSavePosts()
+        
+
+        
     }
 
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
         setUnreadMessageCount()
+
     }
 
     // MARK: - UICollectionViewFlowLayout
@@ -119,7 +127,7 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
         if let post = cell.post, let currentUid = Auth.auth().currentUser?.uid {
             if post.ownerUid == currentUid {
                 print("Hiding save button for user's own post")
-                cell.savePostButton.isHidden = true
+              //  cell.savePostButton.isHidden = true
             } else {
                 print("Showing save button for post by user \(post.ownerUid)")
                 cell.savePostButton.isHidden = false
@@ -268,7 +276,7 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
         posts.removeAll(keepingCapacity: false)
         self.currentKey = nil
         //fetchSitesSavePosts()
-        fetchRandomUserPost()
+        fetchSitesSavePosts()
         collectionView?.reloadData()
     }
 
@@ -298,7 +306,55 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
             self.navigationController?.pushViewController(userProfileController, animated: true)
         }
     }
+    func fetchSitesSavePosts() {
+        guard let currentUid = Auth.auth().currentUser?.uid else {
+            print("No current user ID found")
+            DispatchQueue.main.async {
+                self.collectionView.refreshControl?.endRefreshing()
+            }
+            return
+        }
 
+        let userRef = Database.database().reference().child("users").child(currentUid)
+        userRef.observeSingleEvent(of: .value) { [weak self] (userSnapshot) in
+            guard let self = self else { return }
+            
+            if let userDict = userSnapshot.value as? [String: AnyObject] {
+                self.user = User(uid: currentUid, dictionary: userDict)
+            } else {
+                print("Could not fetch user data")
+                DispatchQueue.main.async {
+                    self.collectionView.refreshControl?.endRefreshing()
+                }
+                return
+            }
+
+            let postsRef = Database.database().reference().child("user_posts_sites").child(currentUid)
+            postsRef.observeSingleEvent(of: .value) { snapshot in
+                self.posts.removeAll()
+                guard let allObjects = snapshot.children.allObjects as? [DataSnapshot] else {
+                    print("Failed to cast snapshot to DataSnapshot")
+                    DispatchQueue.main.async {
+                        self.collectionView.refreshControl?.endRefreshing()
+                    }
+                    return
+                }
+
+                for snapshot in allObjects {
+                    guard let postData = snapshot.value as? [String: AnyObject] else {
+                        continue
+                    }
+                    let post = Post(postId: snapshot.key, user: self.user!, dictionary: postData)
+                    self.posts.append(post)
+                }
+                DispatchQueue.main.async {
+                    print("Loaded \(self.posts.count) posts")
+                    self.collectionView.reloadData()
+                    self.collectionView.refreshControl?.endRefreshing()
+                }
+            }
+        }
+    }
     func handleSaveTapped(for cell: FeedCell) {
         guard let post = cell.post else { return }
         guard let postId = post.postId else { return }
@@ -396,138 +452,14 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
     
     
     
-    func fetchRandomUserPost() {
-        Auth.auth().currentUser?.getIDToken { token, error in
-            if let error = error {
-                print("Errore nel recuperare il token ID: \(error.localizedDescription)")
-                return
-            }
-
-            guard let token = token else {
-                print("Nessun token disponibile.")
-                return
-            }
-
-            print("Token ottenuto: \(token)")
-
-            guard let url = URL(string: "https://us-central1-flotip-3aa4d.cloudfunctions.net/getRandomPostFromAllUsers") else {
-                print("URL non valida.")
-                return
-            }
-
-            var request = URLRequest(url: url)
-            request.httpMethod = "POST"
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-            URLSession.shared.dataTask(with: request) { data, response, error in
-                if let error = error {
-                    print("Errore durante la richiesta: \(error.localizedDescription)")
-                    return
-                }
-
-                if let httpResponse = response as? HTTPURLResponse {
-                    print("HTTP Response Status Code: \(httpResponse.statusCode)")
-                    if httpResponse.statusCode != 200 {
-                        print("Errore dal server: \(httpResponse.statusCode)")
-                        return
-                    }
-                }
-
-                guard let data = data else {
-                    print("Nessun dato ricevuto dal server.")
-                    return
-                }
-
-                do {
-                    if let jsonResponse = try JSONSerialization.jsonObject(with: data, options: []) as? [String: String],
-                       let postId = jsonResponse["postId"] {
-                        print("Post ID ricevuto: \(postId)")
-                        self.posts.removeAll()
-
-                        // Qui recuperi effettivamente il post corrispondente all’ID ottenuto
-                        self.fetchPost(withPostId: postId) { [weak self] post in
-                            guard let self = self else { return }
-
-                            if let fetchedPost = post {
-                                
-                          //  self.userPostsSites.insert(fetchedPost, at: 0)
-
-
-                                self.posts.append(fetchedPost)
-                              print("i'm here")
-
-                                // Ricarica la collection view sul main thread
-                                DispatchQueue.main.async {
-
-                                }
-                            } else {
-                                print("Nessun post trovato per l'ID: \(postId)")
-                            }
-                        }
-
-                    } else {
-                        print("Parsing JSON fallito.")
-                    }
-                } catch {
-                    print("Errore durante il parsing JSON: \(error.localizedDescription)")
-                }
-            }.resume()
+   
+    func fetchPost(withPostId postId: String) {
+        Database.fetchPost(with: postId) { post in
+            self.posts.append(post)
+            self.posts.sort { $0.creationDate > $1.creationDate }
+            self.collectionView.reloadData()
         }
     }
-
-    func fetchPost(withPostId postId: String, completion: @escaping (Post?) -> Void) {
-        Database.fetchPost(with: postId) { post in
-            print(post != nil ? "Post recuperato con successo: \(post.postId)" : "Errore nel recuperare il post con ID: \(postId)")
-            completion(post)
-        }
-    }/*    func fetchSitesSavePosts() {
-        guard let currentUid = Auth.auth().currentUser?.uid else {
-            print("No current user ID found")
-            return
-        }
-
-        print("Fetching saved posts for user with ID: \(currentUid)")
-
-        USER_SAVED_SITES_REF.child(currentUid).observeSingleEvent(of: .value, with: { (snapshot) in
-            print("Snapshot received: \(snapshot)")
-
-            guard snapshot.exists() else {
-                print("No saved posts found for user")
-                return
-            }
-
-            guard let allObjects = snapshot.children.allObjects as? [DataSnapshot] else {
-                print("Failed to cast snapshot to DataSnapshot")
-                return
-            }
-
-            // Clear previous posts to avoid duplicates
-            self.posts.removeAll()
-
-            allObjects.forEach { snapshot in
-                let postId = snapshot.key
-                print("Fetching post with ID: \(postId)")
-                self.fetchPost(withPostId: postId) { post in
-                    print("Fetched post: \(post.postId ?? "No Post ID")")
-                    self.posts.append(post)
-
-                    // Sort posts by creation date
-                    self.posts.sort(by: { $0.creationDate > $1.creationDate })
-
-                    DispatchQueue.main.async {
-                        print("Reloading collectionView with \(self.posts.count) posts")
-                        self.collectionView?.reloadData()
-                        self.collectionView?.refreshControl?.endRefreshing()
-                    }
-                }
-            }
-        }) { error in
-            print("Failed to fetch saved posts: \(error.localizedDescription)")
-        }
-    }*/
-
-    
 
     func getUnreadMessageCount(withCompletion completion: @escaping(Int) -> ()) {
         guard let currentUid = Auth.auth().currentUser?.uid else { return }

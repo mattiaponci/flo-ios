@@ -125,14 +125,17 @@ class LoginVC: UIViewController {
         }
         
         // properties
-        guard let email = emailTextField.text, let password = passwordTextField.text else { return }
-        
+        guard let email = emailTextField.text, let password = passwordTextField.text else {
+            print("Email or password fields are empty.")
+
+            return }
+        print("Attempting to login with email: \(email)")
         // sign user in with email and password
         Auth.auth().signIn(withEmail: email, password: password) { (result, error) in
             
             // handle error
             if let error = error {
-                print("Unable to sign user in with error", error.localizedDescription)
+                print("Unable to sign user in with error: \(error.localizedDescription)")
                 self.failedLoginAttempts += 1
                 
                 // If user fails once or twice, show top alert

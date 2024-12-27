@@ -187,13 +187,15 @@ class EditProfileController: UIViewController {
         guard let updatedUsername = self.updatedUsername else { return }
         guard let currentUid = Auth.auth().currentUser?.uid else { return }
         guard usernameChanged == true else { return }
-        
+
         USER_REF.child(currentUid).child("username").setValue(updatedUsername) { (err, ref) in
-            
             guard let userProfileController = self.userProfileController else { return }
-            userProfileController.fetchCurrentUserData()
             
-            self.dismiss(animated: true, completion: nil)
+            // Aggiorna i dati dell'utente con il completamento
+            userProfileController.fetchCurrentUserData {
+                print("Username updated and user data refreshed")
+                self.dismiss(animated: true, completion: nil)
+            }
         }
     }
     
@@ -207,23 +209,28 @@ class EditProfileController: UIViewController {
         let filename = NSUUID().uuidString
         
         guard let updatedProfileImage = profileImageView.image else { return }
-        
         guard let imageData = updatedProfileImage.jpegData(compressionQuality: 0.3) else { return }
         
         STORAGE_PROFILE_IMAGES_REF.child(filename).putData(imageData, metadata: nil) { (metadata, error) in
-            
             if let error = error {
                 print("Failed to upload image to storage with error: ", error.localizedDescription)
             }
             
             STORAGE_PROFILE_IMAGES_REF.downloadURL(completion: { (url, error) in
-                USER_REF.child(currentUid).child("profileImageUrl").setValue(url?.absoluteString, withCompletionBlock: { (err, ref) in
-                    
+                guard let downloadURL = url else {
+                    print("Failed to get download URL")
+                    return
+                }
+                
+                USER_REF.child(currentUid).child("profileImageUrl").setValue(downloadURL.absoluteString) { (err, ref) in
                     guard let userProfileController = self.userProfileController else { return }
-                    userProfileController.fetchCurrentUserData()
                     
-                    self.dismiss(animated: true, completion: nil)
-                })
+                    // Esegui l'aggiornamento dei dati dell'utente
+                    userProfileController.fetchCurrentUserData {
+                        print("User data refreshed successfully")
+                        self.dismiss(animated: true, completion: nil)
+                    }
+                }
             })
         }
     }

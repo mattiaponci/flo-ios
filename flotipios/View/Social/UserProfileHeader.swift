@@ -264,5 +264,5 @@ class UserProfileHeader: UICollectionViewCell {
     @objc func handleSettingsTapped() {
         delegate?.handleEditFollowTapped(for: self) // Oppure esegui l'azione desiderata
     }
-    
+   
 }

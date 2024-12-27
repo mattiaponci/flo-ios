@@ -36,7 +36,7 @@ protocol UserCellDelegate{
     func handleCommentTapped(for cell: UserPostCell)
     func handleImageclicked(url: URL)  // Aggiungi questo metodo
     func handleLikeTapped(for cell: UserPostCell, isDoubleTap: Bool)
-  
+    func handleFlagToLike(for cell: UserPostCell, isDoubleTap: Bool)
 
 
 }

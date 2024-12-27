@@ -45,8 +45,8 @@ class YourViewController: UIViewController, UICollectionViewDataSource, UICollec
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Edit", style: .plain, target: self, action: #selector(handleEditButtonTapped))
         
         // Recupera i post
-        showLoadingIndicator()  // Mostra un indicatore di caricamento
-        fetchUserPostsSites()
+       // showLoadingIndicator()  // Mostra un indicatore di caricamento
+        fetchSitesSavePosts()
     }
     
     func setupUI() {
@@ -131,13 +131,14 @@ class YourViewController: UIViewController, UICollectionViewDataSource, UICollec
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(refreshData), for: .valueChanged)
         scrollView.refreshControl = refreshControl
+
     }
     
     @objc func refreshData() {
         print("Refreshing data...")
         userPostsSites.removeAll()
         userPostsSitesCollectionView.reloadData()
-        fetchUserPostsSites()
+        fetchSitesSavePosts()
         scrollView.refreshControl?.endRefreshing()
     }
     
@@ -234,46 +235,66 @@ class YourViewController: UIViewController, UICollectionViewDataSource, UICollec
         return CGSize(width: 120, height: 120)
     }
     
-    func fetchUserPostsSites() {
+    func fetchSitesSavePosts() {
         guard let currentUid = Auth.auth().currentUser?.uid else {
             print("No current user ID found")
-            hideLoadingIndicator()
+            DispatchQueue.main.async {
+                self.scrollView.refreshControl?.endRefreshing()
+            }
             return
         }
-        
-        USER_SAVED_SITES_REF.child(currentUid).observeSingleEvent(of: .value, with: { (snapshot) in
-            guard snapshot.exists() else {
-                self.hideLoadingIndicator()
-                return
-            }
-            
-            guard let allObjects = snapshot.children.allObjects as? [DataSnapshot] else {
-                self.hideLoadingIndicator()
-                return
-            }
-            
-            self.userPostsSites.removeAll()
-            
-            allObjects.forEach { snapshot in
-                let postId = snapshot.key
-                self.fetchPost(withPostId: postId) { post in
-                    self.userPostsSites.insert(post, at: 0) // Inserisce i post in ordine inverso (dal più giovane al più vecchio)
-                    self.userPostsSitesCollectionView.reloadData()
-                    self.hideLoadingIndicator() // Nascondi l'indicatore di caricamento quando i post sono caricati
+
+        let userRef = Database.database().reference().child("users").child(currentUid)
+        userRef.observeSingleEvent(of: .value) { userSnapshot in
+            guard let userDict = userSnapshot.value as? [String: AnyObject] else {
+                print("Failed to fetch user data")
+                DispatchQueue.main.async {
+                    self.scrollView.refreshControl?.endRefreshing()
                 }
+                return
             }
-        }) { error in
-            print("Failed to fetch user posts sites: \(error.localizedDescription)")
-            self.hideLoadingIndicator()
+            let user = User(uid: currentUid, dictionary: userDict)
+
+            let postsRef = Database.database().reference().child("user_posts_sites").child(currentUid)
+            postsRef.observeSingleEvent(of: .value, with: { snapshot in
+                self.userPostsSites.removeAll()
+                guard let allObjects = snapshot.children.allObjects as? [DataSnapshot] else {
+                    print("Failed to cast snapshot to DataSnapshot")
+                    DispatchQueue.main.async {
+                        self.scrollView.refreshControl?.endRefreshing()
+                    }
+                    return
+                }
+
+                let group = DispatchGroup()
+
+                for postSnapshot in allObjects {
+                    let postId = postSnapshot.key
+                    let postFlagsRef = Database.database().reference().child("post-flags").child(postId).child(currentUid)
+                    group.enter()
+                    postFlagsRef.observeSingleEvent(of: .value, with: { flagSnapshot in
+                        defer { group.leave() }
+                        if let flagValue = flagSnapshot.value as? Int, flagValue == 1 {
+                            if let postData = postSnapshot.value as? [String: AnyObject] {
+                                let post = Post(postId: postId, user: user, dictionary: postData)
+                                self.userPostsSites.append(post)
+                            }
+                        }
+                    })
+                }
+
+                group.notify(queue: DispatchQueue.main) {
+                    self.userPostsSitesCollectionView.reloadData()
+                    self.scrollView.refreshControl?.endRefreshing()
+                }
+            }, withCancel: { error in
+                print("Error fetching user posts sites: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.scrollView.refreshControl?.endRefreshing()
+                }
+            })
         }
     }
-    
-    func fetchPost(withPostId postId: String, completion: @escaping (Post) -> Void) {
-        Database.fetchPost(with: postId) { (post) in
-            completion(post)
-        }
-    }
-    
     @objc func handleEditButtonTapped() {
         showDeleteButtons.toggle()
         userPostsSitesCollectionView.reloadData()

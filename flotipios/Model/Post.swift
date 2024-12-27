@@ -17,6 +17,8 @@ class Post {
     var postId: String!
     var user: User?
     var didLike = false
+    var didFlag = false  // Assicurati che questa riga sia aggiunta
+
     var link: String? // Field for the saved site's link
 
     init(postId: String!, user: User, dictionary: Dictionary<String, AnyObject>) {
