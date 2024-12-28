@@ -71,7 +71,7 @@ class SearchVC: UIViewController,
         
         view.backgroundColor = .white
         
-        // 1) Configuriamo la searchBar
+        // 1) Configuriamo la searchBar e cerchiamo
         configureSearchBar()
         
         // 2) Navigation Bar
