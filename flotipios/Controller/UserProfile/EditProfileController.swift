@@ -183,7 +183,7 @@ class EditProfileController: UIViewController {
     
     // MARK: - API
     
-    func updateUsername() {
+   func updateUsername() {
         guard let updatedUsername = self.updatedUsername else { return }
         guard let currentUid = Auth.auth().currentUser?.uid else { return }
         guard usernameChanged == true else { return }
@@ -199,7 +199,7 @@ class EditProfileController: UIViewController {
         }
     }
     
-    func updateProfileImage() {
+   func updateProfileImage() {
         guard imageChanged == true else { return }
         guard let currentUid = Auth.auth().currentUser?.uid else { return }
         guard let user = self.user else { return }

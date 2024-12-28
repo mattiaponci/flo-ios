@@ -22,42 +22,29 @@ protocol UserVCDelegate: AnyObject {
 
 class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, UserProfileHeaderDelegate, UserCellDelegate {
     func handleFlagToLike(for cell: UserPostCell, isDoubleTap: Bool) {
-        guard let postId = cell.post?.postId, let currentUid = Auth.auth().currentUser?.uid else {
-            return
+        print("")
+        
         }
-
-        let flagsRef = Database.database().reference().child("post-flags").child(postId)
-        flagsRef.child(currentUid).observeSingleEvent(of: .value) { snapshot in
-            let didFlag = snapshot.value as? Int == 1
-            flagsRef.child(currentUid).setValue(didFlag ? 0 : 1) { error, _ in
-                if error == nil {
-                    DispatchQueue.main.async {
-                        cell.savePostButton.setImage(UIImage(named: didFlag ? "flag" : "flag1"), for: .normal)
-                        cell.post?.didFlag = !didFlag
-                    }
-                }
-            }
-        }
-    }
-
+        
+    
+    
+    
+    
     func handleLikeTapped(for cell: UserPostCell, isDoubleTap: Bool) {
-        guard let postId = cell.post?.postId, let currentUid = Auth.auth().currentUser?.uid else {
-            return
-        }
+           guard let postId = cell.post?.postId else { return }
+           guard let currentUid = Auth.auth().currentUser?.uid else { return }
 
-        let likesRef = Database.database().reference().child("post-likes").child(postId)
-        likesRef.child(currentUid).observeSingleEvent(of: .value) { snapshot in
-            let didLike = snapshot.value as? Int == 1
-            likesRef.child(currentUid).setValue(didLike ? 0 : 1) { error, _ in
-                if error == nil {
-                    DispatchQueue.main.async {
-                        cell.likeButton.setImage(UIImage(named: didLike ? "star" : "star2"), for: .normal)
-                        cell.post?.didLike = !didLike
-                    }
-                }
-            }
-        }
-    }
+           let likesRef = Database.database().reference().child("post-likes").child(postId)
+           likesRef.child(currentUid).observeSingleEvent(of: .value) { snapshot in
+               if let didLike = snapshot.value as? Int, didLike == 1 {
+                   likesRef.child(currentUid).removeValue()
+                   cell.likeButton.setImage(UIImage(named: "star"), for: .normal)
+               } else {
+                   likesRef.child(currentUid).setValue(1)
+                   cell.likeButton.setImage(UIImage(named: "star2"), for: .normal)
+               }
+           }
+       }
     
     func handleEditFollowTapped(for header: UserProfileHeader) {
         print("Edit Follow tapped")
@@ -167,26 +154,21 @@ class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLay
               cell.post = post
               cell.delegate = self
               
-        // Controllo se il post è "likato" dall'utente corrente e imposta l'immagine di conseguenza
-           if let currentUid = Auth.auth().currentUser?.uid {
-               let likesRef = Database.database().reference().child("post-likes").child(post.postId)
-               likesRef.child(currentUid).observeSingleEvent(of: .value, with: { snapshot in
-                   let isLiked = snapshot.value as? Int == 1
-                   DispatchQueue.main.async {
-                       cell.likeButton.setImage(UIImage(named: isLiked ? "star2" : "star"), for: .normal)
-                   }
-               })
-
-               // Aggiungi il controllo per i flag
-               let flagsRef = Database.database().reference().child("post-flags").child(post.postId)
-               flagsRef.child(currentUid).observeSingleEvent(of: .value, with: { snapshot in
-                   let isFlagged = snapshot.value as? Int == 1
-                   DispatchQueue.main.async {
-                       cell.savePostButton.setImage(UIImage(named: isFlagged ? "flag1" : "flag"), for: .normal)
-                       cell.post?.didFlag = isFlagged
-                   }
-               })
-           }
+              // Check if the post is liked by current user and set the image accordingly
+              let likesRef = Database.database().reference().child("post-likes").child(post.postId)
+              if let currentUid = Auth.auth().currentUser?.uid {
+                  likesRef.child(currentUid).observeSingleEvent(of: .value, with: { snapshot in
+                      if let isLiked = snapshot.value as? Int, isLiked == 1 {
+                          DispatchQueue.main.async {
+                              cell.likeButton.setImage(UIImage(named: "star2"), for: .normal)
+                          }
+                      } else {
+                          DispatchQueue.main.async {
+                              cell.likeButton.setImage(UIImage(named: "star"), for: .normal)
+                          }
+                      }
+                  })
+              }
               
               return cell    }
     
