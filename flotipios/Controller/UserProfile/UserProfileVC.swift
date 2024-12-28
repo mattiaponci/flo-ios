@@ -15,20 +15,40 @@
 import UIKit
 import Firebase
 import ActiveLabel
+import FirebaseDatabase
 
 protocol UserVCDelegate: AnyObject {
     func didSelectWebsiteInUser(url: URL)
 }
 
 class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, UserProfileHeaderDelegate, UserCellDelegate {
+    
     func handleFlagToLike(for cell: UserPostCell, isDoubleTap: Bool) {
-        print("")
+        guard let postId = cell.post?.postId else { return }
+        guard let currentUid = Auth.auth().currentUser?.uid else { return }
+
+        let flagsRef = Database.database().reference().child("post-flags").child(postId)
         
+        flagsRef.child(currentUid).observeSingleEvent(of: .value) { snapshot in
+            // Controlla se il flag è presente
+            if let didFlag = snapshot.value as? Int, didFlag == 1 {
+                // Rimuovi il flag
+                flagsRef.child(currentUid).removeValue()
+                print("Flag rimosso per il post con ID: \(postId)")
+                DispatchQueue.main.async {
+                    cell.savePostButton.setImage(UIImage(named: "flag"), for: .normal)
+                }
+            } else {
+                // Aggiungi il flag
+                flagsRef.child(currentUid).setValue(1)
+                print("Post flaggato con successo con ID: \(postId)")
+                DispatchQueue.main.async {
+                    cell.savePostButton.setImage(UIImage(named: "flag1"), for: .normal)
+                }
+            }
         }
+    }
         
-    
-    
-    
     
     func handleLikeTapped(for cell: UserPostCell, isDoubleTap: Bool) {
            guard let postId = cell.post?.postId else { return }
@@ -150,27 +170,45 @@ class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLay
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as? UserPostCell else {
             return UICollectionViewCell()
         }
+
         let post = posts[indexPath.item]
-              cell.post = post
-              cell.delegate = self
-              
-              // Check if the post is liked by current user and set the image accordingly
-              let likesRef = Database.database().reference().child("post-likes").child(post.postId)
-              if let currentUid = Auth.auth().currentUser?.uid {
-                  likesRef.child(currentUid).observeSingleEvent(of: .value, with: { snapshot in
-                      if let isLiked = snapshot.value as? Int, isLiked == 1 {
-                          DispatchQueue.main.async {
-                              cell.likeButton.setImage(UIImage(named: "star2"), for: .normal)
-                          }
-                      } else {
-                          DispatchQueue.main.async {
-                              cell.likeButton.setImage(UIImage(named: "star"), for: .normal)
-                          }
-                      }
-                  })
-              }
-              
-              return cell    }
+        cell.post = post
+        cell.delegate = self
+
+        // Verifica se il post è stato flaggato dall'utente
+        let flagsRef = Database.database().reference().child("post-flags").child(post.postId)
+        if let currentUid = Auth.auth().currentUser?.uid {
+            flagsRef.child(currentUid).observeSingleEvent(of: .value) { snapshot in
+                if let isFlagged = snapshot.value as? Int, isFlagged == 1 {
+                    DispatchQueue.main.async {
+                        cell.savePostButton.setImage(UIImage(named: "flag1"), for: .normal)
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        cell.savePostButton.setImage(UIImage(named: "flag"), for: .normal)
+                    }
+                }
+            }
+        }
+
+        // Verifica se il post è stato liked dall'utente
+        let likesRef = Database.database().reference().child("post-likes").child(post.postId)
+        if let currentUid = Auth.auth().currentUser?.uid {
+            likesRef.child(currentUid).observeSingleEvent(of: .value) { snapshot in
+                if let isLiked = snapshot.value as? Int, isLiked == 1 {
+                    DispatchQueue.main.async {
+                        cell.likeButton.setImage(UIImage(named: "star2"), for: .normal)
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        cell.likeButton.setImage(UIImage(named: "star"), for: .normal)
+                    }
+                }
+            }
+        }
+
+        return cell
+    }
     
     override func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: headerIdentifier, for: indexPath) as! UserProfileHeader

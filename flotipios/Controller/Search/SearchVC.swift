@@ -3,7 +3,7 @@ import Firebase
 import SDWebImage
 import AudioToolbox
 import FirebaseFunctions
-import Alamofire
+import Alamofire  // se vuoi usarlo, altrimenti URLSession
 import FirebaseAuth
 import FirebaseStorage
 
@@ -25,6 +25,8 @@ class SearchVC: UIViewController,
     var user: User?
     var users = [User]()
     var filteredUsers = [User]()
+
+    // Questo array conterrà solo 1 post alla volta
     var userPostsSites = [Post]()
     
     var inSearchMode = false
@@ -36,7 +38,7 @@ class SearchVC: UIViewController,
 
     // MARK: - Elementi UI
     
-    /// TableView per i risultati di ricerca (inizialmente hidden)
+    /// TableView per i risultati di ricerca (inizialmente nascosta)
     lazy var tableView: UITableView = {
         let tv = UITableView()
         tv.backgroundColor = .white
@@ -44,12 +46,11 @@ class SearchVC: UIViewController,
         tv.dataSource = self
         tv.register(SearchUserCell.self, forCellReuseIdentifier: reuseIdentifier)
         tv.separatorStyle = .none
-        // Parte nascosta
         tv.isHidden = true
         return tv
     }()
     
-    /// CollectionView a tutto schermo (visibile quando non cerchiamo)
+    /// CollectionView a tutto schermo (per mostrare il singolo post)
     lazy var fullCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
@@ -71,15 +72,13 @@ class SearchVC: UIViewController,
         
         view.backgroundColor = .white
         
-        // 1) Configuriamo la searchBar e cerchiamo
+        // 1) Configuriamo la searchBar
         configureSearchBar()
         
         // 2) Navigation Bar
         configureNavigationBar()
         
         // 3) Aggiungiamo subview e configuriamo constraint
-        // A) CollectionView (occupa tutto lo schermo di default)
-        // B) TableView (anch’essa a tutto schermo, ma nascosta di default)
         view.addSubview(fullCollectionView)
         view.addSubview(tableView)
         
@@ -93,8 +92,7 @@ class SearchVC: UIViewController,
             fullCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             fullCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
-            // TableView sopra la collection (stessa posizione e dimensioni),
-            // così quando è isHidden=false, copre la collection
+            // TableView sopra la collection (stessa posizione e dimensioni)
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -105,24 +103,153 @@ class SearchVC: UIViewController,
         configureRefreshControl()
         fullCollectionView.refreshControl = refreshControl
         
-        // 5) Se l’utente è loggato
+        // 5) Controllo utente loggato
         if let user = Auth.auth().currentUser {
             print("User authenticated with UID: \(user.uid)")
         } else {
             print("No user authenticated.")
         }
         
-        // 6) Fetch utente, poi post
+        // 6) Se vuoi caricare dati dell’utente, fallo qui (opzionale)
         fetchCurrentUserData {
-            self.fetchSitesSavePosts()
+            // Una volta preso l’utente, chiediamo il random post
+            self.fetchRandomSite()
         }
     }
     
-    // MARK: - fetchCurrentUserData
-    
+    // MARK: - fetchRandomSite: chiama la Cloud Function e carica 1 post
+    func fetchRandomSite() {
+        print("Chiedo al server un post random...")
+
+        // Esempio di URL per la funzione: sostituisci con la TUA endpoint
+        guard let url = URL(string: "https://us-central1-flotip-3aa4d.cloudfunctions.net/getRandomPostFromAllUsers") else {
+            print("URL non valida")
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        // Se la tua Cloud Function richiede un token ID, aggiungi l’header:
+        // request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        // Puoi usare URLSession o Alamofire. Qui esempio con URLSession:
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                self.fullCollectionView.refreshControl?.beginRefreshing()
+            }
+
+            if let error = error {
+                print("Errore richiesta random site:", error.localizedDescription)
+                DispatchQueue.main.async {
+                    self.fullCollectionView.refreshControl?.endRefreshing()
+                }
+                return
+            }
+
+            guard let data = data else {
+                print("Nessun dato ricevuto dal server.")
+                DispatchQueue.main.async {
+                    self.fullCollectionView.refreshControl?.endRefreshing()
+                }
+                return
+            }
+
+            do {
+                if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: String],
+                   let randomPostId = json["postId"] {
+                    print("postId casuale ricevuto dal server: \(randomPostId)")
+                    // Adesso prendiamo i dettagli del post
+                    self.fetchPostDetails(postId: randomPostId)
+                } else {
+                    print("La Cloud Function ha restituito un JSON inatteso.")
+                    DispatchQueue.main.async {
+                        self.fullCollectionView.refreshControl?.endRefreshing()
+                    }
+                }
+            } catch {
+                print("Errore nel parsing JSON: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.fullCollectionView.refreshControl?.endRefreshing()
+                }
+            }
+        }
+        task.resume()
+    }
+
+    // MARK: - fetchPostDetails: Recupera i dati di un post specifico dal database e dall'utente
+    // MARK: - fetchPostDetails: Recupera i dati di un post specifico dal database e dall'utente
+    func fetchPostDetails(postId: String) {
+        print("Recupero i dettagli del post con ID: \(postId)...")
+        
+        let postsRef = Database.database().reference().child("user_posts_sites")
+        
+        postsRef.observeSingleEvent(of: .value) { snapshot in
+            guard snapshot.exists(),
+                  let userPostsData = snapshot.value as? [String: [String: AnyObject]] else {
+                print("Errore: Impossibile trovare dati in user_posts_sites.")
+                DispatchQueue.main.async {
+                    self.fullCollectionView.refreshControl?.endRefreshing()
+                }
+                return
+            }
+            
+            // Iterate over users to find the post
+            for (userId, posts) in userPostsData {
+                if let postData = posts[postId] {
+                    print("Post trovato per l'utente con ID: \(userId).")
+                    
+                    // Fetch user details
+                    self.fetchUserDetails(userId: userId) { user in
+                        guard let user = user else {
+                            print("Errore: Impossibile trovare l'utente proprietario del post.")
+                            DispatchQueue.main.async {
+                                self.fullCollectionView.refreshControl?.endRefreshing()
+                            }
+                            return
+                        }
+                        
+                        // Create the Post object
+                        let post = Post(postId: postId, user: user, dictionary: postData as! Dictionary<String, AnyObject>)
+                        
+                        // Update the collectionView with the post
+                        self.userPostsSites = [post]
+                        
+                        DispatchQueue.main.async {
+                            print("Post e utente caricati correttamente. Ricarico la CollectionView.")
+                            self.fullCollectionView.reloadData()
+                            self.fullCollectionView.refreshControl?.endRefreshing()
+                        }
+                    }
+                    return
+                }
+            }
+            
+            // If the post was not found
+            print("Errore: Post ID \(postId) non trovato.")
+            DispatchQueue.main.async {
+                self.fullCollectionView.refreshControl?.endRefreshing()
+            }
+        }
+    }
+    // MARK: - fetchUserDetails: Recupera i dettagli di un utente dato il suo ID
+    func fetchUserDetails(userId: String, completion: @escaping (User?) -> Void) {
+        let userRef = Database.database().reference().child("users").child(userId)
+        userRef.observeSingleEvent(of: .value) { snapshot in
+            guard let userData = snapshot.value as? [String: AnyObject] else {
+                print("Impossibile trovare i dettagli dell'utente con ID: \(userId)")
+                completion(nil)
+                return
+            }
+
+            let user = User(uid: userId, dictionary: userData)
+            completion(user)
+        }
+    }
+    // MARK: - fetchCurrentUserData (opzionale)
     func fetchCurrentUserData(completion: @escaping () -> Void) {
         guard let currentUid = Auth.auth().currentUser?.uid else {
             print("No current user ID found")
+            completion()
             return
         }
         
@@ -130,6 +257,7 @@ class SearchVC: UIViewController,
         ref.observeSingleEvent(of: .value) { snapshot in
             guard let dictionary = snapshot.value as? [String: AnyObject] else {
                 print("Failed to fetch user data")
+                completion()
                 return
             }
             self.user = User(uid: currentUid, dictionary: dictionary)
@@ -139,76 +267,15 @@ class SearchVC: UIViewController,
         }
     }
     
-    // MARK: - fetchSitesSavePosts
-    
-    func fetchSitesSavePosts() {
-        guard let currentUid = Auth.auth().currentUser?.uid else {
-            print("No current user ID found")
-            return
-        }
-        
-        guard let currentUser = self.user else {
-            print("User is nil. Cannot fetch saved posts.")
-            return
-        }
-        
-        print("Fetching user posts sites for user with ID: \(currentUid)")
-        
-        let ref = Database.database().reference()
-            .child("user_posts_sites")
-            .child(currentUid)
-        
-        ref.observeSingleEvent(of: .value) { snapshot in
-            print("Snapshot received: \(snapshot)")
-            
-            guard snapshot.exists() else {
-                print("No saved post sites found for user")
-                self.fullCollectionView.refreshControl?.endRefreshing()
-                return
-            }
-            
-            guard let allObjects = snapshot.children.allObjects as? [DataSnapshot] else {
-                print("Failed to cast snapshot to DataSnapshot")
-                self.fullCollectionView.refreshControl?.endRefreshing()
-                return
-            }
-            
-            self.userPostsSites.removeAll()
-            
-            allObjects.forEach { snap in
-                let postId = snap.key
-                print("Fetching post site with ID: \(postId)")
-                
-                if let postData = snap.value as? [String: AnyObject] {
-                    let post = Post(postId: postId, user: currentUser, dictionary: postData)
-                    self.userPostsSites.append(post)
-                } else {
-                    print("Snapshot does not contain valid data for post ID: \(snap.key)")
-                }
-            }
-            
-            // Ordiniamo i post per data di creazione
-            self.userPostsSites.sort { $0.creationDate > $1.creationDate }
-            
-            DispatchQueue.main.async {
-                print("Reloading fullCollectionView with \(self.userPostsSites.count) post sites")
-                self.fullCollectionView.reloadData()
-                self.fullCollectionView.refreshControl?.endRefreshing()
-            }
-        } withCancel: { error in
-            print("Failed to fetch user posts sites: \(error.localizedDescription)")
-            self.fullCollectionView.refreshControl?.endRefreshing()
-        }
+    // Se clicchi su refresh
+    @objc func handleRefresh() {
+        // Ogni volta che fai refresh, chiediamo di nuovo un post random
+        userPostsSites.removeAll()
+        self.fullCollectionView.reloadData()
+        fetchRandomSite()
     }
     
     // MARK: - Refresh Control
-    
-    @objc func handleRefresh() {
-        userPostsSites.removeAll()
-        currentKey = nil
-        fetchSitesSavePosts()
-    }
-    
     var refreshControl: UIRefreshControl?
     
     func configureRefreshControl() {
@@ -218,21 +285,15 @@ class SearchVC: UIViewController,
     }
     
     // MARK: - TableView DataSource / Delegate
+    func numberOfSections(in tableView: UITableView) -> Int { return 1 }
     
-    func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
-    }
-    
-    /// Se non siamo in searchMode, mostra `users` (oppure puoi decidere di mostrare tutti gli utenti, dipende dalla tua logica)
     func tableView(_ tableView: UITableView,
                    numberOfRowsInSection section: Int) -> Int {
-        
         return inSearchMode ? filteredUsers.count : 0
     }
     
     func tableView(_ tableView: UITableView,
                    cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
         guard let cell = tableView.dequeueReusableCell(
             withIdentifier: reuseIdentifier,
             for: indexPath
@@ -240,14 +301,13 @@ class SearchVC: UIViewController,
             return UITableViewCell()
         }
         
-        let user = filteredUsers[indexPath.row]  // in searchMode
+        let user = filteredUsers[indexPath.row]
         cell.user = user
         return cell
     }
     
     func tableView(_ tableView: UITableView,
                    didSelectRowAt indexPath: IndexPath) {
-        
         let user = filteredUsers[indexPath.row]
         let userProfileVC = UserProfileVC(collectionViewLayout: UICollectionViewFlowLayout())
         userProfileVC.user = user
@@ -255,21 +315,15 @@ class SearchVC: UIViewController,
     }
     
     // MARK: - CollectionView DataSource / Delegate
-    
     func collectionView(_ collectionView: UICollectionView,
                         numberOfItemsInSection section: Int) -> Int {
-        // Se non cerchiamo, mostriamo userPostsSites
-        // Se cerchiamo, non mostriamo nulla (0)
+        // Mostriamo i post se non stiamo cercando
         return inSearchMode ? 0 : userPostsSites.count
     }
     
     func collectionView(_ collectionView: UICollectionView,
                         cellForItemAt indexPath: IndexPath)
     -> UICollectionViewCell {
-        
-        guard indexPath.item < userPostsSites.count else {
-            fatalError("Index out of range for userPostsSites")
-        }
         
         guard let cell = collectionView.dequeueReusableCell(
             withReuseIdentifier: "FeedCell",
@@ -282,7 +336,7 @@ class SearchVC: UIViewController,
         cell.delegate = self
         cell.post = post
         
-        // Caricamento immagine
+        // Carichiamo l'immagine
         if let imageUrl = post.imageUrl, let url = URL(string: imageUrl) {
             cell.postImageView.sd_setImage(with: url) { [weak cell] _, _, _, _ in
                 DispatchQueue.main.async {
@@ -297,18 +351,13 @@ class SearchVC: UIViewController,
     func collectionView(_ collectionView: UICollectionView,
                         didSelectItemAt indexPath: IndexPath) {
         
-        guard indexPath.item < userPostsSites.count else {
-            print("Index out of range for userPostsSites in didSelectItemAt")
-            return
-        }
-        
         let post = userPostsSites[indexPath.item]
         if let postUrlString = post.link, let postUrl = URL(string: postUrlString) {
             handleImageTapped(url: postUrl)
         }
     }
     
-    // Spaziatura item
+    // MARK: - Spaziatura items
     func collectionView(_ collectionView: UICollectionView,
                         layout collectionViewLayout: UICollectionViewLayout,
                         minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
@@ -322,7 +371,6 @@ class SearchVC: UIViewController,
     }
     
     // MARK: - FeedCellDelegate
-    
     func handleUsernameTapped(for cell: FeedCell) {
         print("Username tapped!")
     }
@@ -360,69 +408,52 @@ class SearchVC: UIViewController,
     }
     
     // MARK: - SearchBar
-    
     func configureSearchBar() {
         searchBar.sizeToFit()
         searchBar.delegate = self
-        searchBar.barTintColor = UIColor(red: 240/255, green: 240/255, blue: 240/255, alpha: 1)
+        searchBar.barTintColor = UIColor(
+            red: 240/255,
+            green: 240/255,
+            blue: 240/255,
+            alpha: 1
+        )
         searchBar.tintColor = .black
         searchBar.searchTextField.backgroundColor = .gray
         searchBar.showsCancelButton = true
         navigationItem.titleView = searchBar
     }
     
-    // Quando il testo cambia: se è vuoto => esci dalla search mode
-    // altrimenti => entra in search mode
     func searchBar(_ searchBar: UISearchBar,
                    textDidChange searchText: String) {
-        
         if searchText.isEmpty || searchText == " " {
             // Non stiamo cercando
             inSearchMode = false
-            
-            // Mostra la collection
             fullCollectionView.isHidden = false
-            
-            // Nascondi la table
             tableView.isHidden = true
-            
-            // Ricarica
             tableView.reloadData()
             fullCollectionView.reloadData()
         } else {
             // Stiamo cercando
             inSearchMode = true
-            
-            // Nascondi la collection
             fullCollectionView.isHidden = true
-            
-            // Mostra la table
             tableView.isHidden = false
-            
-            // Carica i risultati di ricerca
             searchUsers(withUsername: searchText.lowercased())
         }
     }
     
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
-        // L’utente ha toccato “Cancel”
         searchBar.endEditing(true)
         searchBar.text = nil
         inSearchMode = false
         
-        // Mostra la collection
         fullCollectionView.isHidden = false
-        
-        // Nascondi la table
         tableView.isHidden = true
         
-        // Ricarica
         tableView.reloadData()
         fullCollectionView.reloadData()
     }
     
     // MARK: - Ricerca Utenti
-    
     func searchUsers(withUsername username: String) {
         self.filteredUsers = []
         
@@ -452,13 +483,10 @@ class SearchVC: UIViewController,
     }
     
     // MARK: - NavigationBar
-    
     func configureNavigationBar() {
-        // Se user non c’è ancora, non facciamo nulla
         guard let currentUid = Auth.auth().currentUser?.uid,
               let user = self.user else { return }
         
-        // Se l’utente corrente coincide con self.user, mostra il bottone impostazioni
         if currentUid == user.uid {
             navigationItem.rightBarButtonItem = UIBarButtonItem(
                 image: UIImage(systemName: "gearshape.fill"),
