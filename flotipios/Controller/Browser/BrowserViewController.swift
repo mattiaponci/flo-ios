@@ -2,20 +2,13 @@ import UIKit
 import WebKit
 import CropViewController
 
-
-class BrowserViewController: UIViewController, WKNavigationDelegate{
+class BrowserViewController: UIViewController, WKNavigationDelegate {
 
     var webView: WKWebView!
-    var toolBar: UIToolbar!
     var refreshControl: UIRefreshControl!
     var progressView: UIProgressView! // Barra di caricamento
     var initialURL: URL?
-    var pendingURL: URL?    
-
-    
-    
-    var backButton: UIBarButtonItem!
-    var forwardButton: UIBarButtonItem!
+    var pendingURL: URL?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -41,16 +34,13 @@ class BrowserViewController: UIViewController, WKNavigationDelegate{
         refreshControl.addTarget(self, action: #selector(refreshWebView), for: .valueChanged)
         webView.scrollView.addSubview(refreshControl)
 
-        // Configura la barra degli strumenti
-        configureToolbar()
-
         // Configura la navigation bar
         configureNavigationBar()
 
         // Configura la barra di progresso (sotto la tab bar)
         configureProgressBar()
 
-        // Configura i constraints per la web view e la barra degli strumenti
+        // Configura i constraints per la web view
         setupConstraints()
 
         tabBarController?.tabBar.isTranslucent = false
@@ -60,14 +50,16 @@ class BrowserViewController: UIViewController, WKNavigationDelegate{
         if let url = URL(string: "https://www.google.com") {
             load(url: url)
         }
+        
+        
     }
 
     // Configura la barra di caricamento
     func configureProgressBar() {
         progressView = UIProgressView(progressViewStyle: .default)
         progressView.translatesAutoresizingMaskIntoConstraints = false
-        progressView.trackTintColor = UIColor.lightGray
-        progressView.progressTintColor = UIColor.gray
+        progressView.trackTintColor = UIColor.blue
+        progressView.progressTintColor = UIColor.blue
         view.addSubview(progressView)
 
         // Imposta i constraints per la progressView
@@ -86,32 +78,12 @@ class BrowserViewController: UIViewController, WKNavigationDelegate{
         }
     }
 
-    // Configura la barra degli strumenti
-    func configureToolbar() {
-        toolBar = UIToolbar()
-        toolBar.translatesAutoresizingMaskIntoConstraints = false
-        toolBar.barTintColor = .white
-        toolBar.isTranslucent = false
-        view.addSubview(toolBar)
-
-        backButton = UIBarButtonItem(title: "<", style: .plain, target: self, action: #selector(backButtonTapped))
-        forwardButton = UIBarButtonItem(title: ">", style: .plain, target: self, action: #selector(forwardButtonTapped))
-        forwardButton.isEnabled = false
-        backButton.isEnabled = false
-
-        let actionButton = UIBarButtonItem(image: UIImage(named: "flag"), style: .plain, target: self, action: #selector(toolbarAction))
-
-        let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
-        toolBar.setItems([backButton, flexibleSpace, actionButton, flexibleSpace, forwardButton], animated: false)
-    }
-
-    // Configura la navigation bar
     func configureNavigationBar() {
         guard let navigationController = navigationController else { return }
-        
+
         // Disabilita large titles
         navigationController.navigationBar.prefersLargeTitles = false
-        
+
         // Configura l'aspetto della navigation bar
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
@@ -122,26 +94,68 @@ class BrowserViewController: UIViewController, WKNavigationDelegate{
         navigationController.navigationBar.scrollEdgeAppearance = appearance
         navigationController.navigationBar.isTranslucent = false
 
-        // Aggiungi il pulsante "Folder" e imposta il titolo
+        // Configura il titolo come stack con i pulsanti vicini
+        let titleStackView = UIStackView()
+        titleStackView.axis = .horizontal
+        titleStackView.alignment = .center
+        titleStackView.spacing = 8 // Spaziatura minima tra gli elementi
+
+        // Configura il pulsante "Back" (<) a sinistra del titolo
+        let backButton = UIButton(type: .system)
+        backButton.setTitle("<", for: .normal)
+        backButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+        backButton.setTitleColor(.black, for: .normal)
+        backButton.addTarget(self, action: #selector(backButtonTapped), for: .touchUpInside)
+
+        // Configura il pulsante "Forward" (>) a destra del titolo
+        let forwardButton = UIButton(type: .system)
+        forwardButton.setTitle(">", for: .normal)
+        forwardButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+        forwardButton.setTitleColor(.black, for: .normal)
+        forwardButton.addTarget(self, action: #selector(forwardButtonTapped), for: .touchUpInside)
+
+        // Configura il titolo "Home" come cliccabile
+        let titleLabel = UILabel()
+        titleLabel.text = "Home"
+        titleLabel.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        titleLabel.textColor = .black
+        titleLabel.isUserInteractionEnabled = true
+        let titleTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleHomeTapped))
+        titleLabel.addGestureRecognizer(titleTapGesture)
+
+        // Aggiungi i pulsanti e il titolo allo stack
+        titleStackView.addArrangedSubview(backButton)
+        titleStackView.addArrangedSubview(titleLabel)
+        titleStackView.addArrangedSubview(forwardButton)
+
+        // Imposta lo stack come titleView
+        self.navigationItem.titleView = titleStackView
+
+        // Configura il pulsante "Folder" a destra
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(named: "Folder"), style: .plain, target: self, action: #selector(handleShowMessages))
-       // self.navigationItem.rightBarButtonItem?.tintColor = .red
-        self.navigationItem.title = "Surf"
+    }
+
+    // Azione per il titolo "Home"
+    @objc func handleHomeTapped() {
+        if let url = URL(string: "https://www.google.com") {
+            load(url: url)
+        }
+        print("Navigato a Google.com")
+    }
+
+    // MARK: - Azioni
+
+    @objc func handleTitleTapped() {
+        print("home")
     }
 
     func setupConstraints() {
-        // Constraints per la barra degli strumenti
-        NSLayoutConstraint.activate([
-            toolBar.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            toolBar.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            toolBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
-        ])
-
         // Constraints per il web view
         NSLayoutConstraint.activate([
             webView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             webView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             webView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            webView.bottomAnchor.constraint(equalTo: toolBar.topAnchor)
+            webView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
     }
 
@@ -168,9 +182,8 @@ class BrowserViewController: UIViewController, WKNavigationDelegate{
 
     @objc func handleShowMessages() {
         // Implementazione per il pulsante "Folder"
-        
         let messagesController = YourViewController()
-        messagesController.delegate = self  // Imposta 'self' come delegato
+        messagesController.delegate = self
         navigationController?.pushViewController(messagesController, animated: true)
     }
 
@@ -190,11 +203,9 @@ class BrowserViewController: UIViewController, WKNavigationDelegate{
         }
     }
 
-    // Funzione per catturare screenshot del WebView
     func captureWebViewScreenshot() {
         let snapshotConfiguration = WKSnapshotConfiguration()
-        
-        // Definisci l'area da catturare (intera pagina)
+
         snapshotConfiguration.rect = webView.bounds
         snapshotConfiguration.afterScreenUpdates = true
 
@@ -203,7 +214,7 @@ class BrowserViewController: UIViewController, WKNavigationDelegate{
                 print("Errore durante lo screenshot: \(String(describing: error))")
                 return
             }
-            
+
             let cropViewController = CropViewController(croppingStyle: .default, image: image)
             cropViewController.delegate = self
             let cropSquareSize = CGSize(width: self?.view.frame.width ?? 0, height: self?.view.frame.width ?? 0)
@@ -211,6 +222,7 @@ class BrowserViewController: UIViewController, WKNavigationDelegate{
             cropViewController.aspectRatioLockEnabled = true
             cropViewController.resetAspectRatioEnabled = false
             cropViewController.aspectRatioPickerButtonHidden = true
+            
             cropViewController.cropView.cropBoxResizeEnabled = false
             cropViewController.toolbar.clampButtonHidden = true
             cropViewController.toolbar.rotateButton.isHidden = true
@@ -222,23 +234,21 @@ class BrowserViewController: UIViewController, WKNavigationDelegate{
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        backButton.isEnabled = webView.canGoBack
-        forwardButton.isEnabled = webView.canGoForward
+        navigationItem.titleView?.isHidden = false
     }
 }
 
 extension BrowserViewController: CropViewControllerDelegate {
     func cropViewController(_ cropViewController: CropViewController, didCropToImage image: UIImage, withRect cropRect: CGRect, angle: Int) {
         cropViewController.dismiss(animated: true, completion: nil)
-        
-        // Configura e presenta ScreenshotViewController
+
         let screenshotVC = SecondViewController()
         screenshotVC.screenshotImage = image
-        screenshotVC.pageURL = webView.url  // Passa l'URL corrente della web view
+        screenshotVC.pageURL = webView.url
         screenshotVC.modalPresentationStyle = .fullScreen
         self.present(screenshotVC, animated: true, completion: nil)
     }
-    
+
     func cropViewController(_ cropViewController: CropViewController, didFinishCancelled cancelled: Bool) {
         cropViewController.dismiss(animated: true, completion: nil)
     }
@@ -246,11 +256,11 @@ extension BrowserViewController: CropViewControllerDelegate {
 
 extension BrowserViewController: YourViewControllerDelegate {
     func didSelectWebsite(url: URL) {
-        navigationController?.popViewController(animated: true)  // Torna indietro
+        navigationController?.popViewController(animated: true)
         print("the url is \(url)")
-        webView.load(URLRequest(url: url))  // Carica l'URL
+        webView.load(URLRequest(url: url))
     }
-    
-    
-    
 }
+
+
+

@@ -5,9 +5,6 @@
 //  Created by mattia poncini on 26.09.2024.
 //
 
-
-
-
 import UIKit
 import Firebase
 
@@ -17,7 +14,9 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
     
     let dot = UIView()
     var isInitialLoad: Bool?
-    
+     private var wasFlagTabPreviouslySelected: Bool = false
+      private var isInitialLaunch: Bool = true
+
     // MARK: - Init
 
     override func viewDidLoad() {
@@ -30,19 +29,22 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
         configureViewControllers()
         
         // Configure notification dot
-      //  configureNotificationDot()
+        // configureNotificationDot()
         
         // Observe notifications
-     //  observeNotifications()
+        // observeNotifications()
         
         // User validation
         checkIfUserIsLoggedIn()
         
         self.selectedIndex = 2  // Index of the BrowserViewController
-        
-        view.backgroundColor = UIColor.white
-        
 
+        
+        // Forza l'aggiornamento per visualizzare l'immagine selezionata
+       if let browserNavController = viewControllers?[2] as? UINavigationController {
+            browserNavController.tabBarItem.selectedImage = #imageLiteral(resourceName: "flag").withRenderingMode(.alwaysOriginal)
+            tabBar.tintColor = .white }
+        view.backgroundColor = UIColor.white
 
     }
     
@@ -55,22 +57,16 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
         let userProfileVC = UserProfileVC(collectionViewLayout: UICollectionViewFlowLayout())
         userProfileVC.delegate = self
      
-        
-     
-      
-
         let feedNavController = constructNavController(unselectedImage: #imageLiteral(resourceName: "home_unselected"), selectedImage: #imageLiteral(resourceName: "home_selected"), rootViewController: feedVC)
-        
-      //  let homeVC = constructNavController(unselectedImage: #imageLiteral(resourceName: "search_unselected"), selectedImage: #imageLiteral(resourceName: "comment"), rootViewController: HomeViewController())
-       /* let homeVC = constructNavController(
-                    unselectedImage: #imageLiteral(resourceName: "search_unselected"),
-                    selectedImage: #imageLiteral(resourceName: "comment"),
-                    rootViewController: HomeViewController(collectionViewLayout: UICollectionViewFlowLayout())
-                )*/
 
         let searchVC = constructNavController(unselectedImage: #imageLiteral(resourceName: "search_unselected"), selectedImage: #imageLiteral(resourceName: "comment"), rootViewController: SearchVC())
         
-        let browserVC = constructNavController(unselectedImage: #imageLiteral(resourceName: "grid"), selectedImage: #imageLiteral(resourceName: "grid"), rootViewController: BrowserViewController())
+        let browserVC = constructNavController(
+                 unselectedImage: #imageLiteral(resourceName: "flag"),
+                 selectedImage: #imageLiteral(resourceName: "flag1"),
+                 rootViewController: BrowserViewController()
+             )
+
 
         let notificationVC = constructNavController(unselectedImage: #imageLiteral(resourceName: "profile_unselected"), selectedImage: #imageLiteral(resourceName: "profile_selected"), rootViewController: NotificationsVC())
 
@@ -81,23 +77,18 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
         tabBar.tintColor = .white
     }
 
-    
     func constructNavController(unselectedImage: UIImage, selectedImage: UIImage, rootViewController: UIViewController = UIViewController()) -> UINavigationController {
-        
         // Construct nav controller
         let navController = UINavigationController(rootViewController: rootViewController)
         navController.tabBarItem.image = unselectedImage
         navController.tabBarItem.selectedImage = selectedImage
         navController.navigationBar.tintColor = .red
-        
         return navController
     }
     
     func configureNotificationDot() {
         if UIDevice().userInterfaceIdiom == .phone {
-            
             let tabBarHeight = tabBar.frame.height
-            
             if UIScreen.main.nativeBounds.height == 2436 {
                 // Configure dot for iPhone X
                 dot.frame = CGRect(x: view.frame.width / 5 * 3, y: view.frame.height - tabBarHeight, width: 6, height: 6)
@@ -105,7 +96,6 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
                 // Configure dot for other phone models
                 dot.frame = CGRect(x: view.frame.width / 5 * 3, y: view.frame.height - 16, width: 6, height: 6)
             }
-            
             // Create dot
             dot.center.x = (view.frame.width / 5 * 3 + (view.frame.width / 5) / 2)
             dot.backgroundColor = UIColor(red: 233/255, green: 30/255, blue: 99/255, alpha: 1)
@@ -117,14 +107,67 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
     
     // MARK: - UITabBar
     
+   
+       
+       // MARK: - UITabBarControllerDelegate
     func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
-        let index = viewControllers?.firstIndex(of: viewController)
-        
-        dot.isHidden = true
+        guard let index = viewControllers?.firstIndex(of: viewController) else { return true }
+
+        // Caso in cui si seleziona un altro tab dopo il lancio
+        if selectedIndex != index {
+            isInitialLaunch = false
+            wasFlagTabPreviouslySelected = false
+            return true
+        }
+
+        // Gestione del clic su "flag"
+        if let browserNavController = viewControllers?[index] as? UINavigationController,
+           let browserVC = browserNavController.topViewController as? BrowserViewController {
+
+            if isInitialLaunch {
+                // Primo clic iniziale su flag
+                print("photo done")
+                browserVC.captureWebViewScreenshot()
+                isInitialLaunch = false
+                wasFlagTabPreviouslySelected = true
+            } else if wasFlagTabPreviouslySelected {
+                // Dal secondo clic consecutivo su flag
+                print("photo don")
+                browserVC.captureWebViewScreenshot()
+            } else {
+                // Primo clic su flag dopo aver selezionato un altro tab
+                wasFlagTabPreviouslySelected = true
+                print("phtot do")
+                browserVC.captureWebViewScreenshot()
+
+            }
+        } else {
+            // Selezionato un altro tab, resetta lo stato
+            wasFlagTabPreviouslySelected = false
+        }
+
         return true
     }
-    
-    // MARK: - API
+
+    // Funzione per simulare il pulsante premuto
+    func simulateButtonPress(for tabBarItem: UITabBarItem) {
+        guard let tabBar = tabBarController?.tabBar else { return }
+
+        // Trova il pulsante associato al tabBarItem
+        if let tabBarButton = tabBar.subviews.first(where: { view in
+            guard let item = (view as? UIControl)?.value(forKey: "item") as? UITabBarItem else { return false }
+            return item == tabBarItem
+        }) {
+            // Anima la pressione del pulsante
+            UIView.animate(withDuration: 0.1, animations: {
+                tabBarButton.transform = CGAffineTransform(scaleX: 0.9, y: 0.9)
+            }, completion: { _ in
+                UIView.animate(withDuration: 0.1) {
+                    tabBarButton.transform = CGAffineTransform.identity
+                }
+            })
+        }
+    }    // MARK: - API
     
     func checkIfUserIsLoggedIn() {
         if let user = Auth.auth().currentUser {
@@ -148,13 +191,13 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
     func observeNotifications() {
         guard let currentUid = Auth.auth().currentUser?.uid else { return }
         
-        NOTIFICATIONS_REF.child(currentUid).observeSingleEvent(of: .value) { (snapshot) in
+        NOTIFICATIONS_REF.child(currentUid).observeSingleEvent(of: .value) { snapshot in
             guard let allObjects = snapshot.children.allObjects as? [DataSnapshot] else { return }
             
-            allObjects.forEach({ (snapshot) in
+            allObjects.forEach { snapshot in
                 let notificationId = snapshot.key
                 
-                NOTIFICATIONS_REF.child(currentUid).child(notificationId).child("checked").observeSingleEvent(of: .value, with: { (snapshot) in
+                NOTIFICATIONS_REF.child(currentUid).child(notificationId).child("checked").observeSingleEvent(of: .value) { snapshot in
                     guard let checked = snapshot.value as? Int else { return }
                     
                     if checked == 0 {
@@ -162,18 +205,15 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
                     } else {
                         self.dot.isHidden = true
                     }
-                })
-            })
+                }
+            }
         }
     }
 
     // MARK: - FeedVCDelegate Implementation
     
     func didSelectWebsiteInFeed(url: URL) {
-        // Ensure the correct tab is selected if BrowserViewController is a tab
-   
         print("URL received in MainTabVC: \(url.absoluteString)")
-
         self.selectedIndex = 2 // Assuming BrowserViewController is the third tab (index 2)
         
         if let browserNavController = viewControllers?[2] as? UINavigationController {
@@ -185,7 +225,6 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
                 browserNavController.pushViewController(browserVC, animated: true)
             }
         } else {
-            // If BrowserViewController is not a tab, present it modally
             let browserVC = BrowserViewController()
             browserVC.load(url: url)
             present(browserVC, animated: true, completion: nil)
@@ -196,13 +235,11 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
 
     func didSelectWebsiteInUser(url: URL) {
         print("MainTabVC: didSelectWebsiteInUser called with URL: \(url.absoluteString)")
-        
         self.selectedIndex = 2  // Assuming BrowserViewController is the third tab (index 2)
         
         if let browserNavController = viewControllers?[2] as? UINavigationController {
             if let browserVC = browserNavController.topViewController as? BrowserViewController {
                 browserVC.load(url: url)
-                print("MainTabVC: URL passed to BrowserViewController")
             } else {
                 let browserVC = BrowserViewController()
                 browserVC.load(url: url)
@@ -214,5 +251,4 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
             present(browserVC, animated: true, completion: nil)
         }
     }
-
 }
