@@ -2,7 +2,7 @@ import UIKit
 import WebKit
 import CropViewController
 
-class BrowserViewController: UIViewController, WKNavigationDelegate {
+class BrowserViewController: UIViewController, WKNavigationDelegate, TOCropViewControllerDelegate {
 
     var webView: WKWebView!
     var refreshControl: UIRefreshControl!
@@ -205,31 +205,39 @@ class BrowserViewController: UIViewController, WKNavigationDelegate {
 
     func captureWebViewScreenshot() {
         let snapshotConfiguration = WKSnapshotConfiguration()
-
         snapshotConfiguration.rect = webView.bounds
         snapshotConfiguration.afterScreenUpdates = true
 
         webView.takeSnapshot(with: snapshotConfiguration) { [weak self] image, error in
+            guard let self = self else { return }
             guard let image = image else {
                 print("Errore durante lo screenshot: \(String(describing: error))")
                 return
             }
 
-            let cropViewController = CropViewController(croppingStyle: .default, image: image)
+            let cropViewController = CustomCropViewController(croppingStyle: .default, image: image)
             cropViewController.delegate = self
-            let cropSquareSize = CGSize(width: self?.view.frame.width ?? 0, height: self?.view.frame.width ?? 0)
-            cropViewController.customAspectRatio = cropSquareSize
             cropViewController.aspectRatioLockEnabled = true
-            cropViewController.resetAspectRatioEnabled = false
-            cropViewController.aspectRatioPickerButtonHidden = true
-            
+            cropViewController.customAspectRatio = CGSize(width: self.view.frame.width, height: self.view.frame.width)
             cropViewController.cropView.cropBoxResizeEnabled = false
             cropViewController.toolbar.clampButtonHidden = true
             cropViewController.toolbar.rotateButton.isHidden = true
-            cropViewController.toolbar.rotateClockwiseButton?.isHidden = true
             cropViewController.toolbar.resetButton.isHidden = true
 
-            self?.present(cropViewController, animated: true, completion: nil)
+            self.present(cropViewController, animated: true, completion: nil)
+        }
+    }
+
+    class CustomCropViewController: TOCropViewController {
+        override func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+
+            // Trova lo UIScrollView all'interno di TOCropView
+            if let scrollView = cropView.subviews.first(where: { $0 is UIScrollView }) as? UIScrollView {
+                scrollView.maximumZoomScale = 1.0 // Disabilita lo zoom massimo
+                scrollView.minimumZoomScale = 1.0 // Disabilita lo zoom minimo
+                scrollView.isScrollEnabled = true // Mantieni lo scroll abilitato
+            }
         }
     }
 
@@ -239,7 +247,7 @@ class BrowserViewController: UIViewController, WKNavigationDelegate {
 }
 
 extension BrowserViewController: CropViewControllerDelegate {
-    func cropViewController(_ cropViewController: CropViewController, didCropToImage image: UIImage, withRect cropRect: CGRect, angle: Int) {
+    @nonobjc func cropViewController(_ cropViewController: CropViewController, didCropToImage image: UIImage, withRect cropRect: CGRect, angle: Int) {
         cropViewController.dismiss(animated: true, completion: nil)
 
         let screenshotVC = SecondViewController()
@@ -249,7 +257,7 @@ extension BrowserViewController: CropViewControllerDelegate {
         self.present(screenshotVC, animated: true, completion: nil)
     }
 
-    func cropViewController(_ cropViewController: CropViewController, didFinishCancelled cancelled: Bool) {
+    @nonobjc func cropViewController(_ cropViewController: CropViewController, didFinishCancelled cancelled: Bool) {
         cropViewController.dismiss(animated: true, completion: nil)
     }
 }
