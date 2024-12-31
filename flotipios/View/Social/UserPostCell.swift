@@ -15,6 +15,8 @@ class UserPostCell: UICollectionViewCell {
     var delegate: UserCellDelegate?
     var stackView: UIStackView!
     var postSaved: Bool = false // Variabile per monitorare lo stato del salvataggio
+    var viewSinglePost = false
+
     
     var post: Post? {
         didSet {
@@ -63,14 +65,7 @@ class UserPostCell: UICollectionViewCell {
         return button
     }()
     
-    lazy var optionsButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("•••", for: .normal)
-        button.setTitleColor(.black, for: .normal)
-        button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
-        button.addTarget(self, action: #selector(handleOptionsTapped), for: .touchUpInside)
-        return button
-    }()
+    
     
     lazy var postImageView: CustomImageView = {
         let iv = CustomImageView()
@@ -82,7 +77,14 @@ class UserPostCell: UICollectionViewCell {
         iv.addGestureRecognizer(tapGesture)
         return iv
     }()
-    
+    lazy var optionsButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("•••", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
+        button.addTarget(self, action: #selector(handleOptionsTapped), for: .touchUpInside)
+        return button
+    }()
     lazy var likeButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(#imageLiteral(resourceName: "star"), for: .normal)
@@ -184,7 +186,7 @@ class UserPostCell: UICollectionViewCell {
             usernameButton.setTitleColor(.black, for: .normal) // Testo nero
 
             // Configura il pulsante delle azioni (flag, like, comment)
-            let actionStackView = UIStackView(arrangedSubviews: [savePostButton, likeButton, commentButton])
+            let actionStackView = UIStackView(arrangedSubviews: [savePostButton, likeButton, commentButton,optionsButton])
             actionStackView.axis = .horizontal
             actionStackView.spacing = 12
             actionStackView.alignment = .center
@@ -195,7 +197,7 @@ class UserPostCell: UICollectionViewCell {
     // MARK: - Handlers
     
     @objc func handleSaveTapped() {
-        //delegate?.handleSaveTapped(for: self)
+       // delegate?.handleSaveTapped(for: self)
     }
     
     @objc func handleUsernameTapped() {
@@ -203,7 +205,8 @@ class UserPostCell: UICollectionViewCell {
     }
     
     @objc func handleOptionsTapped() {
-       // delegate?.handleOptionsTapped(for: self)
+        print("hello wooww")
+        delegate?.handleOptionsTapped(for: self, isDoubleTap: false)
     }
   
     @objc func handleLikeTapped() {
@@ -225,20 +228,13 @@ class UserPostCell: UICollectionViewCell {
         delegate?.handleFlagToLike(for: self, isDoubleTap: true)
     }
     @objc func handleImageTap() {
-        guard let post = post else { return }
-        print("kava")
-        if let postUrlString = post.link, let postUrl = URL(string: postUrlString) {
-            // Stampa l'URL del sito del feed nella console
-            print("Opening URL: \(postUrl)")
-            
-            // Chiamata al delegato per aprire il BrowserViewController con l'URL
-           delegate?.handleImageclicked(url: postUrl)
-            
-            print("primo passaggio")
-
-        } else {
-            print("Invalid or nil URL for post")
-        }    }
+            guard let linkString = post?.link, let url = URL(string: linkString) else {
+                print("Invalid or nil URL for post")
+                return
+            }
+            delegate?.handleImageclicked(url: url)
+        }
+    
     
     // MARK: - Funzioni di configurazione
     

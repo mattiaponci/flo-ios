@@ -168,32 +168,41 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
         if post.ownerUid == Auth.auth().currentUser?.uid {
             let alertController = UIAlertController(title: "Options", message: nil, preferredStyle: .actionSheet)
 
+            // Delete Post
             alertController.addAction(UIAlertAction(title: "Delete Post", style: .destructive, handler: { (_) in
-                post.deletePost()
+                post.deletePost { error in
+                    if let error = error {
+                        print("Failed to delete post: \(error.localizedDescription)")
+                    } else {
+                        print("Post deleted successfully")
 
-                if !self.viewSinglePost {
-                    self.handleRefresh()
-                } else {
-                    if let userProfileController = self.userProfileController {
-                        _ = self.navigationController?.popViewController(animated: true)
-                        userProfileController.handleRefresh()
+                        if !self.viewSinglePost {
+                            self.handleRefresh()
+                        } else {
+                            if let userProfileController = self.userProfileController {
+                                _ = self.navigationController?.popViewController(animated: true)
+                                userProfileController.handleRefresh()
+                            }
+                        }
                     }
                 }
             }))
 
+            // Edit Post
             alertController.addAction(UIAlertAction(title: "Edit Post", style: .default, handler: { (_) in
                 let uploadPostController = UploadPostVC()
                 let navigationController = UINavigationController(rootViewController: uploadPostController)
                 uploadPostController.postToEdit = post
                 uploadPostController.uploadAction = UploadPostVC.UploadAction(index: 1)
+                navigationController.modalPresentationStyle = .fullScreen
                 self.present(navigationController, animated: true, completion: nil)
             }))
 
+            // Cancel
             alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
             present(alertController, animated: true, completion: nil)
         }
     }
-
     func handleImageTapped(url: URL) {
         print("Delegate method called with URL: \(url)")
         print("secondo passaggio")

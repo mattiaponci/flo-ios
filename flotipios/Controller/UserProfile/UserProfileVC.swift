@@ -1,9 +1,4 @@
-//
-//  UserProfileVC.swift
-//  flotipios
-//
-//  Created by mattia poncini on 26.09.2024.
-//
+
 
 //
 //  UserProfileVC.swift
@@ -22,6 +17,64 @@ protocol UserVCDelegate: AnyObject {
 }
 
 class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, UserProfileHeaderDelegate, UserCellDelegate {
+    
+    func handleOptionsTapped(for cell: UserPostCell, isDoubleTap: Bool) {
+        guard let post = cell.post else { return }
+
+        let alertController = UIAlertController(title: "Options", message: nil, preferredStyle: .actionSheet)
+
+        // Edit Post
+        alertController.addAction(UIAlertAction(title: "Edit Post", style: .default, handler: { _ in
+            let uploadPostController = UploadPostVC()
+            uploadPostController.postToEdit = post
+
+            // Pass image to UploadPostVC
+            if let imageUrlString = post.imageUrl, let imageUrl = URL(string: imageUrlString) {
+                URLSession.shared.dataTask(with: imageUrl) { data, _, error in
+                    if let error = error {
+                        print("Failed to load image: \(error.localizedDescription)")
+                        return
+                    }
+
+                    guard let data = data, let image = UIImage(data: data) else {
+                        print("Failed to convert data to UIImage")
+                        return
+                    }
+
+                    DispatchQueue.main.async {
+                        uploadPostController.selectedImage = image
+                        uploadPostController.uploadAction = UploadPostVC.UploadAction(index: 1)
+                        let navigationController = UINavigationController(rootViewController: uploadPostController)
+                        navigationController.modalPresentationStyle = .fullScreen
+                        self.present(navigationController, animated: true, completion: nil)
+                    }
+                }.resume()
+            } else {
+                print("Invalid or missing imageUrl for post")
+            }
+        }))
+
+        // Delete Post
+        alertController.addAction(UIAlertAction(title: "Delete Post", style: .destructive, handler: { _ in
+            post.deletePost { error in
+                if let error = error {
+                    print("Failed to delete post: \(error.localizedDescription)")
+                    return
+                }
+
+                DispatchQueue.main.async {
+                    self.posts.removeAll { $0.postId == post.postId }
+                    self.collectionView.reloadData()
+                }
+            }
+        }))
+
+        // Cancel Action
+        alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+
+        present(alertController, animated: true, completion: nil)
+    }
+    
     
     func handleFlagToLike(for cell: UserPostCell, isDoubleTap: Bool) {
         guard let postId = cell.post?.postId else { return }
@@ -220,6 +273,10 @@ class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLay
     // MARK: - Handlers
     func handleImageclicked(url: URL) {
         print("Image tapped with URL: \(url)")
+      
+        
+        delegate?.didSelectWebsiteInUser(url: url)
+
     }
     
     

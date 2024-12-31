@@ -25,7 +25,7 @@ class UploadPostVC: UIViewController, UITextViewDelegate {
         }
     }
     
-    var uploadAction: UploadAction!
+    var uploadAction: UploadAction?
     var selectedImage: UIImage?
     var postToEdit: Post?
     
@@ -34,12 +34,16 @@ class UploadPostVC: UIViewController, UITextViewDelegate {
         iv.contentMode = .scaleAspectFill
         iv.clipsToBounds = true
         iv.backgroundColor = .lightGray
+        iv.layer.cornerRadius = 8 // Arrotondamento bordi
         return iv
     }()
     
     let captionTextView: UITextView = {
         let tv = UITextView()
         tv.backgroundColor = UIColor.groupTableViewBackground
+        tv.layer.cornerRadius = 8 // Arrotondamento bordi
+        tv.backgroundColor = .lightGray
+        tv.textColor = .black
         tv.font = UIFont.systemFont(ofSize: 12)
         return tv
     }()
@@ -73,13 +77,18 @@ class UploadPostVC: UIViewController, UITextViewDelegate {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
+        guard let uploadAction = uploadAction else {
+            print("Error: uploadAction is nil. Assigning default value.")
+            self.uploadAction = .UploadPost
+            return
+        }
+        
         configureViewController(forUploadAction: uploadAction)
     }
     
     // MARK: - UITextView
     
     func textViewDidChange(_ textView: UITextView) {
-        
         guard !textView.text.isEmpty else {
             actionButton.isEnabled = false
             actionButton.backgroundColor = UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1)
@@ -93,6 +102,10 @@ class UploadPostVC: UIViewController, UITextViewDelegate {
     // MARK: - Handlers
     
     @objc func handleUploadAction() {
+        guard let uploadAction = uploadAction else {
+            print("Error: uploadAction is nil")
+            return
+        }
         buttonSelector(uploadAction: uploadAction)
     }
     
@@ -102,22 +115,33 @@ class UploadPostVC: UIViewController, UITextViewDelegate {
     
     func buttonSelector(uploadAction: UploadAction) {
         switch uploadAction {
-            case .UploadPost:
-                handleUploadPost()
-            case .SaveChanges:
-                handleSavePostChanges()
+        case .UploadPost:
+            handleUploadPost()
+        case .SaveChanges:
+            handleSavePostChanges()
         }
     }
     
     func configureViewController(forUploadAction uploadAction: UploadAction) {
         if uploadAction == .SaveChanges {
-            guard let post = self.postToEdit else { return }
+            guard let post = self.postToEdit else {
+                print("Error: postToEdit is nil")
+                return
+            }
+            
             actionButton.setTitle("Save Changes", for: .normal)
             self.navigationItem.title = "Edit Post"
             self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Cancel", style: .plain, target: self, action: #selector(handleCancel))
             navigationController?.navigationBar.tintColor = .black
-            photoImageView.loadImage(with: post.imageUrl)
-            captionTextView.text = post.caption
+            
+            if let imageUrl = post.imageUrl {
+                photoImageView.loadImage(with: imageUrl)
+            } else {
+                print("Error: imageUrl is nil")
+                photoImageView.image = UIImage(named: "placeholder")
+            }
+            
+            captionTextView.text = post.caption ?? "Add a caption"
         } else {
             actionButton.setTitle("Share", for: .normal)
             self.navigationItem.title = "Upload Post"
@@ -145,7 +169,10 @@ class UploadPostVC: UIViewController, UITextViewDelegate {
     // MARK: - API
     
     func handleSavePostChanges() {
-        guard let post = self.postToEdit else { return }
+        guard let post = self.postToEdit else {
+            print("Error: postToEdit is nil")
+            return
+        }
         guard let updatedCaption = captionTextView.text else { return }
         
         if updatedCaption.contains("#") {
@@ -158,70 +185,52 @@ class UploadPostVC: UIViewController, UITextViewDelegate {
     }
     
     func handleUploadPost() {
+        guard let caption = captionTextView.text,
+              let postImg = photoImageView.image,
+              let currentUid = Auth.auth().currentUser?.uid else { return }
         
-        // paramaters
-        guard
-            let caption = captionTextView.text,
-            let postImg = photoImageView.image,
-            let currentUid = Auth.auth().currentUser?.uid else { return }
-        
-        // image upload data
         guard let uploadData = postImg.jpegData(compressionQuality: 0.5) else { return }
-        
-        // creation date
         let creationDate = Int(NSDate().timeIntervalSince1970)
         
-        // update storage
         let filename = NSUUID().uuidString
         let storageRef = STORAGE_POST_IMAGES_REF.child(filename)
+        
         storageRef.putData(uploadData, metadata: nil) { (metadata, error) in
-            
-            // handle error
             if let error = error {
                 print("Failed to upload image to storage with error", error.localizedDescription)
                 return
             }
             
-           storageRef.downloadURL(completion: { (url, error) in
+            storageRef.downloadURL { (url, error) in
                 guard let imageUrl = url?.absoluteString else { return }
                 
-                // post data
                 let values = ["caption": caption,
                               "creationDate": creationDate,
                               "likes": 0,
                               "imageUrl": imageUrl,
                               "ownerUid": currentUid] as [String: Any]
                 
-                // post id
                 let postId = POSTS_REF.childByAutoId()
                 guard let postKey = postId.key else { return }
                 
-                // upload information to database
-                postId.updateChildValues(values, withCompletionBlock: { (err, ref) in
-                    
-                    // update user-post structure
+                postId.updateChildValues(values) { (err, ref) in
                     let userPostsRef = USER_POSTS_REF.child(currentUid)
                     userPostsRef.updateChildValues([postKey: 1])
-                    
-                    // update user-feed structure
                     self.updateUserFeeds(with: postKey)
                     
-                    // upload hashtag to server
                     if caption.contains("#") {
                         self.uploadHashtagToServer(withPostId: postKey)
                     }
                     
-                    // upload mention notification to server
                     if caption.contains("@") {
                         self.uploadMentionNotification(forPostId: postKey, withText: caption, isForComment: false)
                     }
                     
-                    // return to home feed
                     self.dismiss(animated: true, completion: {
                         self.tabBarController?.selectedIndex = 0
                     })
-                })
-            })
+                }
+            }
         }
     }
     
@@ -229,7 +238,7 @@ class UploadPostVC: UIViewController, UITextViewDelegate {
         guard let currentUid = Auth.auth().currentUser?.uid else { return }
         let values = [postId: 1]
         
-        USER_FOLLOWER_REF.child(currentUid).observe(.childAdded) { (snapshot) in
+        USER_FOLLOWER_REF.child(currentUid).observe(.childAdded) { snapshot in
             let followerUid = snapshot.key
             USER_FEED_REF.child(followerUid).updateChildValues(values)
         }
@@ -239,13 +248,11 @@ class UploadPostVC: UIViewController, UITextViewDelegate {
     
     func uploadHashtagToServer(withPostId postId: String) {
         guard let caption = captionTextView.text else { return }
-        let words: [String] = caption.components(separatedBy: .whitespacesAndNewlines)
+        let words = caption.components(separatedBy: .whitespacesAndNewlines)
         
         for var word in words {
             if word.hasPrefix("#") {
                 word = word.trimmingCharacters(in: .punctuationCharacters)
-                word = word.trimmingCharacters(in: .symbols)
-                
                 let hashtagValues = [postId: 1]
                 HASHTAG_POST_REF.child(word.lowercased()).updateChildValues(hashtagValues)
             }

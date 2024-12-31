@@ -188,6 +188,10 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, TOCropViewC
     }
 
     func load(url: URL) {
+        guard let webView = webView else {
+            print("webView is nil. Cannot load URL.")
+          return
+        }
         initialURL = url
         let request = URLRequest(url: url)
         webView.load(request)
@@ -204,29 +208,52 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, TOCropViewC
     }
 
     func captureWebViewScreenshot() {
-        let snapshotConfiguration = WKSnapshotConfiguration()
-        snapshotConfiguration.rect = webView.bounds
-        snapshotConfiguration.afterScreenUpdates = true
+        let snapshotConfig = WKSnapshotConfiguration()
+        snapshotConfig.rect = webView.bounds
+        snapshotConfig.afterScreenUpdates = true
 
-        webView.takeSnapshot(with: snapshotConfiguration) { [weak self] image, error in
+        webView.takeSnapshot(with: snapshotConfig) { [weak self] image, error in
             guard let self = self else { return }
-            guard let image = image else {
-                print("Errore durante lo screenshot: \(String(describing: error))")
+            guard let screenshot = image else {
+                print("Failed to capture screenshot: \(String(describing: error))")
                 return
             }
 
-            let cropViewController = CustomCropViewController(croppingStyle: .default, image: image)
+            let cropViewController = CustomCropViewController(croppingStyle: .default, image: screenshot)
             cropViewController.delegate = self
             cropViewController.aspectRatioLockEnabled = true
             cropViewController.customAspectRatio = CGSize(width: self.view.frame.width, height: self.view.frame.width)
-            cropViewController.cropView.cropBoxResizeEnabled = false
             cropViewController.toolbar.clampButtonHidden = true
             cropViewController.toolbar.rotateButton.isHidden = true
             cropViewController.toolbar.resetButton.isHidden = true
+            cropViewController.rotateClockwiseButtonHidden = true // Nasconde il pulsante di rotazione
 
-            self.present(cropViewController, animated: true, completion: nil)
+            self.present(cropViewController, animated: true)
         }
     }
+
+    // MARK: - TOCropViewControllerDelegate
+    func cropViewController(_ cropViewController: TOCropViewController, didCropTo image: UIImage, with cropRect: CGRect, angle: Int) {
+        print("Crop completed. Preparing to present SecondViewController.")
+        
+        cropViewController.dismiss(animated: true) {
+            let screenshotVC = SecondViewController()
+            screenshotVC.screenshotImage = image
+            screenshotVC.pageURL = self.webView.url
+            screenshotVC.modalPresentationStyle = .fullScreen
+
+            self.present(screenshotVC, animated: true) {
+                print("SecondViewController presented")
+            }
+        }
+    }
+
+    func cropViewController(_ cropViewController: TOCropViewController, didFinishCancelled cancelled: Bool) {
+        cropViewController.dismiss(animated: true) {
+            print("Crop cancelled.")
+        }
+    }
+}
 
     class CustomCropViewController: TOCropViewController {
         override func viewDidAppear(_ animated: Bool) {
@@ -241,26 +268,11 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, TOCropViewC
         }
     }
 
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        navigationItem.titleView?.isHidden = false
-    }
-}
+   
 
-extension BrowserViewController: CropViewControllerDelegate {
-    @nonobjc func cropViewController(_ cropViewController: CropViewController, didCropToImage image: UIImage, withRect cropRect: CGRect, angle: Int) {
-        cropViewController.dismiss(animated: true, completion: nil)
 
-        let screenshotVC = SecondViewController()
-        screenshotVC.screenshotImage = image
-        screenshotVC.pageURL = webView.url
-        screenshotVC.modalPresentationStyle = .fullScreen
-        self.present(screenshotVC, animated: true, completion: nil)
-    }
 
-    @nonobjc func cropViewController(_ cropViewController: CropViewController, didFinishCancelled cancelled: Bool) {
-        cropViewController.dismiss(animated: true, completion: nil)
-    }
-}
+
 
 extension BrowserViewController: YourViewControllerDelegate {
     func didSelectWebsite(url: URL) {

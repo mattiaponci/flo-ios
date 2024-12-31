@@ -7,55 +7,63 @@
 
 import UIKit
 
+// Cache globale per le immagini
 var imageCache = [String: UIImage]()
 
 class CustomImageView: UIImageView {
     
+    // Variabile per tenere traccia dell'ultima URL caricata
     var lastImgUrlUsedToLoadImage: String?
     
     func loadImage(with urlString: String) {
-        
-        // set image to nil
+        // Resetta l'immagine corrente
         self.image = nil
         
-        // set lastImgUrlUsedToLoadImage
+        // Memorizza l'ultima URL usata
         lastImgUrlUsedToLoadImage = urlString
         
-        // check if image exists in cache
+        // Controlla se l'immagine esiste nella cache
         if let cachedImage = imageCache[urlString] {
             self.image = cachedImage
             return
         }
         
-        // url for image location
-        guard let url = URL(string: urlString) else { return }
+        // Verifica che l'URL sia valido
+        guard let url = URL(string: urlString) else {
+            print("Invalid URL string: \(urlString)")
+            return
+        }
         
-        // fetch contents of URL
-        URLSession.shared.dataTask(with: url) { (data, response, error) in
+        // Effettua la richiesta per ottenere l'immagine
+        URLSession.shared.dataTask(with: url) { [weak self] (data, response, error) in
             
-            // handle error
+            // Assicurati che `self` sia ancora disponibile
+            guard let self = self else { return }
+            
+            // Gestisci l'errore
             if let error = error {
-                print("Failed to load image with error", error.localizedDescription)
+                print("Failed to load image from URL: \(url.absoluteString) with error: \(error.localizedDescription)")
+                return
             }
             
+            // Controlla che l'URL sia ancora quello corretto
             if self.lastImgUrlUsedToLoadImage != url.absoluteString {
                 return
             }
             
-            // image data
-            guard let imageData = data else { return }
+            // Controlla che i dati siano validi e crea l'immagine
+            guard let imageData = data, let photoImage = UIImage(data: imageData) else {
+                print("Failed to create image from data for URL: \(url.absoluteString)")
+                return
+            }
             
-            // create image using image data
-            let photoImage = UIImage(data: imageData)
-            
-            // set key and value for image cache
+            // Salva l'immagine nella cache
             imageCache[url.absoluteString] = photoImage
             
-            // set image
+            // Aggiorna l'immagine sull'interfaccia utente
             DispatchQueue.main.async {
                 self.image = photoImage
             }
-            }.resume()
+        }.resume()
     }
 }
-

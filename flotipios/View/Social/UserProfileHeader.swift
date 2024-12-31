@@ -5,11 +5,6 @@
 //  Created by mattia poncini on 29.09.2024.
 //
 
-//
-//  UserProfileHeader.swift
-//  flotipios
-//
-//  Created by mattia poncini on
 import UIKit
 import Firebase
 
@@ -18,6 +13,7 @@ class UserProfileHeader: UICollectionViewCell {
     // MARK: - Properties
     
     var delegate: UserProfileHeaderDelegate?
+    private var cachedSavedSitesCount: Int = 0 // Cache for saved sites count
     
     var user: User? {
         didSet {
@@ -25,17 +21,17 @@ class UserProfileHeader: UICollectionViewCell {
             nameLabel.text = user?.name
             usernameLabel.text = user?.username
             
-            // Aggiorna la userRedLabel con l'username da Firebase
-            if let username = user?.username {
-                userRedLabel.text = username
-            } else {
-                userRedLabel.text = "" // Testo di fallback
+            // Update the userRedLabel with the username
+            userRedLabel.text = user?.username ?? ""
+            
+            // Load profile image
+            if let profileImageUrl = user?.profileImageUrl {
+                profileImageView.loadImage(with: profileImageUrl)
+                profileImageView.layer.cornerRadius = 50
             }
             
-            // Carica l'immagine del profilo
-            guard let profileImageUrl = user?.profileImageUrl else { return }
-            profileImageView.loadImage(with: profileImageUrl)
-            profileImageView.layer.cornerRadius = 50 // Tondo con metà larghezza/altezza
+            // Update saved sites count
+            updateSavedSitesCount(for: user)
         }
     }
     
@@ -81,17 +77,7 @@ class UserProfileHeader: UICollectionViewCell {
         return label
     }()
     
-    // Username Static Label
-    let usernameStaticLabel: UILabel = {
-        let label = UILabel()
-        label.text = "Username"
-        label.font = UIFont.italicSystemFont(ofSize: 12)
-        label.textColor = .gray
-        label.textAlignment = .center
-        return label
-    }()
-    
-    // Username Label (Dynamic)
+    // Username Label
     let usernameLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 14)
@@ -136,6 +122,7 @@ class UserProfileHeader: UICollectionViewCell {
         label.addGestureRecognizer(tap)
         return label
     }()
+    
     // Settings Button
     let settingsButton: UIButton = {
         let button = UIButton(type: .system)
@@ -145,6 +132,7 @@ class UserProfileHeader: UICollectionViewCell {
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
+    
     // Following Label
     lazy var followingLabel: UILabel = {
         let label = UILabel()
@@ -204,10 +192,9 @@ class UserProfileHeader: UICollectionViewCell {
         
         addSubview(badgeView)
         badgeView.addSubview(profileImageView)
-        badgeView.addSubview(userRedLabel) // Aggiungi la label "User"
-        
+        badgeView.addSubview(userRedLabel)
         badgeView.addSubview(statsStackView)
-        badgeView.addSubview(settingsButton) // Aggiungi il pulsante al badgeView
+        badgeView.addSubview(settingsButton)
 
         setupConstraints()
     }
@@ -243,12 +230,44 @@ class UserProfileHeader: UICollectionViewCell {
             statsStackView.heightAnchor.constraint(equalToConstant: 40),
             
             // Settings Button
-            settingsButton.topAnchor.constraint(equalTo: badgeView.topAnchor, constant: 10), // Posizionato nell'angolo superiore destro del badge
-            settingsButton.trailingAnchor.constraint(equalTo: badgeView.trailingAnchor, constant: -10), // Margine destro
+            settingsButton.topAnchor.constraint(equalTo: badgeView.topAnchor, constant: 10),
+            settingsButton.trailingAnchor.constraint(equalTo: badgeView.trailingAnchor, constant: -10),
             settingsButton.widthAnchor.constraint(equalToConstant: 30),
             settingsButton.heightAnchor.constraint(equalTo: settingsButton.widthAnchor)
         ])
-    }   // MARK: - Delegate Actions
+    }
+    
+    private func updateSavedSitesCount(for user: User?) {
+        guard let userId = user?.uid else { return }
+        
+        // Use cached value if available
+        if cachedSavedSitesCount > 0 {
+            updateSavedSitesLabel(with: cachedSavedSitesCount)
+        }
+        
+        // Listen to Firebase updates
+        Database.database().reference().child("user_posts_sites").child(userId).observe(.value) { snapshot in
+            let count = snapshot.childrenCount
+            self.cachedSavedSitesCount = Int(count)
+            self.updateSavedSitesLabel(with: self.cachedSavedSitesCount)
+        }
+    }
+    
+    private func updateSavedSitesLabel(with count: Int) {
+        DispatchQueue.main.async {
+            let attributedText = NSMutableAttributedString(string: "\(count)\n", attributes: [
+                .font: UIFont.boldSystemFont(ofSize: 14),
+                .foregroundColor: UIColor.black
+            ])
+            attributedText.append(NSAttributedString(string: "saved sites", attributes: [
+                .font: UIFont.systemFont(ofSize: 14),
+                .foregroundColor: UIColor.lightGray
+            ]))
+            self.savedSitesLabel.attributedText = attributedText
+        }
+    }
+    
+    // MARK: - Delegate Actions
     
     @objc func handleFollowersTapped() {
         delegate?.handleFollowersTapped(for: self)
@@ -261,8 +280,8 @@ class UserProfileHeader: UICollectionViewCell {
     func setUserStats(for user: User?) {
         delegate?.setUserStats(for: self)
     }
+    
     @objc func handleSettingsTapped() {
-        delegate?.handleEditFollowTapped(for: self) // Oppure esegui l'azione desiderata
+        delegate?.handleEditFollowTapped(for: self)
     }
-   
 }

@@ -177,7 +177,6 @@ class SearchVC: UIViewController,
     }
 
     // MARK: - fetchPostDetails: Recupera i dati di un post specifico dal database e dall'utente
-    // MARK: - fetchPostDetails: Recupera i dati di un post specifico dal database e dall'utente
     func fetchPostDetails(postId: String) {
         print("Recupero i dettagli del post con ID: \(postId)...")
         
@@ -272,7 +271,7 @@ class SearchVC: UIViewController,
         // Ogni volta che fai refresh, chiediamo di nuovo un post random
         userPostsSites.removeAll()
         self.fullCollectionView.reloadData()
-        fetchRandomSite()
+      //  fetchRandomSite()
     }
     
     // MARK: - Refresh Control

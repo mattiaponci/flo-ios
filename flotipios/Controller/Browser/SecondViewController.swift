@@ -41,12 +41,13 @@ class SecondViewController: UIViewController, CropViewControllerDelegate, UIText
         // Configure the top bar
         topBar = UIView()
         topBar.translatesAutoresizingMaskIntoConstraints = false
-        topBar.backgroundColor = .lightGray
+        topBar.backgroundColor = .white
         view.addSubview(topBar)
 
         // Configure the close button
         closeButton = UIButton(type: .system)
-        closeButton.setTitle("Close", for: .normal)
+        closeButton.setTitle("Cancel", for: .normal)
+        closeButton.setTitleColor(.black, for: .normal) // Imposta il colore del testo su nero
         closeButton.addTarget(self, action: #selector(closeButtonTapped), for: .touchUpInside)
         closeButton.translatesAutoresizingMaskIntoConstraints = false
         topBar.addSubview(closeButton)
@@ -54,56 +55,48 @@ class SecondViewController: UIViewController, CropViewControllerDelegate, UIText
         // Configure the UIImageView to display the screenshot image
         imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.contentMode = .scaleAspectFit // Mostra tutta l'immagine
+        imageView.contentMode = .scaleAspectFill
         imageView.isUserInteractionEnabled = true
-        imageView.layer.cornerRadius = 1 // Ridotto il bordo arrotondato al minimo
+        imageView.layer.cornerRadius = 8 // Arrotondamento dei bordi
         imageView.clipsToBounds = true
+        imageView.backgroundColor = .lightGray // Colore di sfondo
         view.addSubview(imageView)
 
         // Configure the UITextView for comments
         textView = UITextView()
         textView.translatesAutoresizingMaskIntoConstraints = false
-        textView.layer.borderColor = UIColor.gray.cgColor
-        textView.layer.borderWidth = 1.0
-        textView.layer.cornerRadius = 10
-        textView.backgroundColor = UIColor.lightGray // Sfondo grigio
-        textView.textColor = .black // Colore del testo nero
-        textView.font = UIFont.systemFont(ofSize: 14) // Testo più piccolo
-        textView.delegate = self // Assicura che il delegato sia assegnato correttamente
+        textView.layer.cornerRadius = 8 // Arrotondamento dei bordi
+        textView.textColor = .black
+        textView.backgroundColor = UIColor.lightGray // Colore di sfondo grigio
+
+        textView.font = UIFont.systemFont(ofSize: 12)
+        textView.delegate = self
         view.addSubview(textView)
 
         // Configure the Post button
         postButton = UIButton(type: .system)
         postButton.setTitle("Post", for: .normal)
         postButton.setTitleColor(.white, for: .normal)
-        postButton.backgroundColor = .systemBlue
-        postButton.layer.cornerRadius = 10
+        postButton.backgroundColor = UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1) // Colore di sfondo chiaro
+        postButton.layer.cornerRadius = 5
         postButton.addTarget(self, action: #selector(postButtonTapped), for: .touchUpInside)
         postButton.translatesAutoresizingMaskIntoConstraints = false
+        postButton.isEnabled = false // Disabilitato inizialmente
         view.addSubview(postButton)
 
         // Configure the Save button
         saveButton = UIButton(type: .system)
         saveButton.setTitle("Save", for: .normal)
         saveButton.setTitleColor(.white, for: .normal)
-        saveButton.backgroundColor = .systemGreen
-        saveButton.layer.cornerRadius = 10
+        saveButton.backgroundColor = UIColor.systemGreen
+        saveButton.layer.cornerRadius = 5
         saveButton.addTarget(self, action: #selector(saveButtonTapped), for: .touchUpInside)
         saveButton.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(saveButton)
 
-        // Configure the user posts collection view
-        let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .horizontal
-        userPostsCollectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        userPostsCollectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "postCell")
-        userPostsCollectionView.dataSource = self
-        userPostsCollectionView.delegate = self
-        userPostsCollectionView.backgroundColor = .white
-        userPostsCollectionView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(userPostsCollectionView)
-
         setupConstraints()
+        textView.delegate = self
+
     }
 
     func setupConstraints() {
@@ -116,33 +109,31 @@ class SecondViewController: UIViewController, CropViewControllerDelegate, UIText
             closeButton.leadingAnchor.constraint(equalTo: topBar.leadingAnchor, constant: 10),
             closeButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
 
+            // ImageView constraints
             imageView.topAnchor.constraint(equalTo: topBar.bottomAnchor, constant: 20),
             imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            imageView.heightAnchor.constraint(equalToConstant: 250), // Altezza dell'immagine
+            imageView.widthAnchor.constraint(equalToConstant: 100),
+            imageView.heightAnchor.constraint(equalToConstant: 100),
 
-            textView.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 20),
-            textView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            // TextView constraints
+            textView.topAnchor.constraint(equalTo: topBar.bottomAnchor, constant: 20),
+            textView.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 12),
             textView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            textView.heightAnchor.constraint(equalToConstant: 60), // Altezza ridotta
+            textView.heightAnchor.constraint(equalToConstant: 100),
 
-            postButton.topAnchor.constraint(equalTo: textView.bottomAnchor, constant: 20),
+            // Post button constraints
+            postButton.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 20),
             postButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             postButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             postButton.heightAnchor.constraint(equalToConstant: 50),
 
-            saveButton.topAnchor.constraint(equalTo: postButton.bottomAnchor, constant: 20), // Aggiunto spazio per evitare sovrapposizione
+            // Save button constraints
+            saveButton.topAnchor.constraint(equalTo: postButton.bottomAnchor, constant: 20),
             saveButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             saveButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             saveButton.heightAnchor.constraint(equalToConstant: 50),
-
-            userPostsCollectionView.topAnchor.constraint(equalTo: saveButton.bottomAnchor, constant: 20),
-            userPostsCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            userPostsCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            userPostsCollectionView.heightAnchor.constraint(equalToConstant: 150)
         ])
     }
-
     func configureImageIfNeeded() {
         if let image = screenshotImage {
             imageView.image = image
@@ -170,6 +161,9 @@ class SecondViewController: UIViewController, CropViewControllerDelegate, UIText
     }
 
     @objc func saveButtonTapped() {
+        dismissKeyboard()
+
+        
         if let url = pageURL {
             print("Save button tapped, URL: \(url.absoluteString)")
         } else {
@@ -196,6 +190,16 @@ class SecondViewController: UIViewController, CropViewControllerDelegate, UIText
 
     // Rest of your code...
 
+    func textViewDidChange(_ textView: UITextView) {
+        // Controlla se c'è del testo nel textView
+        let hasText = !textView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+
+        // Abilita o disabilita il bottone in base al contenuto
+        postButton.isEnabled = hasText
+
+        // Cambia il colore del bottone
+        postButton.backgroundColor = hasText ? UIColor.systemBlue : UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1)
+    }
 
     func handleUploadsavesitePost() {
         guard let caption = textView.text,

@@ -212,13 +212,23 @@ class YourViewController: UIViewController, UICollectionViewDataSource, UICollec
             }
         } else if collectionView == userPostsSitesCollectionView {
             if showDeleteButtons {
-                // Mostra un'alert di conferma per la cancellazione
+                // Show confirmation alert for deletion
                 let post = userPostsSites[indexPath.item]
-                let alertController = UIAlertController(title: "Delete Post", message: "Are you sure you want to delete this post?", preferredStyle: .alert)
+                let alertController = UIAlertController(
+                    title: "Delete Post",
+                    message: "Are you sure you want to delete this post?",
+                    preferredStyle: .alert
+                )
                 alertController.addAction(UIAlertAction(title: "Delete", style: .destructive, handler: { _ in
-                    self.userPostsSites.remove(at: indexPath.item)
-                    self.userPostsSitesCollectionView.reloadData()
-                    post.deletePost()
+                    post.deletePost { error in
+                        if let error = error {
+                            print("Failed to delete post: \(error.localizedDescription)")
+                        } else {
+                            print("Post deleted successfully")
+                            self.userPostsSites.remove(at: indexPath.item)
+                            self.userPostsSitesCollectionView.reloadData()
+                        }
+                    }
                 }))
                 alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
                 present(alertController, animated: true, completion: nil)

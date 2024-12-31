@@ -57,7 +57,7 @@ class Post {
 
         if addLike {
             USER_LIKES_REF.child(currentUid).updateChildValues([postId: 1], withCompletionBlock: { (err, ref) in
-                self.sendLikeNotificationToServer()
+               // self.sendLikeNotificationToServer()
 
                 POST_LIKES_REF.child(self.postId).updateChildValues([currentUid: 1], withCompletionBlock: { (err, ref) in
                     self.likes += 1
@@ -98,7 +98,7 @@ class Post {
         })
     }
 
-    func deletePost() {
+  /*  func deletePost() {
         guard let currentUid = Auth.auth().currentUser?.uid else { return }
         guard let postId = self.postId else { return }
 
@@ -141,23 +141,82 @@ class Post {
         }
 
         COMMENT_REF.child(postId).removeValue()
-    }
-
-    func sendLikeNotificationToServer() {
+    }*/
+    func deletePost(completion: @escaping (Error?) -> Void) {
         guard let currentUid = Auth.auth().currentUser?.uid else { return }
-        let creationDate = Int(NSDate().timeIntervalSince1970)
+        guard let postId = self.postId else { return }
 
-        if currentUid != self.ownerUid {
-            let values = ["checked": 0,
-                          "creationDate": creationDate,
-                          "uid": currentUid,
-                          "type": LIKE_INT_VALUE,
-                          "postId": postId] as [String: Any]
+        let postRef = Database.database().reference()
 
-            let notificationRef = NOTIFICATIONS_REF.child(self.ownerUid).childByAutoId()
-            notificationRef.updateChildValues(values, withCompletionBlock: { (err, ref) in
-                USER_LIKES_REF.child(currentUid).child(self.postId).setValue(notificationRef.key)
-            })
+        // Delete the image from Firebase Storage
+        if let imageUrl = URL(string: self.imageUrl) {
+            Storage.storage().reference(forURL: imageUrl.absoluteString).delete { error in
+                if let error = error {
+                    print("Failed to delete image: \(error.localizedDescription)")
+                }
+            }
+        }
+
+        // Remove post references in user_posts_sites
+        postRef.child("user_posts_sites").child(currentUid).child(postId).removeValue { error, _ in
+            if let error = error {
+                print("Failed to delete user_posts_sites reference: \(error.localizedDescription)")
+            }
+        }
+
+        // Remove post references in posts
+        postRef.child("posts").child(postId).removeValue { error, _ in
+            if let error = error {
+                print("Failed to delete posts reference: \(error.localizedDescription)")
+            }
+        }
+
+        // Remove post from user and followers' feeds
+        postRef.child("user_feeds").child(currentUid).child(postId).removeValue { error, _ in
+            if let error = error {
+                print("Failed to delete user_feeds reference: \(error.localizedDescription)")
+            }
+        }
+
+        postRef.child("user_feeds").observe(.childAdded) { snapshot in
+            postRef.child("user_feeds").child(snapshot.key).child(postId).removeValue { error, _ in
+                if let error = error {
+                    print("Failed to delete from follower feeds: \(error.localizedDescription)")
+                }
+            }
+        }
+
+        // Remove likes
+        postRef.child("post-likes").child(postId).removeValue { error, _ in
+            if let error = error {
+                print("Failed to delete post-likes reference: \(error.localizedDescription)")
+            }
+        }
+
+        postRef.child("user-likes").observe(.childAdded) { snapshot in
+            postRef.child("user-likes").child(snapshot.key).child(postId).removeValue { error, _ in
+                if let error = error {
+                    print("Failed to delete user-likes reference: \(error.localizedDescription)")
+                }
+            }
+        }
+
+        // Remove related hashtags
+        let words = caption.components(separatedBy: .whitespacesAndNewlines)
+        for var word in words {
+            if word.hasPrefix("#") {
+                word = word.trimmingCharacters(in: .punctuationCharacters)
+                postRef.child("hashtags").child(word).child(postId).removeValue { error, _ in
+                    if let error = error {
+                        print("Failed to delete hashtag reference: \(error.localizedDescription)")
+                    }
+                }
+            }
+        }
+
+        // Remove comments
+        postRef.child("comments").child(postId).removeValue { error, _ in
+            completion(error) // Pass the error (if any) to the completion block
         }
     }
 }
