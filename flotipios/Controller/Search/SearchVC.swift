@@ -17,6 +17,11 @@ class SearchVC: UIViewController,
                 UICollectionViewDataSource,
                 UICollectionViewDelegateFlowLayout,
                 FeedCellDelegate {
+    func handleFlagToLike(for cell: FeedCell) {
+        print("")
+
+    }
+    
 
     // MARK: - Proprietà
     
@@ -35,6 +40,7 @@ class SearchVC: UIViewController,
     
     // Search bar
     var searchBar = UISearchBar()
+    var isSearching: Bool = false
 
     // MARK: - Elementi UI
     
@@ -64,57 +70,70 @@ class SearchVC: UIViewController,
         cv.register(FeedCell.self, forCellWithReuseIdentifier: "FeedCell")
         return cv
     }()
-    
+    lazy var noResultsLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Nessun risultato trovato"
+        label.textAlignment = .center
+        label.textColor = .gray
+        label.isHidden = true // Nascondi inizialmente
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+
+  
     // MARK: - viewDidLoad
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         view.backgroundColor = .white
-        
-        // 1) Configuriamo la searchBar
-        configureSearchBar()
-        
-        // 2) Navigation Bar
-        configureNavigationBar()
-        
-        // 3) Aggiungiamo subview e configuriamo constraint
-        view.addSubview(fullCollectionView)
-        view.addSubview(tableView)
-        
-        fullCollectionView.translatesAutoresizingMaskIntoConstraints = false
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        
-        NSLayoutConstraint.activate([
-            // CollectionView a tutto schermo
-            fullCollectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            fullCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            fullCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            fullCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+          
+          // 1) Configuriamo la searchBar
+          configureSearchBar()
+          
+          // 2) Navigation Bar
+          configureNavigationBar()
+          
+          // 3) Aggiungiamo subview e configuriamo constraint
+          view.addSubview(fullCollectionView)
+          view.addSubview(tableView)
+          view.addSubview(noResultsLabel) // Aggiungi la noResultsLabel alla vista principale
+          
+          fullCollectionView.translatesAutoresizingMaskIntoConstraints = false
+          tableView.translatesAutoresizingMaskIntoConstraints = false
+          
+          NSLayoutConstraint.activate([
+              // CollectionView a tutto schermo
+              fullCollectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+              fullCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+              fullCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+              fullCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+              
+              // TableView sopra la collection (stessa posizione e dimensioni)
+              tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+              tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+              tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+              tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+              
             
-            // TableView sopra la collection (stessa posizione e dimensioni)
-            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
-        
-        // 4) Configuriamo il refreshControl per la collectionView
-        configureRefreshControl()
-        fullCollectionView.refreshControl = refreshControl
-        
-        // 5) Controllo utente loggato
-        if let user = Auth.auth().currentUser {
-            print("User authenticated with UID: \(user.uid)")
-        } else {
-            print("No user authenticated.")
-        }
-        
-        // 6) Se vuoi caricare dati dell’utente, fallo qui (opzionale)
-        fetchCurrentUserData {
-            // Una volta preso l’utente, chiediamo il random post
-            self.fetchRandomSite()
-        }
+          ])
+          
+          // 4) Configuriamo il refreshControl per la collectionView
+          configureRefreshControl()
+          fullCollectionView.refreshControl = refreshControl
+          
+          // 5) Controllo utente loggato
+          if let user = Auth.auth().currentUser {
+              print("User authenticated with UID: \(user.uid)")
+          } else {
+              print("No user authenticated.")
+          }
+          
+          // 6) Se vuoi caricare dati dell’utente, fallo qui (opzionale)
+          fetchCurrentUserData {
+              // Una volta preso l’utente, chiediamo il random post
+              self.fetchRandomSite()
+          }
     }
     
     // MARK: - fetchRandomSite: chiama la Cloud Function e carica 1 post
@@ -230,6 +249,10 @@ class SearchVC: UIViewController,
             }
         }
     }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 60 // Altezza personalizzata
+    }
     // MARK: - fetchUserDetails: Recupera i dettagli di un utente dato il suo ID
     func fetchUserDetails(userId: String, completion: @escaping (User?) -> Void) {
         let userRef = Database.database().reference().child("users").child(userId)
@@ -271,7 +294,7 @@ class SearchVC: UIViewController,
         // Ogni volta che fai refresh, chiediamo di nuovo un post random
         userPostsSites.removeAll()
         self.fullCollectionView.reloadData()
-      //  fetchRandomSite()
+       fetchRandomSite()
     }
     
     // MARK: - Refresh Control
@@ -285,18 +308,19 @@ class SearchVC: UIViewController,
     
     // MARK: - TableView DataSource / Delegate
     func numberOfSections(in tableView: UITableView) -> Int { return 1 }
+   
     
-    func tableView(_ tableView: UITableView,
-                   numberOfRowsInSection section: Int) -> Int {
-        return inSearchMode ? filteredUsers.count : 0
-    }
-    
-    func tableView(_ tableView: UITableView,
-                   cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(
-            withIdentifier: reuseIdentifier,
-            for: indexPath
-        ) as? SearchUserCell else {
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        if filteredUsers.isEmpty && inSearchMode && !isSearching {
+            let cell = UITableViewCell(style: .default, reuseIdentifier: "NoResultsCell")
+            cell.textLabel?.text = "Nessun risultato trovato"
+            cell.textLabel?.textColor = .gray
+            cell.textLabel?.textAlignment = .center
+            cell.selectionStyle = .none
+            return cell
+        }
+
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier, for: indexPath) as? SearchUserCell else {
             return UITableViewCell()
         }
         
@@ -304,12 +328,26 @@ class SearchVC: UIViewController,
         cell.user = user
         return cell
     }
-    
-    func tableView(_ tableView: UITableView,
-                   didSelectRowAt indexPath: IndexPath) {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if isSearching {
+            return 0 // Non mostra nulla mentre sta cercando
+        }
+
+        if filteredUsers.isEmpty && inSearchMode {
+            return 1 // Mostra "Nessun risultato trovato" solo se non ci sono risultati
+        }
+
+        return filteredUsers.count
+    }
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        if filteredUsers.isEmpty {
+            return // Non fare nulla se la cella mostra "No Results"
+        }
+        
         let user = filteredUsers[indexPath.row]
         let userProfileVC = UserProfileVC(collectionViewLayout: UICollectionViewFlowLayout())
         userProfileVC.user = user
+        userProfileVC.isFromSearch = true // Indica che viene dalla ricerca
         navigationController?.pushViewController(userProfileVC, animated: true)
     }
     
@@ -454,28 +492,61 @@ class SearchVC: UIViewController,
     
     // MARK: - Ricerca Utenti
     func searchUsers(withUsername username: String) {
+        // Resetta i risultati e aggiorna lo stato della ricerca
         self.filteredUsers = []
+        self.isSearching = true
+        self.noResultsLabel.isHidden = true
+        tableView.reloadData()
         
+        guard !username.isEmpty else {
+            // Se il campo di ricerca è vuoto, resetta la modalità di ricerca
+            inSearchMode = false
+            isSearching = false
+            tableView.reloadData()
+            return
+        }
+
+        inSearchMode = true
+
+        // Query per ricerca parziale
         let query = USER_REF
             .queryOrdered(byChild: "username")
             .queryStarting(atValue: username)
             .queryEnding(atValue: username + "\u{f8ff}")
-            .queryLimited(toLast: 10)
-        
+
         query.observeSingleEvent(of: .value) { snapshot in
             guard let allObjects = snapshot.children.allObjects as? [DataSnapshot] else {
+                print("Nessun utente trovato.")
                 self.filteredUsers = []
+                self.isSearching = false
                 self.tableView.reloadData()
+                self.noResultsLabel.isHidden = false // Mostra il messaggio
                 return
             }
-            
+
+            // Itera sugli utenti trovati
+            let group = DispatchGroup()
+            self.filteredUsers = []
+
             allObjects.forEach { snap in
                 let uid = snap.key
+                group.enter()
                 Database.fetchUser(with: uid) { fetchedUser in
                     if !self.filteredUsers.contains(where: { $0.uid == fetchedUser.uid }) {
                         self.filteredUsers.append(fetchedUser)
-                        self.tableView.reloadData()
                     }
+                    group.leave()
+                }
+            }
+
+            // Quando tutte le richieste sono completate
+            group.notify(queue: .main) {
+                self.isSearching = false
+                self.tableView.reloadData()
+                if self.filteredUsers.isEmpty {
+                    self.noResultsLabel.isHidden = false // Mostra il messaggio solo se vuoto
+                } else {
+                    self.noResultsLabel.isHidden = true // Nascondi il messaggio
                 }
             }
         }
@@ -504,4 +575,6 @@ class SearchVC: UIViewController,
         navController.modalPresentationStyle = .fullScreen
         present(navController, animated: true, completion: nil)
     }
+    
+    
 }

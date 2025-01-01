@@ -17,6 +17,12 @@ protocol UserVCDelegate: AnyObject {
 }
 
 class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, UserProfileHeaderDelegate, UserCellDelegate {
+    func didTapBackToSearch() {
+        navigationController?.popViewController(animated: true)
+    }
+    
+    var isFromSearch: Bool = false
+    
     
     func handleOptionsTapped(for cell: UserPostCell, isDoubleTap: Bool) {
         guard let post = cell.post else { return }
@@ -56,14 +62,19 @@ class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLay
 
         // Delete Post
         alertController.addAction(UIAlertAction(title: "Delete Post", style: .destructive, handler: { _ in
-            post.deletePost { error in
+            guard let postId = post.postId else {
+                print("Post ID not found.")
+                return
+            }
+
+            post.deletePost(postId: postId) { error in
                 if let error = error {
                     print("Failed to delete post: \(error.localizedDescription)")
                     return
                 }
 
                 DispatchQueue.main.async {
-                    self.posts.removeAll { $0.postId == post.postId }
+                    self.posts.removeAll { $0.postId == postId }
                     self.collectionView.reloadData()
                 }
             }
@@ -74,7 +85,6 @@ class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLay
 
         present(alertController, animated: true, completion: nil)
     }
-    
     
     func handleFlagToLike(for cell: UserPostCell, isDoubleTap: Bool) {
         guard let postId = cell.post?.postId else { return }
@@ -169,14 +179,25 @@ class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLay
         // Configure refresh control
         configureRefreshControl()
         
-        // Fetch data
-       
-        
-        // Fetch user data and then posts
-            fetchCurrentUserData {
-                self.fetchSitesSavePosts()
+        // Configura l'header della collection view
+        if let user = self.user {
+            // Configura l'header per un utente trovato tramite ricerca
+            if let header = collectionView.supplementaryView(forElementKind: UICollectionView.elementKindSectionHeader, at: IndexPath(item: 0, section: 0)) as? UserProfileHeader {
+                header.configureHeader(for: user, isFromSearch: true)
             }
-       
+            
+            // Se è un utente passato, carica i suoi post
+            fetchPosts(for: user)
+        } else {
+            // Se è l'utente corrente, configura l'header e carica i suoi post
+            fetchCurrentUserData { [weak self] in
+                guard let self = self, let currentUser = self.user else { return }
+                if let header = self.collectionView.supplementaryView(forElementKind: UICollectionView.elementKindSectionHeader, at: IndexPath(item: 0, section: 0)) as? UserProfileHeader {
+                    header.configureHeader(for: currentUser, isFromSearch: false)
+                }
+                self.fetchPosts(for: currentUser)
+            }
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -265,7 +286,9 @@ class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLay
     
     override func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: headerIdentifier, for: indexPath) as! UserProfileHeader
-        header.user = self.user
+        if let user = self.user {
+            header.configureHeader(for: user, isFromSearch: isFromSearch)
+        }
         header.delegate = self
         return header
     }
@@ -279,7 +302,7 @@ class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLay
 
     }
     
-    
+  
     
     func handleLike(postId: String, addLike: Bool) {
         guard let currentUid = Auth.auth().currentUser?.uid else { return }
@@ -325,33 +348,27 @@ class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLay
     @objc func handleRefresh() {
         posts.removeAll(keepingCapacity: false)
         currentKey = nil
-        fetchSitesSavePosts()
+
+        if let user = self.user {
+            // Se stiamo visualizzando un profilo utente cercato
+            print("Refreshing posts for searched user with ID: \(user.uid ?? "N/A")")
+            fetchPosts(for: user)
+        } else {
+            // Se stiamo visualizzando il profilo dell'utente corrente
+            print("Refreshing posts for current user")
+            fetchCurrentUserData { [weak self] in
+                guard let self = self, let currentUser = self.user else { return }
+                self.fetchPosts(for: currentUser)
+            }
+        }
+
         collectionView.reloadData()
     }
     
     // MARK: - API
-    func fetchPosts() {
-        guard let currentUser = Auth.auth().currentUser else { return }
-        let uid = user?.uid ?? currentUser.uid
-        let query: DatabaseQuery = currentKey == nil
-            ? USER_POSTS_REF.child(uid).queryLimited(toLast: 10)
-            : USER_POSTS_REF.child(uid).queryOrderedByKey().queryEnding(atValue: currentKey!).queryLimited(toLast: 7)
-        
-        query.observeSingleEvent(of: .value) { snapshot in
-            guard let allObjects = snapshot.children.allObjects as? [DataSnapshot] else { return }
-            allObjects.forEach { self.fetchPost(withPostId: $0.key) }
-            self.currentKey = allObjects.first?.key
-            self.collectionView.refreshControl?.endRefreshing()
-        }
-    }
+   
     
-    func fetchPost(withPostId postId: String) {
-        Database.fetchPost(with: postId) { post in
-            self.posts.append(post)
-            self.posts.sort { $0.creationDate > $1.creationDate }
-            self.collectionView.reloadData()
-        }
-    }
+   
     
     func fetchCurrentUserData(completion: @escaping () -> Void) {
         guard let currentUid = Auth.auth().currentUser?.uid else {
@@ -426,6 +443,58 @@ class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLay
             }
         } withCancel: { error in
             print("Failed to fetch user posts sites: \(error.localizedDescription)")
+            self.collectionView?.refreshControl?.endRefreshing()
+        }
+    }
+    func fetchPosts(for user: User) {
+        guard let userId = user.uid else {
+            print("User ID is missing. Cannot fetch posts.")
+            return
+        }
+
+        print("Fetching posts for user with ID: \(userId)")
+
+        let postsRef = Database.database().reference().child("user_posts_sites").child(userId)
+
+        postsRef.observeSingleEvent(of: .value) { snapshot in
+            print("Snapshot received: \(snapshot)")
+
+            guard snapshot.exists() else {
+                print("No posts found for user with ID: \(userId)")
+                self.collectionView?.refreshControl?.endRefreshing()
+                return
+            }
+
+            guard let allObjects = snapshot.children.allObjects as? [DataSnapshot] else {
+                print("Failed to cast snapshot to DataSnapshot")
+                self.collectionView?.refreshControl?.endRefreshing()
+                return
+            }
+
+            self.posts.removeAll()
+
+            allObjects.forEach { snapshot in
+                let postId = snapshot.key
+                print("Fetching post with ID: \(postId)")
+
+                if let postData = snapshot.value as? [String: AnyObject] {
+                    // Crea l'oggetto Post solo se i dati sono completi
+                    let post = Post(postId: postId, user: user, dictionary: postData)
+                    self.posts.append(post)
+                } else {
+                    print("Snapshot does not contain valid data for post ID: \(snapshot.key)")
+                }
+            }
+
+            self.posts.sort(by: { $0.creationDate > $1.creationDate })
+
+            DispatchQueue.main.async {
+                print("Reloading collectionView with \(self.posts.count) posts")
+                self.collectionView?.reloadData()
+                self.collectionView?.refreshControl?.endRefreshing()
+            }
+        } withCancel: { error in
+            print("Failed to fetch posts for user with ID: \(userId): \(error.localizedDescription)")
             self.collectionView?.refreshControl?.endRefreshing()
         }
     }

@@ -214,13 +214,18 @@ class YourViewController: UIViewController, UICollectionViewDataSource, UICollec
             if showDeleteButtons {
                 // Show confirmation alert for deletion
                 let post = userPostsSites[indexPath.item]
+                guard let postId = post.postId else {
+                    print("Post ID is missing")
+                    return
+                }
+
                 let alertController = UIAlertController(
                     title: "Delete Post",
                     message: "Are you sure you want to delete this post?",
                     preferredStyle: .alert
                 )
                 alertController.addAction(UIAlertAction(title: "Delete", style: .destructive, handler: { _ in
-                    post.deletePost { error in
+                    post.deletePost(postId: postId) { error in
                         if let error = error {
                             print("Failed to delete post: \(error.localizedDescription)")
                         } else {

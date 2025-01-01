@@ -185,6 +185,19 @@ class UserProfileHeader: UICollectionViewCell {
         return stack
     }()
     
+    // Back Button
+    let backButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "chevron.backward"), for: .normal)
+        button.tintColor = .black
+        button.addTarget(self, action: #selector(handleBackToSearchTapped), for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.isHidden = true // Nascondi inizialmente
+        return button
+    }()
+
+
+    
     // MARK: - Init
     
     override init(frame: CGRect) {
@@ -195,6 +208,8 @@ class UserProfileHeader: UICollectionViewCell {
         badgeView.addSubview(userRedLabel)
         badgeView.addSubview(statsStackView)
         badgeView.addSubview(settingsButton)
+        badgeView.addSubview(backButton) // Aggiungi il pulsante Indietro
+
 
         setupConstraints()
     }
@@ -233,7 +248,13 @@ class UserProfileHeader: UICollectionViewCell {
             settingsButton.topAnchor.constraint(equalTo: badgeView.topAnchor, constant: 10),
             settingsButton.trailingAnchor.constraint(equalTo: badgeView.trailingAnchor, constant: -10),
             settingsButton.widthAnchor.constraint(equalToConstant: 30),
-            settingsButton.heightAnchor.constraint(equalTo: settingsButton.widthAnchor)
+            settingsButton.heightAnchor.constraint(equalTo: settingsButton.widthAnchor),
+            
+            // Back Button
+            backButton.topAnchor.constraint(equalTo: badgeView.topAnchor, constant: 10),
+            backButton.leadingAnchor.constraint(equalTo: badgeView.leadingAnchor, constant: 10),
+            backButton.widthAnchor.constraint(equalToConstant: 30),
+            backButton.heightAnchor.constraint(equalTo: backButton.widthAnchor)
         ])
     }
     
@@ -283,5 +304,17 @@ class UserProfileHeader: UICollectionViewCell {
     
     @objc func handleSettingsTapped() {
         delegate?.handleEditFollowTapped(for: self)
+    }
+    
+    func configureHeader(for user: User?, isFromSearch: Bool) {
+        self.user = user
+
+        // Mostra il pulsante Indietro solo per utenti della ricerca
+        backButton.isHidden = !isFromSearch
+        settingsButton.isHidden = isFromSearch
+    }
+
+    @objc func handleBackToSearchTapped() {
+        delegate?.didTapBackToSearch()
     }
 }

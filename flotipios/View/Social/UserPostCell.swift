@@ -15,8 +15,7 @@ class UserPostCell: UICollectionViewCell {
     var delegate: UserCellDelegate?
     var stackView: UIStackView!
     var postSaved: Bool = false // Variabile per monitorare lo stato del salvataggio
-    var viewSinglePost = false
-
+    
     
     var post: Post? {
         didSet {

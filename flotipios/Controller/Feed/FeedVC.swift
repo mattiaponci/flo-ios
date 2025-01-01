@@ -15,6 +15,8 @@ protocol FeedVCDelegate: AnyObject {
 }
 
 class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, FeedCellDelegate {
+   
+    
 
     weak var delegate: FeedVCDelegate?
 
@@ -150,6 +152,7 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
         handleHashtagTapped(forCell: cell)
         handleUsernameLabelTapped(forCell: cell)
         handleMentionTapped(forCell: cell)
+        configureLikeAndFlagButtons(for: cell)
 
         return cell
     }
@@ -162,15 +165,31 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
         navigationController?.pushViewController(userProfileVC, animated: true)
     }
 
+   
     func handleOptionsTapped(for cell: FeedCell) {
         guard let post = cell.post else { return }
 
         if post.ownerUid == Auth.auth().currentUser?.uid {
             let alertController = UIAlertController(title: "Options", message: nil, preferredStyle: .actionSheet)
 
+            // Edit Post
+            alertController.addAction(UIAlertAction(title: "Edit Post", style: .default, handler: { (_) in
+                let uploadPostController = UploadPostVC()
+                let navigationController = UINavigationController(rootViewController: uploadPostController)
+                uploadPostController.postToEdit = post
+                uploadPostController.uploadAction = UploadPostVC.UploadAction(index: 1)
+                navigationController.modalPresentationStyle = .fullScreen
+                self.present(navigationController, animated: true, completion: nil)
+            }))
+
             // Delete Post
             alertController.addAction(UIAlertAction(title: "Delete Post", style: .destructive, handler: { (_) in
-                post.deletePost { error in
+                guard let postId = post.postId else {
+                    print("Post ID is missing.")
+                    return
+                }
+                
+                post.deletePost(postId: postId) { error in
                     if let error = error {
                         print("Failed to delete post: \(error.localizedDescription)")
                     } else {
@@ -188,16 +207,6 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
                 }
             }))
 
-            // Edit Post
-            alertController.addAction(UIAlertAction(title: "Edit Post", style: .default, handler: { (_) in
-                let uploadPostController = UploadPostVC()
-                let navigationController = UINavigationController(rootViewController: uploadPostController)
-                uploadPostController.postToEdit = post
-                uploadPostController.uploadAction = UploadPostVC.UploadAction(index: 1)
-                navigationController.modalPresentationStyle = .fullScreen
-                self.present(navigationController, animated: true, completion: nil)
-            }))
-
             // Cancel
             alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
             present(alertController, animated: true, completion: nil)
@@ -212,19 +221,38 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
 
     func handleLikeTapped(for cell: FeedCell, isDoubleTap: Bool) {
         guard let post = cell.post else { return }
+        guard let postId = post.postId else { return }
+        guard let currentUid = Auth.auth().currentUser?.uid else { return }
 
-        if post.didLike {
-            if !isDoubleTap {
-                post.adjustLikes(addLike: false, completion: { (likes) in
-                    cell.likesLabel.text = "\(likes) likes"
-                    cell.likeButton.setImage(#imageLiteral(resourceName: "star2"), for: .normal)
-                })
+        let likesRef = Database.database().reference().child("post-likes").child(postId)
+
+        // Controlla se il like è già presente
+        likesRef.child(currentUid).observeSingleEvent(of: .value) { snapshot in
+            if snapshot.exists() {
+                // Rimuovi il like
+                likesRef.child(currentUid).removeValue { error, _ in
+                    if let error = error {
+                        print("Failed to unlike post: \(error.localizedDescription)")
+                        return
+                    }
+                    print("Post unliked")
+                    DispatchQueue.main.async {
+                        cell.likeButton.setImage(#imageLiteral(resourceName: "star"), for: .normal)
+                    }
+                }
+            } else {
+                // Aggiungi il like
+                likesRef.child(currentUid).setValue(1) { error, _ in
+                    if let error = error {
+                        print("Failed to like post: \(error.localizedDescription)")
+                        return
+                    }
+                    print("Post liked")
+                    DispatchQueue.main.async {
+                        cell.likeButton.setImage(#imageLiteral(resourceName: "star2"), for: .normal)
+                    }
+                }
             }
-        } else {
-            post.adjustLikes(addLike: true, completion: { (likes) in
-                cell.likesLabel.text = "\(likes) likes"
-                cell.likeButton.setImage(#imageLiteral(resourceName: "star"), for: .normal)
-            })
         }
     }
 
@@ -488,6 +516,72 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
                     completion(unreadCount)
                 }
             })
+        }
+    }
+    func handleFlagToLike(for cell: FeedCell) {
+        guard let post = cell.post else { return }
+        guard let postId = post.postId else { return }
+        guard let currentUid = Auth.auth().currentUser?.uid else { return }
+
+        let flagsRef = Database.database().reference().child("post-flags").child(postId)
+
+        // Controlla se il flag è già presente
+        flagsRef.child(currentUid).observeSingleEvent(of: .value) { snapshot in
+            if snapshot.exists() {
+                // Rimuovi il flag
+                flagsRef.child(currentUid).removeValue { error, _ in
+                    if let error = error {
+                        print("Failed to remove flag: \(error.localizedDescription)")
+                        return
+                    }
+                    print("Flag removed from post-flags")
+                    DispatchQueue.main.async {
+                        cell.savePostButton.setImage(#imageLiteral(resourceName: "flag"), for: .normal)
+                    }
+                }
+            } else {
+                // Aggiungi il flag
+                flagsRef.child(currentUid).setValue(1) { error, _ in
+                    if let error = error {
+                        print("Failed to add flag: \(error.localizedDescription)")
+                        return
+                    }
+                    print("Flag added to post-flags")
+                    DispatchQueue.main.async {
+                        cell.savePostButton.setImage(#imageLiteral(resourceName: "flag1"), for: .normal)
+                    }
+                }
+            }
+        }
+    }
+    func configureLikeAndFlagButtons(for cell: FeedCell) {
+        guard let post = cell.post else { return }
+        guard let postId = post.postId else { return }
+        guard let currentUid = Auth.auth().currentUser?.uid else { return }
+
+        let likesRef = Database.database().reference().child("post-likes").child(postId)
+        let flagsRef = Database.database().reference().child("post-flags").child(postId)
+
+        // Controlla lo stato del like
+        likesRef.child(currentUid).observeSingleEvent(of: .value) { snapshot in
+            DispatchQueue.main.async {
+                if snapshot.exists() {
+                    cell.likeButton.setImage(#imageLiteral(resourceName: "star2"), for: .normal)
+                } else {
+                    cell.likeButton.setImage(#imageLiteral(resourceName: "star"), for: .normal)
+                }
+            }
+        }
+
+        // Controlla lo stato del flag
+        flagsRef.child(currentUid).observeSingleEvent(of: .value) { snapshot in
+            DispatchQueue.main.async {
+                if snapshot.exists() {
+                    cell.savePostButton.setImage(#imageLiteral(resourceName: "flag1"), for: .normal)
+                } else {
+                    cell.savePostButton.setImage(#imageLiteral(resourceName: "flag"), for: .normal)
+                }
+            }
         }
     }
 }

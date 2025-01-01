@@ -17,6 +17,7 @@ protocol FeedCellDelegate {
     func configureCommentIndicatorView(for cell: FeedCell)
     func handleSaveTapped(for cell: FeedCell)  // Aggiungi questo metodo al protocollo
     func handleImageTapped(url: URL)  // Aggiungi questo metodo */
+    func handleFlagToLike(for cell: FeedCell)
 
 
 
@@ -48,6 +49,8 @@ protocol UserProfileHeaderDelegate {
     func setUserStats(for header: UserProfileHeader)
     func handleFollowersTapped(for header: UserProfileHeader)
     func handleFollowingTapped(for header: UserProfileHeader)
+    func didTapBackToSearch() // Aggiungi questo metodo
+
 }
 
 protocol NotificationCellDelegate {

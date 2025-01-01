@@ -11,6 +11,11 @@ import Firebase
 import SafariServices
 
 class HomeViewController: UICollectionViewController, UICollectionViewDelegateFlowLayout, FeedCellDelegate , PhotoCellDelegate {
+    func handleFlagToLike(for cell: FeedCell) {
+        print("")
+
+    }
+    
     func handleUsernameTapped(for cell: PhotoCell) {
         print("")
     }
@@ -301,39 +306,7 @@ class HomeViewController: UICollectionViewController, UICollectionViewDelegateFl
     }
     
     func handleOptionsTapped(for cell: FeedCell) {
-        guard let indexPath = collectionView.indexPath(for: cell) else { return }
-        let post = posts[indexPath.item]
-        
-        if post.ownerUid == Auth.auth().currentUser?.uid {
-            let alertController = UIAlertController(title: "Options", message: nil, preferredStyle: .actionSheet)
-            
-            // Delete Post
-            alertController.addAction(UIAlertAction(title: "Delete Post", style: .destructive, handler: { _ in
-                post.deletePost { error in
-                    if let error = error {
-                        print("Failed to delete post: \(error.localizedDescription)")
-                    } else {
-                        print("Post deleted successfully")
-                        self.posts.remove(at: indexPath.item)
-                        self.collectionView.deleteItems(at: [indexPath])
-                    }
-                }
-            }))
-            
-            // Edit Post
-            alertController.addAction(UIAlertAction(title: "Edit Post", style: .default, handler: { _ in
-                let uploadPostController = UploadPostVC()
-                uploadPostController.postToEdit = post
-                let navController = UINavigationController(rootViewController: uploadPostController)
-                navController.modalPresentationStyle = .fullScreen
-                self.present(navController, animated: true, completion: nil)
-            }))
-            
-            // Cancel
-            alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-            
-            present(alertController, animated: true, completion: nil)
-        }
+      
     }
     
     func handleLikeTapped(for cell: FeedCell, isDoubleTap: Bool) {

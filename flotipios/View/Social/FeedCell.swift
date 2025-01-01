@@ -197,7 +197,7 @@ class FeedCell: UICollectionViewCell {
     // MARK: - Handlers
     
     @objc func handleSaveTapped() {
-        delegate?.handleSaveTapped(for: self)
+        delegate?.handleFlagToLike(for: self)
     }
     
     @objc func handleUsernameTapped() {

@@ -142,81 +142,96 @@ class Post {
 
         COMMENT_REF.child(postId).removeValue()
     }*/
-    func deletePost(completion: @escaping (Error?) -> Void) {
-        guard let currentUid = Auth.auth().currentUser?.uid else { return }
-        guard let postId = self.postId else { return }
-
-        let postRef = Database.database().reference()
-
-        // Delete the image from Firebase Storage
-        if let imageUrl = URL(string: self.imageUrl) {
-            Storage.storage().reference(forURL: imageUrl.absoluteString).delete { error in
-                if let error = error {
-                    print("Failed to delete image: \(error.localizedDescription)")
-                }
-            }
+    func deletePost(postId: String, completion: @escaping (Error?) -> Void) {
+        guard let currentUid = Auth.auth().currentUser?.uid else {
+            print("User not authenticated.")
+            return
         }
 
-        // Remove post references in user_posts_sites
-        postRef.child("user_posts_sites").child(currentUid).child(postId).removeValue { error, _ in
-            if let error = error {
-                print("Failed to delete user_posts_sites reference: \(error.localizedDescription)")
-            }
-        }
+        let databaseRef = Database.database().reference()
+        let storageRef = Storage.storage().reference()
+        
+        // Get the post reference
+        let postRef = databaseRef.child("user_posts_sites").child(currentUid).child(postId)
 
-        // Remove post references in posts
-        postRef.child("posts").child(postId).removeValue { error, _ in
-            if let error = error {
-                print("Failed to delete posts reference: \(error.localizedDescription)")
+        // Fetch the post details to get the image URL
+        postRef.observeSingleEvent(of: .value) { snapshot in
+            guard let postData = snapshot.value as? [String: AnyObject] else {
+                print("Failed to fetch post data for postId: \(postId)")
+                completion(NSError(domain: "PostErrorDomain", code: 404, userInfo: [NSLocalizedDescriptionKey: "Post not found"]))
+                return
             }
-        }
 
-        // Remove post from user and followers' feeds
-        postRef.child("user_feeds").child(currentUid).child(postId).removeValue { error, _ in
-            if let error = error {
-                print("Failed to delete user_feeds reference: \(error.localizedDescription)")
-            }
-        }
-
-        postRef.child("user_feeds").observe(.childAdded) { snapshot in
-            postRef.child("user_feeds").child(snapshot.key).child(postId).removeValue { error, _ in
-                if let error = error {
-                    print("Failed to delete from follower feeds: \(error.localizedDescription)")
-                }
-            }
-        }
-
-        // Remove likes
-        postRef.child("post-likes").child(postId).removeValue { error, _ in
-            if let error = error {
-                print("Failed to delete post-likes reference: \(error.localizedDescription)")
-            }
-        }
-
-        postRef.child("user-likes").observe(.childAdded) { snapshot in
-            postRef.child("user-likes").child(snapshot.key).child(postId).removeValue { error, _ in
-                if let error = error {
-                    print("Failed to delete user-likes reference: \(error.localizedDescription)")
-                }
-            }
-        }
-
-        // Remove related hashtags
-        let words = caption.components(separatedBy: .whitespacesAndNewlines)
-        for var word in words {
-            if word.hasPrefix("#") {
-                word = word.trimmingCharacters(in: .punctuationCharacters)
-                postRef.child("hashtags").child(word).child(postId).removeValue { error, _ in
+            // Extract image URL if available
+            if let imageUrlString = postData["imageUrl"] as? String, let imageUrl = URL(string: imageUrlString) {
+                // Delete the image from Firebase Storage
+                storageRef.storage.reference(forURL: imageUrl.absoluteString).delete { error in
                     if let error = error {
-                        print("Failed to delete hashtag reference: \(error.localizedDescription)")
+                        print("Failed to delete image from storage: \(error.localizedDescription)")
+                    } else {
+                        print("Image deleted from storage successfully.")
+                    }
+                }
+            }
+
+            // Delete the post node
+            postRef.removeValue { error, _ in
+                if let error = error {
+                    print("Failed to delete post: \(error.localizedDescription)")
+                    completion(error)
+                    return
+                }
+                print("Post deleted successfully.")
+
+                // Clean up related references (e.g., likes, hashtags, feeds)
+                self.cleanupPostReferences(postId: postId, databaseRef: databaseRef)
+                completion(nil)
+            }
+        }
+    }
+
+    private func cleanupPostReferences(postId: String, databaseRef: DatabaseReference) {
+        // Remove likes
+        databaseRef.child("post-likes").child(postId).removeValue { error, _ in
+            if let error = error {
+                print("Failed to remove likes for postId \(postId): \(error.localizedDescription)")
+            } else {
+                print("Likes removed for postId \(postId).")
+            }
+        }
+
+        // Remove hashtags
+        databaseRef.child("hashtags").observeSingleEvent(of: .value) { snapshot in
+            if let hashtags = snapshot.value as? [String: [String: AnyObject]] {
+                for (hashtag, posts) in hashtags {
+                    if posts[postId] != nil {
+                        databaseRef.child("hashtags").child(hashtag).child(postId).removeValue { error, _ in
+                            if let error = error {
+                                print("Failed to remove hashtag \(hashtag) for postId \(postId): \(error.localizedDescription)")
+                            }
+                        }
                     }
                 }
             }
         }
 
+        // Remove from feeds
+        databaseRef.child("user_feeds").observe(.childAdded) { snapshot in
+            let userId = snapshot.key
+            databaseRef.child("user_feeds").child(userId).child(postId).removeValue { error, _ in
+                if let error = error {
+                    print("Failed to remove post \(postId) from user \(userId)'s feed: \(error.localizedDescription)")
+                }
+            }
+        }
+
         // Remove comments
-        postRef.child("comments").child(postId).removeValue { error, _ in
-            completion(error) // Pass the error (if any) to the completion block
+        databaseRef.child("comments").child(postId).removeValue { error, _ in
+            if let error = error {
+                print("Failed to remove comments for postId \(postId): \(error.localizedDescription)")
+            } else {
+                print("Comments removed for postId \(postId).")
+            }
         }
     }
 }
