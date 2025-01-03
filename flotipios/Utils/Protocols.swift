@@ -50,12 +50,15 @@ protocol UserProfileHeaderDelegate {
     func handleFollowersTapped(for header: UserProfileHeader)
     func handleFollowingTapped(for header: UserProfileHeader)
     func didTapBackToSearch() // Aggiungi questo metodo
+    func didTapAddFriend(isFriendAdded: Bool)
+
 
 }
 
-protocol NotificationCellDelegate {
+protocol NotificationCellDelegate: AnyObject {
     func handleFollowTapped(for cell: NotificationCell)
     func handlePostTapped(for cell: NotificationCell)
+    func didTapUsername(username: String)
 }
 
 protocol CommentInputAccesoryViewDelegate {

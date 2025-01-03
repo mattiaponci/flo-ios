@@ -67,8 +67,12 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
             rootViewController: BrowserViewController()
         )
         
+        let notificationVC = constructNavController(
+            unselectedImage: UIImage(named: "Ellipse")!, // Replace with your unselected image name
+            selectedImage: UIImage(named: "Ellipse2")!,  // Replace with your selected image name
+            rootViewController: NotificationsVC()
+        )
         
-        let notificationVC = constructNavController(unselectedImage: #imageLiteral(resourceName: "profile_unselected"), selectedImage: #imageLiteral(resourceName: "profile_selected"), rootViewController: NotificationsVC())
         
         let userNavProfileVC = constructNavController(unselectedImage: #imageLiteral(resourceName: "profile_unselected"), selectedImage: #imageLiteral(resourceName: "profile_selected"), rootViewController: userProfileVC)
         

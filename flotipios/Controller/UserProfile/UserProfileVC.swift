@@ -17,12 +17,25 @@ protocol UserVCDelegate: AnyObject {
 }
 
 class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, UserProfileHeaderDelegate, UserCellDelegate {
+    func didTapAddFriend(isFriendAdded: Bool) {
+        guard let user = self.user else { return }
+          
+          if isFriendAdded {
+              print("Friend added: \(user.username ?? "unknown user")")
+              // Esegui logica per aggiungere l'amico nel database
+          } else {
+              print("Friend removed: \(user.username ?? "unknown user")")
+              // Esegui logica per rimuovere l'amico nel database
+          }
+    }
+    
     func didTapBackToSearch() {
         navigationController?.popViewController(animated: true)
     }
     
     var isFromSearch: Bool = false
-    
+    var isFromFeed: Bool = false
+    var isFromFollowLikeVC: Bool = false
     
     func handleOptionsTapped(for cell: UserPostCell, isDoubleTap: Bool) {
         guard let post = cell.post else { return }
@@ -147,13 +160,30 @@ class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLay
     }
     
     func handleFollowersTapped(for header: UserProfileHeader) {
-        print("Edit Follow tapped")
-
+        guard let user = self.user else { return }
+        
+        let followLikeVC = FollowLikeVC()
+        followLikeVC.viewingMode = .Followers
+        followLikeVC.uid = user.uid
+        
+        if let navController = navigationController {
+            print("Navigating to FollowLikeVC")
+            navController.pushViewController(followLikeVC, animated: true)
+        } else {
+            print("No navigationController found")
+        }
     }
     
     func handleFollowingTapped(for header: UserProfileHeader) {
-        print("Edit Follow tapped")
-
+        guard let user = self.user else { return }
+        
+        let followLikeVC = FollowLikeVC()
+        followLikeVC.viewingMode = .Following
+        followLikeVC.uid = user.uid
+        
+        if let navController = navigationController {
+            navController.pushViewController(followLikeVC, animated: true)
+        }
     }
     
     
@@ -180,10 +210,10 @@ class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLay
         configureRefreshControl()
         
         // Configura l'header della collection view
-        if let user = self.user {
+   /*     if let user = self.user {
             // Configura l'header per un utente trovato tramite ricerca
             if let header = collectionView.supplementaryView(forElementKind: UICollectionView.elementKindSectionHeader, at: IndexPath(item: 0, section: 0)) as? UserProfileHeader {
-                header.configureHeader(for: user, isFromSearch: true)
+                header.configureHeader(for: user, isFromSearch: true, isFromFeed: true,isFromFollowLikeVC: true )
             }
             
             // Se è un utente passato, carica i suoi post
@@ -193,7 +223,30 @@ class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLay
             fetchCurrentUserData { [weak self] in
                 guard let self = self, let currentUser = self.user else { return }
                 if let header = self.collectionView.supplementaryView(forElementKind: UICollectionView.elementKindSectionHeader, at: IndexPath(item: 0, section: 0)) as? UserProfileHeader {
-                    header.configureHeader(for: currentUser, isFromSearch: false)
+                    header.configureHeader(for: currentUser, isFromSearch: false, isFromFeed: false, isFromFollowLikeVC: false)
+                }
+                self.fetchPosts(for: currentUser)
+            }
+        }*/
+        
+        // Verifica se i post sono già disponibili
+        if !posts.isEmpty {
+            // I post sono stati forniti, carica l'header
+            if let user = self.user, let header = collectionView.supplementaryView(forElementKind: UICollectionView.elementKindSectionHeader, at: IndexPath(item: 0, section: 0)) as? UserProfileHeader {
+                header.configureHeader(for: user, isFromSearch: isFromSearch, isFromFeed: isFromFeed, isFromFollowLikeVC: isFromFollowLikeVC)
+            }
+            DispatchQueue.main.async {
+                self.collectionView.reloadData()
+            }
+        } else if let user = self.user {
+            // Carica i post se l'utente è passato ma i post non sono stati forniti
+            fetchPosts(for: user)
+        } else {
+            // Carica i dati dell'utente corrente e i suoi post
+            fetchCurrentUserData { [weak self] in
+                guard let self = self, let currentUser = self.user else { return }
+                if let header = self.collectionView.supplementaryView(forElementKind: UICollectionView.elementKindSectionHeader, at: IndexPath(item: 0, section: 0)) as? UserProfileHeader {
+                    header.configureHeader(for: currentUser, isFromSearch: false, isFromFeed: false, isFromFollowLikeVC: false)
                 }
                 self.fetchPosts(for: currentUser)
             }
@@ -287,7 +340,7 @@ class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLay
     override func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: headerIdentifier, for: indexPath) as! UserProfileHeader
         if let user = self.user {
-            header.configureHeader(for: user, isFromSearch: isFromSearch)
+            header.configureHeader(for: user, isFromSearch: isFromSearch,isFromFeed: isFromFeed,isFromFollowLikeVC: isFromFollowLikeVC)
         }
         header.delegate = self
         return header

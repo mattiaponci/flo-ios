@@ -162,6 +162,9 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
         guard let post = cell.post else { return }
         let userProfileVC = UserProfileVC(collectionViewLayout: UICollectionViewFlowLayout())
         userProfileVC.user = post.user
+        userProfileVC.isFromSearch = false // Specifica che non proviene dalla ricerca
+        userProfileVC.isFromFeed = true // Imposta isFromFeed
+
         navigationController?.pushViewController(userProfileVC, animated: true)
     }
 

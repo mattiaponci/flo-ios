@@ -12,9 +12,15 @@ class UserProfileHeader: UICollectionViewCell {
     
     // MARK: - Properties
     
+    //var isFromFollowers: Bool = false
+    
+    var isFromFollowLikeVC: Bool = false
+    
     var delegate: UserProfileHeaderDelegate?
     private var cachedSavedSitesCount: Int = 0 // Cache for saved sites count
-    
+    private var cachedFollowerCount: Int = 0 // Cache per il conteggio dei follower
+    private var cachedFollowingCount: Int = 0 // Cache for following count
+
     var user: User? {
         didSet {
             setUserStats(for: user)
@@ -32,7 +38,13 @@ class UserProfileHeader: UICollectionViewCell {
             
             // Update saved sites count
             updateSavedSitesCount(for: user)
+            
+            // Aggiorna il conteggio dei follower & following
+            updateFollowerCount(for: user)
+            updateFollowingCount(for: user)
+
         }
+        
     }
     
     // Badge Container
@@ -68,7 +80,16 @@ class UserProfileHeader: UICollectionViewCell {
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
-    
+    // Add Friend Button
+    let addFriendButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "plus"), for: .normal)
+        button.tintColor = .black
+        button.addTarget(self, action: #selector(handleAddFriendTapped), for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.isHidden = true // Nascondi inizialmente
+        return button
+    }()
     // Name Label
     let nameLabel: UILabel = {
         let label = UILabel()
@@ -209,6 +230,8 @@ class UserProfileHeader: UICollectionViewCell {
         badgeView.addSubview(statsStackView)
         badgeView.addSubview(settingsButton)
         badgeView.addSubview(backButton) // Aggiungi il pulsante Indietro
+        badgeView.addSubview(addFriendButton)
+
 
 
         setupConstraints()
@@ -254,10 +277,78 @@ class UserProfileHeader: UICollectionViewCell {
             backButton.topAnchor.constraint(equalTo: badgeView.topAnchor, constant: 10),
             backButton.leadingAnchor.constraint(equalTo: badgeView.leadingAnchor, constant: 10),
             backButton.widthAnchor.constraint(equalToConstant: 30),
-            backButton.heightAnchor.constraint(equalTo: backButton.widthAnchor)
+            backButton.heightAnchor.constraint(equalTo: backButton.widthAnchor),
+            
+            // Add Friend Button
+            addFriendButton.topAnchor.constraint(equalTo: badgeView.topAnchor, constant: 10),
+            addFriendButton.trailingAnchor.constraint(equalTo: badgeView.trailingAnchor, constant: -10), // Stesso
+            addFriendButton.widthAnchor.constraint(equalToConstant: 30),
+            addFriendButton.heightAnchor.constraint(equalTo: addFriendButton.widthAnchor),
         ])
     }
-    
+    @objc func handleAddFriendTapped() {
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            print("Nessun utente corrente trovato.")
+            return
+        }
+
+        guard let viewedUserId = user?.uid else {
+            print("Nessun utente visualizzato trovato.")
+            return
+        }
+
+        let followersRef = Database.database().reference().child("followers").child(viewedUserId)
+        let followingRef = Database.database().reference().child("following").child(currentUserId)
+
+        // Controlla se l'utente è già un follower
+        followersRef.child(currentUserId).observeSingleEvent(of: .value) { snapshot in
+            if snapshot.exists() {
+                // Rimuovi l'utente dai follower
+                followersRef.child(currentUserId).removeValue { error, _ in
+                    if let error = error {
+                        print("Errore durante la rimozione del follower: \(error.localizedDescription)")
+                        return
+                    }
+                    print("Follower rimosso con successo.")
+
+                    // Rimuovi anche dai "following" del corrente utente
+                    followingRef.child(viewedUserId).removeValue { error, _ in
+                        if let error = error {
+                            print("Errore durante la rimozione del following: \(error.localizedDescription)")
+                            return
+                        }
+                        print("Following rimosso con successo.")
+                    }
+
+                    DispatchQueue.main.async {
+                        self.addFriendButton.setImage(UIImage(systemName: "plus"), for: .normal)
+                    }
+                }
+            } else {
+                // Aggiungi l'utente ai follower
+                followersRef.child(currentUserId).setValue(1) { error, _ in
+                    if let error = error {
+                        print("Errore durante l'aggiunta del follower: \(error.localizedDescription)")
+                        return
+                    }
+                    print("Follower aggiunto con successo.")
+
+                    // Aggiungi anche nei "following" del corrente utente
+                    followingRef.child(viewedUserId).setValue(1) { error, _ in
+                        if let error = error {
+                            print("Errore durante l'aggiunta del following: \(error.localizedDescription)")
+                            return
+                        }
+                        print("Following aggiunto con successo.")
+                    }
+
+                    DispatchQueue.main.async {
+                        self.addFriendButton.setImage(UIImage(systemName: "checkmark"), for: .normal)
+                    }
+                }
+            }
+        }
+    }
     private func updateSavedSitesCount(for user: User?) {
         guard let userId = user?.uid else { return }
         
@@ -306,15 +397,98 @@ class UserProfileHeader: UICollectionViewCell {
         delegate?.handleEditFollowTapped(for: self)
     }
     
-    func configureHeader(for user: User?, isFromSearch: Bool) {
+    func configureHeader(for user: User?, isFromSearch: Bool, isFromFeed: Bool, isFromFollowLikeVC: Bool) {
         self.user = user
+        self.isFromFollowLikeVC = isFromFollowLikeVC // Assegna il valore alla proprietà
+        
+        let isCurrentUser = user?.uid == Auth.auth().currentUser?.uid
 
-        // Mostra il pulsante Indietro solo per utenti della ricerca
-        backButton.isHidden = !isFromSearch
-        settingsButton.isHidden = isFromSearch
+        // Mostra il pulsante "Indietro" se l'utente è diverso dall'utente corrente
+        // oppure se si proviene da FeedVC, SearchVC o FollowLikeVC
+        backButton.isHidden = !(isFromSearch || isFromFeed || isFromFollowLikeVC || !isCurrentUser)
+        
+        // Nascondi il pulsante "Impostazioni" se non è l'utente corrente
+        settingsButton.isHidden = !isCurrentUser
+
+        // Mostra il pulsante "Aggiungi Amico" solo per utenti diversi dall'utente corrente
+        // e se si proviene da FeedVC, SearchVC o FollowLikeVC
+        addFriendButton.isHidden = isCurrentUser || !(isFromSearch || isFromFeed || isFromFollowLikeVC)
+        
+        // Verifica se l'utente è già seguito e aggiorna l'icona del pulsante "Aggiungi Amico"
+        if let currentUserId = Auth.auth().currentUser?.uid, let viewedUserId = user?.uid {
+            let followersRef = Database.database().reference().child("followers").child(viewedUserId)
+            followersRef.child(currentUserId).observeSingleEvent(of: .value) { snapshot in
+                let isFollowing = snapshot.exists()
+                DispatchQueue.main.async {
+                    let buttonImage = isFollowing ? UIImage(systemName: "checkmark") : UIImage(systemName: "plus")
+                    self.addFriendButton.setImage(buttonImage, for: .normal)
+                }
+            }
+        }
     }
+    
 
     @objc func handleBackToSearchTapped() {
         delegate?.didTapBackToSearch()
     }
+    
+    private func updateFollowerCount(for user: User?) {
+        guard let userId = user?.uid else { return }
+
+        // Usa il valore in cache se disponibile
+        if cachedFollowerCount > 0 {
+            updateFollowerLabel(with: cachedFollowerCount)
+        }
+
+        // Ascolta gli aggiornamenti su Firebase
+        Database.database().reference().child("followers").child(userId).observe(.value) { snapshot in
+            let count = snapshot.childrenCount
+            self.cachedFollowerCount = Int(count)
+            self.updateFollowerLabel(with: self.cachedFollowerCount)
+        }
+    }
+
+    private func updateFollowerLabel(with count: Int) {
+        DispatchQueue.main.async {
+            let attributedText = NSMutableAttributedString(string: "\(count)\n", attributes: [
+                .font: UIFont.boldSystemFont(ofSize: 14),
+                .foregroundColor: UIColor.black
+            ])
+            attributedText.append(NSAttributedString(string: "followers", attributes: [
+                .font: UIFont.systemFont(ofSize: 14),
+                .foregroundColor: UIColor.lightGray
+            ]))
+            self.followersLabel.attributedText = attributedText
+        }
+    }
+    private func updateFollowingCount(for user: User?) {
+        guard let userId = user?.uid else { return }
+
+        // Use cached value if available
+        if cachedFollowingCount > 0 {
+            updateFollowingLabel(with: cachedFollowingCount)
+        }
+
+        // Listen for updates from Firebase
+        Database.database().reference().child("following").child(userId).observe(.value) { snapshot in
+            let count = snapshot.childrenCount
+            self.cachedFollowingCount = Int(count)
+            self.updateFollowingLabel(with: self.cachedFollowingCount)
+        }
+    }
+
+    private func updateFollowingLabel(with count: Int) {
+        DispatchQueue.main.async {
+            let attributedText = NSMutableAttributedString(string: "\(count)\n", attributes: [
+                .font: UIFont.boldSystemFont(ofSize: 14),
+                .foregroundColor: UIColor.black
+            ])
+            attributedText.append(NSAttributedString(string: "following", attributes: [
+                .font: UIFont.systemFont(ofSize: 14),
+                .foregroundColor: UIColor.lightGray
+            ]))
+            self.followingLabel.attributedText = attributedText
+        }
+    }
+    
 }
