@@ -368,27 +368,46 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
                 }
                 return
             }
-
-            let postsRef = Database.database().reference().child("user_posts_sites").child(currentUid)
-            postsRef.observeSingleEvent(of: .value) { snapshot in
+            
+            // Fetch followed users
+            let followingRef = Database.database().reference().child("following").child(currentUid)
+            followingRef.observeSingleEvent(of: .value) { followingSnapshot in
+                var followedUserIds = [String]()
+                if let followingDict = followingSnapshot.value as? [String: AnyObject] {
+                    followedUserIds = Array(followingDict.keys)
+                }
+                
+                // Add the current user to the list
+                followedUserIds.append(currentUid)
+                
+                let group = DispatchGroup()
                 self.posts.removeAll()
-                guard let allObjects = snapshot.children.allObjects as? [DataSnapshot] else {
-                    print("Failed to cast snapshot to DataSnapshot")
-                    DispatchQueue.main.async {
-                        self.collectionView.refreshControl?.endRefreshing()
+                
+                // Fetch posts for each user
+                for userId in followedUserIds {
+                    group.enter()
+                    let postsRef = Database.database().reference().child("user_posts_sites").child(userId)
+                    postsRef.observeSingleEvent(of: .value) { snapshot in
+                        guard let allObjects = snapshot.children.allObjects as? [DataSnapshot] else {
+                            print("Failed to cast snapshot for user \(userId)")
+                            group.leave()
+                            return
+                        }
+                        
+                        for postSnapshot in allObjects {
+                            guard let postData = postSnapshot.value as? [String: AnyObject] else {
+                                continue
+                            }
+                            let post = Post(postId: postSnapshot.key, user: self.user!, dictionary: postData)
+                            self.posts.append(post)
+                        }
+                        group.leave()
                     }
-                    return
                 }
-
-                for snapshot in allObjects {
-                    guard let postData = snapshot.value as? [String: AnyObject] else {
-                        continue
-                    }
-                    let post = Post(postId: snapshot.key, user: self.user!, dictionary: postData)
-                    self.posts.append(post)
-                }
-                DispatchQueue.main.async {
-                    print("Loaded \(self.posts.count) posts")
+                
+                group.notify(queue: .main) {
+                    self.posts.sort { $0.creationDate > $1.creationDate }
+                    print("Loaded \(self.posts.count) posts from the user and followed users")
                     self.collectionView.reloadData()
                     self.collectionView.refreshControl?.endRefreshing()
                 }

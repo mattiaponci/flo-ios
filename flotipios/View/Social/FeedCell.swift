@@ -15,54 +15,34 @@ class FeedCell: UICollectionViewCell {
     var postSaved: Bool = false
 
     var post: Post? {
-        didSet {
-            // Verifica se tutte le proprietà sono non nil prima di procedere
-            guard let post = post else {
-                print("Post is nil")
-                return
-            }
-            
-            // Usa il controllo degli opzionali per evitare l'unwrapping forzato
-            guard let ownerUid = post.ownerUid else {
-                print("Error: ownerUid is nil")
-                return
-            }
-            
-            guard let imageUrl = post.imageUrl else {
-                print("Error: imageUrl is nil")
-                return
-            }
-            
-            guard let likes = post.likes else {
-                print("Error: likes is nil")
-                return
-            }
-            
-            // Procedi con il caricamento sicuro dei dati
-            Database.fetchUser(with: ownerUid) { [weak self] (user) in
-                guard let self = self else { return }
-                
-                // Verifica che `user` sia valido
-                if user != nil {
-                  //  self.profileImageView.loadImage(with: user.profileImageUrl)
+            didSet {
+                guard let ownerUid = post?.ownerUid,
+                      let imageUrl = post?.imageUrl,
+                      let likes = post?.likes else {
+                    print("Error: One of the post properties is nil")
+                    return
+                }
+
+                // Fetch and configure the user
+                Database.fetchUser(with: ownerUid) { [weak self] user in
+                    guard let self = self else { return }
+                    self.profileImageView.loadImage(with: user.profileImageUrl)
                     self.usernameButton.setTitle(user.username, for: .normal)
                     self.configurePostCaption(user: user)
-                } else {
-                    print("Error: User not found")
                 }
+
+                // Load the image for the post
+                postImageView.loadImage(with: imageUrl)
+
+                // Update likes count
+                likesLabel.text = "\(likes) likes"
+
+                // Configure like button
+                configureLikeButton()
+                configureCommentIndicatorView()
             }
-            
-            // Carica l'immagine
-            postImageView.loadImage(with: imageUrl)
-            
-            // Aggiorna i like
-            likesLabel.text = "\(likes) likes"
-            
-            // Configura il pulsante di like
-            configureLikeButton()
-            configureCommentIndicatorView()
         }
-    }
+    
 
     lazy var savePostButton: UIButton = {
         let button = UIButton(type: .system)
