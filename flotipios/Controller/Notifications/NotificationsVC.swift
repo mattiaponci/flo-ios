@@ -166,6 +166,7 @@ class NotificationsVC: UITableViewController, NotificationCellDelegate {
                         userProfileVC.posts = posts
                         userProfileVC.isFromFeed = false
                         userProfileVC.isFromSearch = false
+                        userProfileVC.isFromFollowLikeVC = true // Indica che proviene dalle notifiche
                         self.navigationController?.pushViewController(userProfileVC, animated: true)
                     }
                 }

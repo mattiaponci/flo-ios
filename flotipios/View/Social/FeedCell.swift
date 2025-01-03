@@ -165,7 +165,7 @@ class FeedCell: UICollectionViewCell {
         usernameButton.centerYAnchor.constraint(equalTo: profileImageView.centerYAnchor, constant: 0).isActive = true
 
         // StackView for buttons aligned to the right (savePostButton, likeButton, commentButton, optionsButton)
-        let rightButtonsStackView = UIStackView(arrangedSubviews: [savePostButton, likeButton, commentButton, optionsButton])
+        let rightButtonsStackView = UIStackView(arrangedSubviews: [savePostButton, likeButton, commentButton])
         rightButtonsStackView.axis = .horizontal
         rightButtonsStackView.spacing = 8
         rightButtonsStackView.distribution = .fillProportionally
