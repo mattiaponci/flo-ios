@@ -259,8 +259,95 @@ class SecondViewController: UIViewController, CropViewControllerDelegate, UIText
         }
     }
 
+    func handleUploadsavesiteSport() {
+        handleUploadForCategory("sport")
+    }
 
-  
+    func handleUploadsavesiteNews() {
+        handleUploadForCategory("news")
+    }
+
+    func handleUploadsavesiteActivity() {
+        handleUploadForCategory("activity")
+    }
+
+    func handleUploadsavesiteOther() {
+        handleUploadForCategory("other")
+    }
+
+    private func handleUploadForCategory(_ category: String) {
+        guard let caption = textView.text,
+              let postImg = imageView.image,
+              let currentUid = Auth.auth().currentUser?.uid,
+              let urlString = pageURL?.absoluteString else {
+            print("Missing required fields.")
+            return
+        }
+
+        guard let uploadData = postImg.jpegData(compressionQuality: 0.5) else {
+            print("Failed to generate JPEG data.")
+            return
+        }
+
+        let creationDate = Int(NSDate().timeIntervalSince1970)
+        let filename = NSUUID().uuidString
+        let storageRef = Storage.storage().reference().child("\(category)_images").child(filename)
+
+        storageRef.putData(uploadData, metadata: nil) { (metadata, error) in
+            if let error = error {
+                print("Failed to upload image to storage: \(error.localizedDescription)")
+                return
+            }
+
+            storageRef.downloadURL { (url, error) in
+                guard let imageUrl = url?.absoluteString else {
+                    print("Failed to retrieve image URL.")
+                    return
+                }
+
+                // Include the category in the values dictionary
+                let values: [String: Any] = [
+                    "caption": caption,
+                    "creationDate": creationDate,
+                    "likes": 0,
+                    "imageUrl": imageUrl,
+                    "ownerUid": currentUid,
+                    "pageURL": urlString,
+                    "category": category // Add category field
+                ]
+
+                // Save to the specific category
+                let userPostsRef = Database.database().reference().child(category).child(currentUid).childByAutoId()
+                userPostsRef.setValue(values) { (error, ref) in
+                    if let error = error {
+                        print("Failed to save post data to '\(category)': \(error.localizedDescription)")
+                        return
+                    }
+                    print("Successfully saved post to '\(category)'.")
+                    self.dismiss(animated: true, completion: nil)
+                }
+            }
+        }
+    }
+    @objc func categoryButtonTapped(_ sender: UIButton) {
+        guard let title = sender.title(for: .normal) else { return }
+        print("Category selected: \(title)")
+
+        switch title {
+        case "Sport":
+            handleUploadsavesiteSport()
+        case "News":
+            handleUploadsavesiteNews()
+        case "Activity":
+            handleUploadsavesiteActivity()
+        case "Other":
+            handleUploadsavesiteOther()
+        default:
+            break
+        }
+
+        dismissActionSheet()
+    }
     func updateUserFeeds(with postId: String) {
         guard let currentUid = Auth.auth().currentUser?.uid else { return }
         let values = [postId: 1]
@@ -278,7 +365,7 @@ class SecondViewController: UIViewController, CropViewControllerDelegate, UIText
     @objc func categoryIconTapped() {
         // Crea una vista semi-trasparente come sfondo
         let dimmingView = UIView()
-        dimmingView.backgroundColor = UIColor.gray.withAlphaComponent(0.5) // Sfondo grigio semi-trasparente
+        dimmingView.backgroundColor = UIColor.gray.withAlphaComponent(0.5)
         dimmingView.translatesAutoresizingMaskIntoConstraints = false
         dimmingView.alpha = 0
         view.addSubview(dimmingView)
@@ -291,7 +378,7 @@ class SecondViewController: UIViewController, CropViewControllerDelegate, UIText
 
         // Crea il contenitore per il custom Action Sheet
         let actionSheetView = UIView()
-        actionSheetView.backgroundColor = UIColor.lightGray // Contenitore grigio
+        actionSheetView.backgroundColor = UIColor.lightGray
         actionSheetView.layer.cornerRadius = 16
         actionSheetView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         actionSheetView.translatesAutoresizingMaskIntoConstraints = false
@@ -322,20 +409,13 @@ class SecondViewController: UIViewController, CropViewControllerDelegate, UIText
         buttonStackView.translatesAutoresizingMaskIntoConstraints = false
         actionSheetView.addSubview(buttonStackView)
 
-        let buttonTitles = ["Sport", "News", "Activity", "Save"]
+        let buttonTitles = ["Sport", "News", "Activity", "Other"]
         for title in buttonTitles {
             let button = UIButton(type: .system)
             button.setTitle(title, for: .normal)
             button.layer.cornerRadius = 8
-            if title == "Save" {
-                // Pulsante "Save" con sfondo azzurro
-                button.backgroundColor = UIColor.systemBlue
-                button.setTitleColor(.white, for: .normal)
-            } else {
-                // Pulsanti normali con sfondo bianco
-                button.backgroundColor = .white
-                button.setTitleColor(.black, for: .normal)
-            }
+            button.backgroundColor = .white
+            button.setTitleColor(.black, for: .normal)
             button.addTarget(self, action: #selector(categoryButtonTapped(_:)), for: .touchUpInside)
             buttonStackView.addArrangedSubview(button)
         }
@@ -344,7 +424,6 @@ class SecondViewController: UIViewController, CropViewControllerDelegate, UIText
         NSLayoutConstraint.activate([
             subtitleLabel.topAnchor.constraint(equalTo: actionSheetView.topAnchor, constant: 16),
             subtitleLabel.centerXAnchor.constraint(equalTo: actionSheetView.centerXAnchor),
-
             buttonStackView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 24),
             buttonStackView.leadingAnchor.constraint(equalTo: actionSheetView.leadingAnchor, constant: 16),
             buttonStackView.trailingAnchor.constraint(equalTo: actionSheetView.trailingAnchor, constant: -16),
@@ -367,7 +446,7 @@ class SecondViewController: UIViewController, CropViewControllerDelegate, UIText
         actionSheetView.tag = 102
     }
 
-    @objc func categoryButtonTapped(_ sender: UIButton) {
+ /*   @objc func categoryButtonTapped(_ sender: UIButton) {
         guard let title = sender.title(for: .normal) else { return }
         print("Category selected: \(title)")
 
@@ -378,7 +457,7 @@ class SecondViewController: UIViewController, CropViewControllerDelegate, UIText
             // Chiudi l'action sheet senza dismettere l'intero view controller
             dismissActionSheet()
         }
-    }
+    }*/
 
     @objc func dismissActionSheet() {
         // Trova le viste aggiunte per il custom action sheet

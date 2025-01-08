@@ -160,12 +160,42 @@ class FeedVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, Fe
     // MARK: - FeedCellDelegate
     func handleUsernameTapped(for cell: FeedCell) {
         guard let post = cell.post else { return }
-        let userProfileVC = UserProfileVC(collectionViewLayout: UICollectionViewFlowLayout())
-        userProfileVC.user = post.user
-        userProfileVC.isFromSearch = false // Specifica che non proviene dalla ricerca
-        userProfileVC.isFromFeed = true // Imposta isFromFeed
-
-        navigationController?.pushViewController(userProfileVC, animated: true)
+        guard let postOwnerUid = post.ownerUid else {
+            print("Post does not have an owner UID")
+            return
+        }
+        
+        // Verifica se l'utente è quello corrente
+        if postOwnerUid == Auth.auth().currentUser?.uid {
+            print("Navigating to the profile of the current user")
+            
+            // Naviga al profilo dell'utente corrente
+            let userProfileVC = UserProfileVC(collectionViewLayout: UICollectionViewFlowLayout())
+            userProfileVC.user = self.user // Passa i dati dell'utente corrente
+            userProfileVC.isFromSearch = false
+            userProfileVC.isFromFeed = true
+            navigationController?.pushViewController(userProfileVC, animated: true)
+            
+        } else {
+            print("Navigating to the profile of another user with UID: \(postOwnerUid)")
+            
+            // Fetch dell'utente selezionato
+            Database.database().reference().child("users").child(postOwnerUid).observeSingleEvent(of: .value) { snapshot in
+                guard let dictionary = snapshot.value as? [String: AnyObject] else {
+                    print("Failed to fetch user data for UID: \(postOwnerUid)")
+                    return
+                }
+                
+                let user = User(uid: postOwnerUid, dictionary: dictionary)
+                
+                // Naviga al profilo dell'utente selezionato
+                let userProfileVC = UserProfileVC(collectionViewLayout: UICollectionViewFlowLayout())
+                userProfileVC.user = user
+                userProfileVC.isFromSearch = false
+                userProfileVC.isFromFeed = true
+                self.navigationController?.pushViewController(userProfileVC, animated: true)
+            }
+        }
     }
 
    

@@ -86,7 +86,7 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
         let navController = UINavigationController(rootViewController: rootViewController)
         navController.tabBarItem.image = unselectedImage
         navController.tabBarItem.selectedImage = selectedImage
-        navController.navigationBar.tintColor = .red
+        navController.navigationBar.tintColor = .gray
         return navController
     }
     

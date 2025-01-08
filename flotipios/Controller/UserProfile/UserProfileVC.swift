@@ -334,9 +334,15 @@ class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLay
             }
         }
 
+        // Configura la visibilità del pulsante optionsButton
+        if let currentUid = Auth.auth().currentUser?.uid, user?.uid == currentUid {
+            cell.showOptionsButton = true // Mostra il pulsante per l'utente corrente
+        } else {
+            cell.showOptionsButton = false // Nascondi il pulsante per altri utenti
+        }
+
         return cell
     }
-    
     override func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: headerIdentifier, for: indexPath) as! UserProfileHeader
         if let user = self.user {

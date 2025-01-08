@@ -19,10 +19,10 @@ class SearchVC: UIViewController,
                 FeedCellDelegate {
     func handleFlagToLike(for cell: FeedCell) {
         print("")
-
+        
     }
     
-
+    
     // MARK: - Proprietà
     
     weak var delegate: NotificationsVC?
@@ -30,7 +30,7 @@ class SearchVC: UIViewController,
     var user: User?
     var users = [User]()
     var filteredUsers = [User]()
-
+    
     // Questo array conterrà solo 1 post alla volta
     var userPostsSites = [Post]()
     
@@ -41,7 +41,7 @@ class SearchVC: UIViewController,
     // Search bar
     var searchBar = UISearchBar()
     var isSearching: Bool = false
-
+    
     // MARK: - Elementi UI
     
     /// TableView per i risultati di ricerca (inizialmente nascosta)
@@ -64,7 +64,7 @@ class SearchVC: UIViewController,
         layout.itemSize = CGSize(width: UIScreen.main.bounds.width - 90, height: 200)
         
         let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        cv.backgroundColor = .lightGray
+        cv.backgroundColor = .white
         cv.delegate = self
         cv.dataSource = self
         cv.register(FeedCell.self, forCellWithReuseIdentifier: "FeedCell")
@@ -79,84 +79,85 @@ class SearchVC: UIViewController,
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
-
-  
+    
+    
     // MARK: - viewDidLoad
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        view.backgroundColor = .white
-          
-          // 1) Configuriamo la searchBar
-          configureSearchBar()
-          
-          // 2) Navigation Bar
-          configureNavigationBar()
-          
-          // 3) Aggiungiamo subview e configuriamo constraint
-          view.addSubview(fullCollectionView)
-          view.addSubview(tableView)
-          view.addSubview(noResultsLabel) // Aggiungi la noResultsLabel alla vista principale
-          
-          fullCollectionView.translatesAutoresizingMaskIntoConstraints = false
-          tableView.translatesAutoresizingMaskIntoConstraints = false
-          
-          NSLayoutConstraint.activate([
-              // CollectionView a tutto schermo
-              fullCollectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-              fullCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-              fullCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-              fullCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-              
-              // TableView sopra la collection (stessa posizione e dimensioni)
-              tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-              tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-              tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-              tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-              
+        
+        // 1) Configuriamo la searchBar
+        configureSearchBar()
+        
+        // 2) Navigation Bar
+        configureNavigationBar()
+        
+        // 3) Aggiungiamo subview e configuriamo constraint
+        view.addSubview(fullCollectionView)
+        view.addSubview(tableView)
+        view.addSubview(noResultsLabel) // Aggiungi la noResultsLabel alla vista principale
+        
+        fullCollectionView.translatesAutoresizingMaskIntoConstraints = false
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            // CollectionView a tutto schermo
+            fullCollectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            fullCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            fullCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            fullCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
-          ])
-          
-          // 4) Configuriamo il refreshControl per la collectionView
-          configureRefreshControl()
-          fullCollectionView.refreshControl = refreshControl
-          
-          // 5) Controllo utente loggato
-          if let user = Auth.auth().currentUser {
-              print("User authenticated with UID: \(user.uid)")
-          } else {
-              print("No user authenticated.")
-          }
-          
-          // 6) Se vuoi caricare dati dell’utente, fallo qui (opzionale)
-          fetchCurrentUserData {
-              // Una volta preso l’utente, chiediamo il random post
-              self.fetchRandomSite()
-          }
+            // TableView sopra la collection (stessa posizione e dimensioni)
+            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+            
+        ])
+        
+        // 4) Configuriamo il refreshControl per la collectionView
+        configureRefreshControl()
+        fullCollectionView.refreshControl = refreshControl
+        
+        // 5) Controllo utente loggato
+        if let user = Auth.auth().currentUser {
+            print("User authenticated with UID: \(user.uid)")
+        } else {
+            print("No user authenticated.")
+        }
+        
+        // 6) Se vuoi caricare dati dell’utente, fallo qui (opzionale)
+        fetchCurrentUserData {
+            // Una volta preso l’utente, chiediamo il random post
+            self.fetchRandomSite()
+        }
+        view.backgroundColor = .white
+        
     }
     
     // MARK: - fetchRandomSite: chiama la Cloud Function e carica 1 post
     func fetchRandomSite() {
         print("Chiedo al server un post random...")
-
+        
         // Esempio di URL per la funzione: sostituisci con la TUA endpoint
         guard let url = URL(string: "https://us-central1-flotip-3aa4d.cloudfunctions.net/getRandomPostFromAllUsers") else {
             print("URL non valida")
             return
         }
-
+        
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         // Se la tua Cloud Function richiede un token ID, aggiungi l’header:
         // request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
+        
         // Puoi usare URLSession o Alamofire. Qui esempio con URLSession:
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
                 self.fullCollectionView.refreshControl?.beginRefreshing()
             }
-
+            
             if let error = error {
                 print("Errore richiesta random site:", error.localizedDescription)
                 DispatchQueue.main.async {
@@ -164,7 +165,7 @@ class SearchVC: UIViewController,
                 }
                 return
             }
-
+            
             guard let data = data else {
                 print("Nessun dato ricevuto dal server.")
                 DispatchQueue.main.async {
@@ -172,7 +173,7 @@ class SearchVC: UIViewController,
                 }
                 return
             }
-
+            
             do {
                 if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: String],
                    let randomPostId = json["postId"] {
@@ -194,7 +195,7 @@ class SearchVC: UIViewController,
         }
         task.resume()
     }
-
+    
     // MARK: - fetchPostDetails: Recupera i dati di un post specifico dal database e dall'utente
     func fetchPostDetails(postId: String) {
         print("Recupero i dettagli del post con ID: \(postId)...")
@@ -262,7 +263,7 @@ class SearchVC: UIViewController,
                 completion(nil)
                 return
             }
-
+            
             let user = User(uid: userId, dictionary: userData)
             completion(user)
         }
@@ -294,7 +295,7 @@ class SearchVC: UIViewController,
         // Ogni volta che fai refresh, chiediamo di nuovo un post random
         userPostsSites.removeAll()
         self.fullCollectionView.reloadData()
-       fetchRandomSite()
+        fetchRandomSite()
     }
     
     // MARK: - Refresh Control
@@ -308,7 +309,7 @@ class SearchVC: UIViewController,
     
     // MARK: - TableView DataSource / Delegate
     func numberOfSections(in tableView: UITableView) -> Int { return 1 }
-   
+    
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if filteredUsers.isEmpty && inSearchMode && !isSearching {
@@ -319,7 +320,7 @@ class SearchVC: UIViewController,
             cell.selectionStyle = .none
             return cell
         }
-
+        
         guard let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier, for: indexPath) as? SearchUserCell else {
             return UITableViewCell()
         }
@@ -332,11 +333,11 @@ class SearchVC: UIViewController,
         if isSearching {
             return 0 // Non mostra nulla mentre sta cercando
         }
-
+        
         if filteredUsers.isEmpty && inSearchMode {
             return 1 // Mostra "Nessun risultato trovato" solo se non ci sono risultati
         }
-
+        
         return filteredUsers.count
     }
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -372,7 +373,13 @@ class SearchVC: UIViewController,
         let post = userPostsSites[indexPath.item]
         cell.delegate = self
         cell.post = post
-        
+        // Aggiungi ombra e arrotondamenti
+        cell.layer.cornerRadius = 15
+        cell.layer.shadowColor = UIColor.black.cgColor
+        cell.layer.shadowOpacity = 0.2
+        cell.layer.shadowOffset = CGSize(width: 0, height: 4)
+        cell.layer.shadowRadius = 5
+        cell.layer.masksToBounds = false
         // Carichiamo l'immagine
         if let imageUrl = post.imageUrl, let url = URL(string: imageUrl) {
             cell.postImageView.sd_setImage(with: url) { [weak cell] _, _, _, _ in
@@ -398,8 +405,10 @@ class SearchVC: UIViewController,
     func collectionView(_ collectionView: UICollectionView,
                         layout collectionViewLayout: UICollectionViewLayout,
                         minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
-        return 10
+        return 20
     }
+   
+    
     
     func collectionView(_ collectionView: UICollectionView,
                         layout collectionViewLayout: UICollectionViewLayout,
@@ -456,14 +465,24 @@ class SearchVC: UIViewController,
         )
         searchBar.tintColor = .black
         searchBar.searchTextField.backgroundColor = .gray
+        
+        // Mostra il pulsante "Cancel"
         searchBar.showsCancelButton = true
+        
+        // Personalizza il pulsante "Cancel" con una freccia o una "X"
+        if let cancelButton = searchBar.value(forKey: "cancelButton") as? UIButton {
+            cancelButton.setImage(UIImage(systemName: "xmark"), for: .normal) // Usa immagine "X"
+            cancelButton.setTitle("", for: .normal) // Rimuove il testo
+            cancelButton.tintColor = .black // Colore dell'immagine
+        }
+        
         navigationItem.titleView = searchBar
     }
     
-    func searchBar(_ searchBar: UISearchBar,
-                   textDidChange searchText: String) {
-        if searchText.isEmpty || searchText == " " {
-            // Non stiamo cercando
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchText.isEmpty {
+            // Gestione del comportamento della "X"
+            searchBar.resignFirstResponder() // Dismetti la tastiera
             inSearchMode = false
             fullCollectionView.isHidden = false
             tableView.isHidden = true
@@ -479,13 +498,14 @@ class SearchVC: UIViewController,
     }
     
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
-        searchBar.endEditing(true)
+        print("Cancel button clicked")
         searchBar.text = nil
+        searchBar.resignFirstResponder()
+        self.view.endEditing(true) // Forza il dismiss della tastiera
+
         inSearchMode = false
-        
         fullCollectionView.isHidden = false
         tableView.isHidden = true
-        
         tableView.reloadData()
         fullCollectionView.reloadData()
     }
@@ -505,15 +525,15 @@ class SearchVC: UIViewController,
             tableView.reloadData()
             return
         }
-
+        
         inSearchMode = true
-
+        
         // Query per ricerca parziale
         let query = USER_REF
             .queryOrdered(byChild: "username")
             .queryStarting(atValue: username)
             .queryEnding(atValue: username + "\u{f8ff}")
-
+        
         query.observeSingleEvent(of: .value) { snapshot in
             guard let allObjects = snapshot.children.allObjects as? [DataSnapshot] else {
                 print("Nessun utente trovato.")
@@ -523,11 +543,11 @@ class SearchVC: UIViewController,
                 self.noResultsLabel.isHidden = false // Mostra il messaggio
                 return
             }
-
+            
             // Itera sugli utenti trovati
             let group = DispatchGroup()
             self.filteredUsers = []
-
+            
             allObjects.forEach { snap in
                 let uid = snap.key
                 group.enter()
@@ -538,7 +558,7 @@ class SearchVC: UIViewController,
                     group.leave()
                 }
             }
-
+            
             // Quando tutte le richieste sono completate
             group.notify(queue: .main) {
                 self.isSearching = false
@@ -575,6 +595,19 @@ class SearchVC: UIViewController,
         navController.modalPresentationStyle = .fullScreen
         present(navController, animated: true, completion: nil)
     }
+    
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        let width = collectionView.frame.width * 0.9 // Mantieni proporzioni simili a FeedVC
+        let height = width + 80 // Altezza per immagine + spazio ridotto sotto
+        return CGSize(width: width, height: height)
+    }
+
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
+        let horizontalInset = collectionView.frame.width * 0.05 // 5% padding laterale
+        return UIEdgeInsets(top: 20, left: horizontalInset, bottom: 20, right: horizontalInset)
+    }
+    
     
     
 }

@@ -1,10 +1,3 @@
-//
-//  File.swift
-//  flotipios
-//
-//  Created by mattia poncini on 30.09.2024.
-//
-
 import UIKit
 
 class CommentInputAccesoryView: UIView {
@@ -17,13 +10,15 @@ class CommentInputAccesoryView: UIView {
         let tv = InputTextView()
         tv.font = UIFont.systemFont(ofSize: 16)
         tv.isScrollEnabled = false
+        tv.backgroundColor = UIColor.lightGray.withAlphaComponent(0.2) // Sfondo grigio chiaro
+        tv.textColor = .black // Testo nero
         return tv
     }()
     
     let postButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Post", for: .normal)
-        button.setTitleColor(.black, for: .normal)
+        button.setTitleColor(.black, for: .normal) // Testo del pulsante nero
         button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
         button.addTarget(self, action: #selector(handleUploadComment), for: .touchUpInside)
         return button
@@ -36,7 +31,7 @@ class CommentInputAccesoryView: UIView {
         
         autoresizingMask = .flexibleHeight
         
-        backgroundColor = .white
+        backgroundColor = UIColor.lightGray.withAlphaComponent(0.1) // Sfondo grigio molto chiaro
         
         addSubview(postButton)
         postButton.anchor(top: topAnchor, left: nil, bottom: nil, right: rightAnchor, paddingTop: 0, paddingLeft: 0, paddingBottom: 0, paddingRight: 8, width: 50, height: 50)

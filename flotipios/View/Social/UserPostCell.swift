@@ -16,7 +16,12 @@ class UserPostCell: UICollectionViewCell {
     var stackView: UIStackView!
     var postSaved: Bool = false // Variabile per monitorare lo stato del salvataggio
     
-    
+    var showOptionsButton: Bool = false {
+           didSet {
+               optionsButton.isHidden = !showOptionsButton
+           }
+       }
+
     var post: Post? {
         didSet {
             guard let ownerUid = post?.ownerUid,

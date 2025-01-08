@@ -43,13 +43,22 @@ class CommentCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         
+        // Imposta il colore dello sfondo della cella
+        backgroundColor = UIColor.lightGray.withAlphaComponent(0.2) // Grigio chiaro con un po' di trasparenza
+        
+        // Configura il profileImageView
         addSubview(profileImageView)
         profileImageView.anchor(top: nil, left: leftAnchor, bottom: nil, right: nil, paddingTop: 0, paddingLeft: 8, paddingBottom: 0, paddingRight: 0, width: 40, height: 40)
         profileImageView.centerYAnchor.constraint(equalTo: self.centerYAnchor).isActive = true
         profileImageView.layer.cornerRadius = 40 / 2
         
+        // Configura il commentLabel
         addSubview(commentLabel)
         commentLabel.anchor(top: topAnchor, left: profileImageView.rightAnchor, bottom: bottomAnchor, right: rightAnchor, paddingTop: 4, paddingLeft: 4, paddingBottom: 4, paddingRight: 4, width: 0, height: 0)
+        
+        // Imposta il colore di sfondo del commentLabel (opzionale)
+        commentLabel.backgroundColor = .gray // Lo lascia trasparente, ma puoi cambiarlo se vuoi
+        commentLabel.textColor = .black // Imposta il colore del testo su nero
     }
     
     required init?(coder aDecoder: NSCoder) {

@@ -21,14 +21,22 @@ class YourViewController: UIViewController, UICollectionViewDataSource, UICollec
     // ScrollView and StackView
     var scrollView: UIScrollView!
     var stackView: UIStackView!
-    
+    var userPostsSites = [Post]()
+      var newsPosts = [Post]()
+      var sportsPosts = [Post]()
+      var activitiesPosts = [Post]()
+      var otherPosts = [Post]()
     // Collection views
     var searchEnginesCollectionView: UICollectionView!
     var newspapersCollectionView: UICollectionView!
     var userPostsSitesCollectionView: UICollectionView!
-    
+      var newsCollectionView: UICollectionView!
+      var sportsCollectionView: UICollectionView!
+    var activitiesCollectionView: UICollectionView!
+
+    var otherCollectionView: UICollectionView!
+
     // Data arrays
-    var userPostsSites = [Post]()
     
     private let postReuseIdentifier = "PostCell"
     private var showDeleteButtons = false // Variabile per la modalità di modifica
@@ -47,6 +55,8 @@ class YourViewController: UIViewController, UICollectionViewDataSource, UICollec
         // Recupera i post
        // showLoadingIndicator()  // Mostra un indicatore di caricamento
         fetchSitesSavePosts()
+        
+        configureNavigationBar()
     }
     
     func setupUI() {
@@ -78,12 +88,45 @@ class YourViewController: UIViewController, UICollectionViewDataSource, UICollec
         
         setupLabelsAndCollectionViews()
     }
-    
-    func setupLabelsAndCollectionViews() {
-        addSection(title: "Search Engines", collectionView: &searchEnginesCollectionView)
-        addSection(title: "Newspapers", collectionView: &newspapersCollectionView)
-        addSection(title: "User Posts Sites", collectionView: &userPostsSitesCollectionView)
+    func configureNavigationBar() {
+        guard let navigationController = navigationController else { return }
+
+        // Disabilita large titles
+        navigationController.navigationBar.prefersLargeTitles = false
+
+        // Configura l'aspetto della navigation bar
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .white
+        appearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.black]
+
+        navigationController.navigationBar.standardAppearance = appearance
+        navigationController.navigationBar.scrollEdgeAppearance = appearance
+        navigationController.navigationBar.isTranslucent = false
+
+        // Configura il pulsante "<" senza testo
+        let backButton = UIBarButtonItem(image: UIImage(systemName: "chevron.left"), style: .plain, target: self, action: #selector(backButtonTapped))
+        backButton.tintColor = .black
+        navigationItem.leftBarButtonItem = backButton
+        
+        
+        
     }
+    
+    
+    
+    
+
+    @objc func backButtonTapped() {
+        navigationController?.popViewController(animated: true)
+    }
+    func setupLabelsAndCollectionViews() {
+            addSection(title: "User Posts Sites", collectionView: &userPostsSitesCollectionView)
+            addSection(title: "News", collectionView: &newsCollectionView)
+            addSection(title: "Sports", collectionView: &sportsCollectionView)
+            addSection(title: "Activities", collectionView: &activitiesCollectionView)
+            addSection(title: "Other", collectionView: &otherCollectionView)
+        }
     
     func addSection(title: String, collectionView: inout UICollectionView!) {
         let titleLabel = createLabel(text: title)
@@ -146,176 +189,267 @@ class YourViewController: UIViewController, UICollectionViewDataSource, UICollec
     func numberOfSections(in collectionView: UICollectionView) -> Int {
         return 1
     }
-    
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        switch collectionView {
-        case searchEnginesCollectionView:
-            return 4
-        case newspapersCollectionView:
-            return 1
-        case userPostsSitesCollectionView:
-            return userPostsSites.count
-        default:
-            return 0
+            switch collectionView {
+            case userPostsSitesCollectionView:
+                return userPostsSites.count
+            case newsCollectionView:
+                return newsPosts.count
+            case sportsCollectionView:
+                return sportsPosts.count
+            case activitiesCollectionView:
+                return activitiesPosts.count
+            case otherCollectionView:
+                return otherPosts.count
+            default:
+                return 0
+            }
         }
-    }
-    
+
+  
+    // Funzione per configurare la cella di ogni collection view
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath)
         cell.contentView.subviews.forEach { $0.removeFromSuperview() }
-        
-        let imageView = UIImageView(frame: cell.bounds)
-        imageView.contentMode = .scaleAspectFit
-        imageView.layer.cornerRadius = 10 // Bordi arrotondati
-        imageView.clipsToBounds = true // Applica il ritaglio per i bordi arrotondati
-        
-        if collectionView == searchEnginesCollectionView {
-            let images = ["google", "yahoo", "bing", "baidu"]
-            imageView.image = UIImage(named: images[indexPath.item])
-        } else if collectionView == newspapersCollectionView {
-            imageView.image = UIImage(named: "gazza")
-        } else if collectionView == userPostsSitesCollectionView {
-            let post = userPostsSites[indexPath.item]
-            if let imageUrl = post.imageUrl {
-                imageView.sd_setImage(with: URL(string: imageUrl), placeholderImage: UIImage(named: "placeholder"))
-            } else {
-                imageView.image = UIImage(named: "placeholder")
-            }
-            
-            // Aggiungi animazione di "shaking" se in modalità modifica
-            if showDeleteButtons {
-                let shakeAnimation = CABasicAnimation(keyPath: "transform.rotation")
-                shakeAnimation.fromValue = -0.05
-                shakeAnimation.toValue = 0.05
-                shakeAnimation.duration = 0.1
-                shakeAnimation.autoreverses = true
-                shakeAnimation.repeatCount = .infinity
-                cell.layer.add(shakeAnimation, forKey: "shake")
-            } else {
-                cell.layer.removeAnimation(forKey: "shake")
-            }
+
+        let post: Post?
+        switch collectionView {
+        case userPostsSitesCollectionView:
+            post = userPostsSites[indexPath.item]
+        case newsCollectionView:
+            post = newsPosts[indexPath.item]
+        case sportsCollectionView:
+            post = sportsPosts[indexPath.item]
+        case activitiesCollectionView:
+            post = activitiesPosts[indexPath.item]
+        case otherCollectionView:
+            post = otherPosts[indexPath.item]
+        default:
+            post = nil
         }
-        
+
+        if let post = post {
+            print("Displaying post: \(post.caption ?? "No Caption")")
+        }
+
+        // Configurazione dell'immagine nella cella
+        let imageView = UIImageView(frame: cell.bounds)
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        imageView.layer.cornerRadius = 10
+
+        if let imageUrl = post?.imageUrl {
+            imageView.sd_setImage(with: URL(string: imageUrl), placeholderImage: UIImage(named: "placeholder"))
+        } else {
+            imageView.image = UIImage(named: "placeholder")
+        }
         cell.contentView.addSubview(imageView)
+        
+        // Aggiungi riconoscitore di pressione prolungata
+           let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+           longPressGesture.minimumPressDuration = 2.0
+           cell.addGestureRecognizer(longPressGesture)
+
+        // Applicazione dell'effetto di shaking
+        if showDeleteButtons {
+            addShakeAnimation(to: cell)
+        } else {
+            removeShakeAnimation(from: cell)
+        }
+
         return cell
     }
-
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if collectionView == searchEnginesCollectionView {
-            let urls = ["https://www.google.com", "https://www.yahoo.com", "https://www.bing.com", "https://image.baidu.com"]
-            if let url = URL(string: urls[indexPath.item]) {
-                delegate?.didSelectWebsite(url: url)
-            }
-        } else if collectionView == newspapersCollectionView {
-            if let url = URL(string: "https://www.gazzetta.it") {
-                delegate?.didSelectWebsite(url: url)
-            }
-        } else if collectionView == userPostsSitesCollectionView {
-            if showDeleteButtons {
-                // Show confirmation alert for deletion
-                let post = userPostsSites[indexPath.item]
-                guard let postId = post.postId else {
-                    print("Post ID is missing")
-                    return
-                }
-
-                let alertController = UIAlertController(
-                    title: "Delete Post",
-                    message: "Are you sure you want to delete this post?",
-                    preferredStyle: .alert
-                )
-                alertController.addAction(UIAlertAction(title: "Delete", style: .destructive, handler: { _ in
-                    post.deletePost(postId: postId) { error in
-                        if let error = error {
-                            print("Failed to delete post: \(error.localizedDescription)")
-                        } else {
-                            print("Post deleted successfully")
-                            self.userPostsSites.remove(at: indexPath.item)
-                            self.userPostsSitesCollectionView.reloadData()
-                        }
-                    }
-                }))
-                alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-                present(alertController, animated: true, completion: nil)
-            } else {
-                let post = userPostsSites[indexPath.item]
-                if let postUrlString = post.link, let postUrl = URL(string: postUrlString) {
-                    delegate?.didSelectWebsite(url: postUrl)
-                }
-            }
-        }
+    
+    
+    @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began else { return }
+        showDeleteButtons = true
+        print("Entered edit mode with shaking effect")
+        reloadAllCollectionsWithShakeEffect()
     }
+    // MARK: - Metodo per Attivare Effetto Shaking in Tutte le Categorie
+    @objc func handleEditButtonTapped() {
+        showDeleteButtons.toggle()
+
+        // Ricarica tutte le collezioni per applicare o rimuovere l'effetto di shaking
+        userPostsSitesCollectionView.reloadData()
+        newsCollectionView.reloadData()
+        sportsCollectionView.reloadData()
+        activitiesCollectionView.reloadData()
+        otherCollectionView.reloadData()
+
+        // Aggiorna il titolo del pulsante di modifica
+        navigationItem.rightBarButtonItem?.title = showDeleteButtons ? "Done" : "Edit"
+    }
+
+    // MARK: - Helper Methods per Shaking Effect
+
+    private func addShakeAnimation(to cell: UICollectionViewCell) {
+        let shakeAnimation = CABasicAnimation(keyPath: "transform.rotation")
+        shakeAnimation.fromValue = -0.05
+        shakeAnimation.toValue = 0.05
+        shakeAnimation.duration = 0.1
+        shakeAnimation.autoreverses = true
+        shakeAnimation.repeatCount = .infinity
+        cell.layer.add(shakeAnimation, forKey: "shake")
+    }
+
+    private func removeShakeAnimation(from cell: UICollectionViewCell) {
+        cell.layer.removeAnimation(forKey: "shake")
+    }
+
+    // MARK: - Metodo per Attivare Vibrazione in Tutte le Collezioni
+
+  
+
+    // MARK: - Metodo per Ricaricare Tutte le Collezioni con Effetto Shaking
+
+    private func reloadAllCollectionsWithShakeEffect() {
+        userPostsSitesCollectionView.reloadData()
+        newsCollectionView.reloadData()
+        sportsCollectionView.reloadData()
+        activitiesCollectionView.reloadData()
+        otherCollectionView.reloadData()
+    }
+    
+    
+    // MARK: - Metodo per Attivare Effetto Shaking in Tutte le Categorie
+   
+
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         return CGSize(width: 120, height: 120)
     }
-    
     func fetchSitesSavePosts() {
-        guard let currentUid = Auth.auth().currentUser?.uid else {
-            print("No current user ID found")
-            DispatchQueue.main.async {
-                self.scrollView.refreshControl?.endRefreshing()
-            }
+          guard let currentUid = Auth.auth().currentUser?.uid else { return }
+
+          userPostsSites.removeAll()
+          newsPosts.removeAll()
+          sportsPosts.removeAll()
+          activitiesPosts.removeAll()
+          otherPosts.removeAll()
+
+          let categories = ["user_posts_sites", "news", "sport", "activity", "other"]
+          let group = DispatchGroup()
+
+          for category in categories {
+              group.enter()
+              let postsRef = Database.database().reference().child(category).child(currentUid)
+              postsRef.observeSingleEvent(of: .value, with: { snapshot in
+                  defer { group.leave() }
+                  guard let allObjects = snapshot.children.allObjects as? [DataSnapshot] else { return }
+
+                  for postSnapshot in allObjects {
+                      guard let postData = postSnapshot.value as? [String: AnyObject] else { continue }
+                      let postId = postSnapshot.key
+                      let post = Post(postId: postId, user: nil, dictionary: postData)
+
+                      switch category {
+                      case "user_posts_sites":
+                          self.userPostsSites.append(post)
+                      case "news":
+                          self.newsPosts.append(post)
+                      case "sport":
+                          self.sportsPosts.append(post)
+                      case "activity":
+                          self.activitiesPosts.append(post)
+                      case "other":
+                          self.otherPosts.append(post)
+                      default:
+                          break
+                      }
+                  }
+
+                  print("Fetched \(self.userPostsSites.count) user posts, \(self.newsPosts.count) news posts, \(self.sportsPosts.count) sports posts.")
+              }, withCancel: { error in
+                  print("Error fetching posts for \(category): \(error.localizedDescription)")
+                  group.leave()
+              })
+          }
+
+          group.notify(queue: DispatchQueue.main) {
+              self.userPostsSitesCollectionView.reloadData()
+              self.newsCollectionView.reloadData()
+              self.sportsCollectionView.reloadData()
+              self.activitiesCollectionView.reloadData()
+              self.otherCollectionView.reloadData()
+          }
+      }
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        var selectedPost: Post?
+
+        // Determina il post selezionato in base alla collection view
+        switch collectionView {
+        case userPostsSitesCollectionView:
+            selectedPost = userPostsSites[indexPath.item]
+        case newsCollectionView:
+            selectedPost = newsPosts[indexPath.item]
+        case sportsCollectionView:
+            selectedPost = sportsPosts[indexPath.item]
+        case activitiesCollectionView:
+            selectedPost = activitiesPosts[indexPath.item]
+        case otherCollectionView:
+            selectedPost = otherPosts[indexPath.item]
+        default:
             return
         }
 
-        let userRef = Database.database().reference().child("users").child(currentUid)
-        userRef.observeSingleEvent(of: .value) { userSnapshot in
-            guard let userDict = userSnapshot.value as? [String: AnyObject] else {
-                print("Failed to fetch user data")
-                DispatchQueue.main.async {
-                    self.scrollView.refreshControl?.endRefreshing()
-                }
+        guard let post = selectedPost else {
+            print("Post not found for the selected item.")
+            return
+        }
+
+        // Se siamo in modalità modifica (shaking), mostra il popup di eliminazione
+        if showDeleteButtons {
+            guard let postId = post.postId else {
+                print("Post ID is missing")
                 return
             }
-            let user = User(uid: currentUid, dictionary: userDict)
 
-            let postsRef = Database.database().reference().child("user_posts_sites").child(currentUid)
-            postsRef.observeSingleEvent(of: .value, with: { snapshot in
-                self.userPostsSites.removeAll()
-                guard let allObjects = snapshot.children.allObjects as? [DataSnapshot] else {
-                    print("Failed to cast snapshot to DataSnapshot")
-                    DispatchQueue.main.async {
-                        self.scrollView.refreshControl?.endRefreshing()
-                    }
-                    return
-                }
+            let alertController = UIAlertController(
+                title: "Delete Post",
+                message: "Are you sure you want to delete this post?",
+                preferredStyle: .alert
+            )
+            alertController.addAction(UIAlertAction(title: "Delete", style: .destructive, handler: { _ in
+                // Rimuovi il post dal database e dall'interfaccia
+                post.deletePost(postId: postId) { error in
+                    if let error = error {
+                        print("Failed to delete post: \(error.localizedDescription)")
+                    } else {
+                        print("Post deleted successfully")
 
-                let group = DispatchGroup()
-
-                for postSnapshot in allObjects {
-                    let postId = postSnapshot.key
-                    let postFlagsRef = Database.database().reference().child("post-flags").child(postId).child(currentUid)
-                    group.enter()
-                    postFlagsRef.observeSingleEvent(of: .value, with: { flagSnapshot in
-                        defer { group.leave() }
-                        if let flagValue = flagSnapshot.value as? Int, flagValue == 1 {
-                            if let postData = postSnapshot.value as? [String: AnyObject] {
-                                let post = Post(postId: postId, user: user, dictionary: postData)
-                                self.userPostsSites.append(post)
-                            }
+                        // Rimuovi il post dall'array appropriato
+                        switch collectionView {
+                        case self.userPostsSitesCollectionView:
+                            self.userPostsSites.removeAll { $0.postId == postId }
+                            self.userPostsSitesCollectionView.reloadData()
+                        case self.newsCollectionView:
+                            self.newsPosts.removeAll { $0.postId == postId }
+                            self.newsCollectionView.reloadData()
+                        case self.sportsCollectionView:
+                            self.sportsPosts.removeAll { $0.postId == postId }
+                            self.sportsCollectionView.reloadData()
+                        case self.activitiesCollectionView:
+                            self.activitiesPosts.removeAll { $0.postId == postId }
+                            self.activitiesCollectionView.reloadData()
+                        case self.otherCollectionView:
+                            self.otherPosts.removeAll { $0.postId == postId }
+                            self.otherCollectionView.reloadData()
+                        default:
+                            break
                         }
-                    })
+                    }
                 }
-
-                group.notify(queue: DispatchQueue.main) {
-                    self.userPostsSitesCollectionView.reloadData()
-                    self.scrollView.refreshControl?.endRefreshing()
-                }
-            }, withCancel: { error in
-                print("Error fetching user posts sites: \(error.localizedDescription)")
-                DispatchQueue.main.async {
-                    self.scrollView.refreshControl?.endRefreshing()
-                }
-            })
+            }))
+            alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+            present(alertController, animated: true, completion: nil)
+        } else {
+            // Se non è in modalità modifica, apri il link del post
+            if let postUrlString = post.link, let postUrl = URL(string: postUrlString) {
+                delegate?.didSelectWebsite(url: postUrl)
+            }
         }
-    }
-    @objc func handleEditButtonTapped() {
-        showDeleteButtons.toggle()
-        userPostsSitesCollectionView.reloadData()
-        
-        // Aggiorna il titolo del pulsante di modifica
-        navigationItem.rightBarButtonItem?.title = showDeleteButtons ? "Done" : "Edit"
     }
     
     func showLoadingIndicator() {

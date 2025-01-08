@@ -30,7 +30,8 @@ class CommentVC: UICollectionViewController, UICollectionViewDelegateFlowLayout 
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        view.backgroundColor = .white
+
         // configure collection view
         collectionView?.backgroundColor = .white
         collectionView?.alwaysBounceVertical = true
@@ -39,13 +40,24 @@ class CommentVC: UICollectionViewController, UICollectionViewDelegateFlowLayout 
         collectionView?.scrollIndicatorInsets = UIEdgeInsets(top: 0, left: 0, bottom: -50, right: 0)
         
         // navigation title
-        navigationItem.title = "Comments"
-        
+        navigationController?.setNavigationBarHidden(false, animated: true)
         // register cell class
         collectionView?.register(CommentCell.self, forCellWithReuseIdentifier: reuseIdentifer)
-        
+        // Aggiungi un pulsante "Indietro"
+        let backButton = UIBarButtonItem(image: UIImage(systemName: "chevron.backward"),
+                                         style: .plain,
+                                         target: self,
+                                         action: #selector(handleBack))
+
+        navigationItem.leftBarButtonItem = backButton
+        navigationItem.leftBarButtonItem = backButton
         // fetch comments
         fetchComments()
+    }
+    
+
+    @objc func handleBack() {
+        navigationController?.popViewController(animated: true)
     }
     
     override func viewWillAppear(_ animated: Bool) {

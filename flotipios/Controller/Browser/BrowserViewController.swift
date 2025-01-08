@@ -10,6 +10,7 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, TOCropViewC
     var initialURL: URL?
     var pendingURL: URL?
 
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -25,6 +26,7 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, TOCropViewC
         webView.scrollView.showsVerticalScrollIndicator = false
         view.addSubview(webView)
         view.backgroundColor = .white
+        addSwipeGestures()
 
         // Osserva il progresso del caricamento della WebView
         webView.addObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), options: .new, context: nil)
@@ -53,13 +55,35 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, TOCropViewC
         
         
     }
+    func addSwipeGestures() {
+        let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipe(_:)))
+        swipeLeft.direction = .left
+        webView.addGestureRecognizer(swipeLeft)
 
+        let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipe(_:)))
+        swipeRight.direction = .right
+        webView.addGestureRecognizer(swipeRight)
+    }
+    @objc func handleSwipe(_ gesture: UISwipeGestureRecognizer) {
+        switch gesture.direction {
+        case .left:
+            if webView.canGoForward {
+                forwardButtonTapped()
+            }
+        case .right:
+            if webView.canGoBack {
+                backButtonTapped()
+            }
+        default:
+            break
+        }
+    }
     // Configura la barra di caricamento
     func configureProgressBar() {
         progressView = UIProgressView(progressViewStyle: .default)
         progressView.translatesAutoresizingMaskIntoConstraints = false
-        progressView.trackTintColor = UIColor.blue
-        progressView.progressTintColor = UIColor.blue
+        progressView.trackTintColor = UIColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 1.0) // Colore oro tenue
+        progressView.progressTintColor = UIColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 1.0) // Colore oro tenue
         view.addSubview(progressView)
 
         // Imposta i constraints per la progressView
@@ -132,7 +156,9 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, TOCropViewC
         self.navigationItem.titleView = titleStackView
 
         // Configura il pulsante "Folder" a destra
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(named: "Folder"), style: .plain, target: self, action: #selector(handleShowMessages))
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(named: "grid"), style: .plain, target: self, action: #selector(handleShowMessages))
+        
+        
     }
 
     // Azione per il titolo "Home"
@@ -208,6 +234,9 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, TOCropViewC
     }
 
     func captureWebViewScreenshot() {
+        
+       
+
         let snapshotConfig = WKSnapshotConfiguration()
         snapshotConfig.rect = webView.bounds
         snapshotConfig.afterScreenUpdates = true

@@ -146,32 +146,79 @@ class FeedCell: UICollectionViewCell {
         
         // Add container view
         addSubview(containerView)
-        containerView.anchor(top: topAnchor, left: leftAnchor, bottom: bottomAnchor, right: rightAnchor, paddingTop: 0, paddingLeft: 0, paddingBottom: 0, paddingRight: 0, width: 0, height: 0)
+        containerView.anchor(
+            top: topAnchor,
+            left: leftAnchor,
+            bottom: nil, // Non specificare il vincolo inferiore per il container
+            right: rightAnchor,
+            paddingTop: 0,
+            paddingLeft: 0,
+            paddingBottom: 0,
+            paddingRight: 0,
+            width: 0,
+            height: 0
+        )
         
         // Add postImageView inside the container view
         containerView.addSubview(postImageView)
-        postImageView.anchor(top: containerView.topAnchor, left: containerView.leftAnchor, bottom: nil, right: containerView.rightAnchor, paddingTop: 0, paddingLeft: 0, paddingBottom: 0, paddingRight: 0, width: 0, height: 0)
+        postImageView.anchor(
+            top: containerView.topAnchor,
+            left: containerView.leftAnchor,
+            bottom: nil,
+            right: containerView.rightAnchor,
+            paddingTop: 0,
+            paddingLeft: 0,
+            paddingBottom: 0,
+            paddingRight: 0,
+            width: 0,
+            height: 0
+        )
         postImageView.heightAnchor.constraint(equalTo: containerView.widthAnchor, multiplier: 1).isActive = true
         
         // Add profileImageView
         containerView.addSubview(profileImageView)
-        profileImageView.anchor(top: postImageView.bottomAnchor, left: containerView.leftAnchor, bottom: nil, right: nil, paddingTop: 8, paddingLeft: 8, paddingBottom: 0, paddingRight: 0, width: 40, height: 40)
+        profileImageView.anchor(
+            top: postImageView.bottomAnchor,
+            left: containerView.leftAnchor,
+            bottom: nil,
+            right: nil,
+            paddingTop: 8,
+            paddingLeft: 8,
+            paddingBottom: 0,
+            paddingRight: 0,
+            width: 40,
+            height: 40
+        )
         profileImageView.layer.cornerRadius = 40 / 2
-
-        // Add usernameButton next to and slightly higher than profileImageView
+        
+        // Add usernameButton next to profileImageView
         containerView.addSubview(usernameButton)
         usernameButton.translatesAutoresizingMaskIntoConstraints = false
         usernameButton.leftAnchor.constraint(equalTo: profileImageView.rightAnchor, constant: 8).isActive = true
         usernameButton.centerYAnchor.constraint(equalTo: profileImageView.centerYAnchor, constant: 0).isActive = true
-
-        // StackView for buttons aligned to the right (savePostButton, likeButton, commentButton, optionsButton)
+        
+        // Create StackView for buttons (aligned to the right)
         let rightButtonsStackView = UIStackView(arrangedSubviews: [savePostButton, likeButton, commentButton])
         rightButtonsStackView.axis = .horizontal
         rightButtonsStackView.spacing = 8
-        rightButtonsStackView.distribution = .fillProportionally
-
+        rightButtonsStackView.distribution = .fillEqually
+        
         containerView.addSubview(rightButtonsStackView)
-        rightButtonsStackView.anchor(top: postImageView.bottomAnchor, left: nil, bottom: nil, right: containerView.rightAnchor, paddingTop: 8, paddingLeft: 0, paddingBottom: 0, paddingRight: 8, width: 0, height: 40)
+        rightButtonsStackView.anchor(
+            top: postImageView.bottomAnchor,
+            left: nil,
+            bottom: nil,
+            right: containerView.rightAnchor,
+            paddingTop: 8,
+            paddingLeft: 0,
+            paddingBottom: 0,
+            paddingRight: 8,
+            width: 0,
+            height: 40 // Altezza specifica dei pulsanti
+        )
+        
+        // Update container height dynamically based on content
+        containerView.bottomAnchor.constraint(equalTo: profileImageView.bottomAnchor, constant: 8).isActive = true
     }
    
     // MARK: - Handlers
