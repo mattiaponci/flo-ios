@@ -8,7 +8,7 @@
 import UIKit
 import Firebase
 
-class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate, UserVCDelegate {
+class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate, UserVCDelegate, SearchVCDelegate, UINavigationControllerDelegate {
     
     // MARK: - Properties
     
@@ -59,7 +59,21 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
         
         let feedNavController = constructNavController(unselectedImage: #imageLiteral(resourceName: "home_unselected"), selectedImage: #imageLiteral(resourceName: "home_selected"), rootViewController: feedVC)
         
-        let searchVC = constructNavController(unselectedImage: #imageLiteral(resourceName: "search_unselected"), selectedImage: #imageLiteral(resourceName: "comment"), rootViewController: SearchVC())
+        
+        let searchVC = SearchVC()
+        searchVC.delegate = self
+
+        let unselectedImage = UIImage(systemName: "magnifyingglass") ?? UIImage()
+        let selectedImage = UIImage(systemName: "bookmark.fill") ?? UIImage()
+
+        let searchNavController = constructSearchNavController(
+            unselectedImage: unselectedImage,
+            selectedImage: selectedImage,
+            searchVC: searchVC
+        )
+        
+   //    let searchVC = constructNavController(unselectedImage: #imageLiteral(resourceName: "search_unselected"), selectedImage: #imageLiteral(resourceName: "comment"), rootViewController: SearchVC())
+
         
         let browserVC = constructNavController(
             unselectedImage: #imageLiteral(resourceName: "flag"),
@@ -76,7 +90,7 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
         
         let userNavProfileVC = constructNavController(unselectedImage: #imageLiteral(resourceName: "profile_unselected"), selectedImage: #imageLiteral(resourceName: "profile_selected"), rootViewController: userProfileVC)
         
-        viewControllers = [feedNavController, searchVC, browserVC, notificationVC, userNavProfileVC]
+        viewControllers = [feedNavController, searchNavController, browserVC, notificationVC, userNavProfileVC]
         
         tabBar.tintColor = .white
     }
@@ -87,6 +101,28 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
         navController.tabBarItem.image = unselectedImage
         navController.tabBarItem.selectedImage = selectedImage
         navController.navigationBar.tintColor = .gray
+        navController.navigationBar.isHidden = false // Assicurati che la barra sia visibile
+
+        return navController
+    }
+    
+    func constructSearchNavController(unselectedImage: UIImage, selectedImage: UIImage, searchVC: SearchVC) -> UINavigationController {
+        print("Constructing SearchNavController")
+
+        let navController = UINavigationController(rootViewController: searchVC)
+        navController.tabBarItem.image = unselectedImage
+        navController.tabBarItem.selectedImage = selectedImage
+        
+        navController.navigationBar.isHidden = false // La barra di navigazione deve essere visibile
+        navController.navigationBar.prefersLargeTitles = false
+        
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .white
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.black]
+        navController.navigationBar.standardAppearance = appearance
+        navController.navigationBar.scrollEdgeAppearance = appearance
+        
         return navController
     }
     
@@ -256,4 +292,25 @@ class MainTabVC: UITabBarController, UITabBarControllerDelegate, FeedVCDelegate,
             present(browserVC, animated: true, completion: nil)
         }
     }
+    
+    
+    func didSelectWebsiteInSearch(url: URL) {
+        print("URL received in MainTabVC: \(url.absoluteString)")
+        self.selectedIndex = 2 // Assuming BrowserViewController is the third tab (index 2)
+        
+        if let browserNavController = viewControllers?[2] as? UINavigationController {
+            if let browserVC = browserNavController.topViewController as? BrowserViewController {
+                browserVC.load(url: url)
+            } else {
+                let browserVC = BrowserViewController()
+                browserVC.load(url: url)
+                browserNavController.pushViewController(browserVC, animated: true)
+            }
+        } else {
+            let browserVC = BrowserViewController()
+            browserVC.load(url: url)
+            present(browserVC, animated: true, completion: nil)
+        }
+    }
+    
 }

@@ -17,6 +17,10 @@ protocol UserVCDelegate: AnyObject {
 }
 
 class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, UserProfileHeaderDelegate, UserCellDelegate {
+    
+    var username: String?
+       var selectedPostId: String?
+    
     func didTapAddFriend(isFriendAdded: Bool) {
         guard let user = self.user else { return }
           
@@ -208,6 +212,8 @@ class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLay
         
         // Configure refresh control
         configureRefreshControl()
+        
+        loadUserPosts()
         
         // Configura l'header della collection view
    /*     if let user = self.user {
@@ -562,4 +568,68 @@ class UserProfileVC: UICollectionViewController, UICollectionViewDelegateFlowLay
         refreshControl.addTarget(self, action: #selector(handleRefresh), for: .valueChanged)
         collectionView.refreshControl = refreshControl
     }
+    
+    // MARK: - Helper Methods
+       private func loadUserPosts() {
+           // Carica i post dell'utente e scorri fino al post selezionato
+           guard let username = username else { return }
+           
+           fetchPosts(for: username) { [weak self] posts in
+               self?.posts = posts
+               DispatchQueue.main.async {
+                   self?.collectionView.reloadData()
+                   self?.scrollToSelectedPostIfNeeded()
+               }
+
+               if let selectedPostId = self?.selectedPostId {
+                   self?.scrollToPost(with: selectedPostId)
+               }
+           }
+       }
+
+       private func scrollToPost(with postId: String) {
+           if let index = posts.firstIndex(where: { $0.postId == postId }) {
+               let indexPath = IndexPath(item: index, section: 0)
+               DispatchQueue.main.async {
+                   self.collectionView.scrollToItem(at: indexPath, at: .centeredVertically, animated: true)
+               }
+           }
+       }
+    
+    // MARK: - API
+    private func fetchPosts(for username: String, completion: @escaping ([Post]) -> Void) {
+        let postsRef = Database.database().reference().child("user_posts").child(username)
+
+        postsRef.observeSingleEvent(of: .value) { snapshot in
+            var fetchedPosts: [Post] = []
+
+            guard let allObjects = snapshot.children.allObjects as? [DataSnapshot] else {
+                print("Failed to fetch posts for user.")
+                completion([])
+                return
+            }
+
+            allObjects.forEach { snapshot in
+                let postId = snapshot.key
+                if let postData = snapshot.value as? [String: AnyObject],
+                   let user = self.user { // Crea l'oggetto `Post`
+                    let post = Post(postId: postId, user: user, dictionary: postData)
+                    fetchedPosts.append(post)
+                }
+            }
+
+            fetchedPosts.sort(by: { $0.creationDate > $1.creationDate })
+            completion(fetchedPosts)
+        }
+    }
+    
+    private func scrollToSelectedPostIfNeeded() {
+           guard let selectedPostId = selectedPostId else { return }
+           
+           // Trova l'indice del post corrispondente a selectedPostId
+           if let index = posts.firstIndex(where: { $0.postId == selectedPostId }) {
+               let indexPath = IndexPath(item: index, section: 0)
+               collectionView.scrollToItem(at: indexPath, at: .centeredVertically, animated: true)
+           }
+       }
 }

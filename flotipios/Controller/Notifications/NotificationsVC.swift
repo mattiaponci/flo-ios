@@ -1,14 +1,48 @@
 import UIKit
 import Firebase
 
+enum NotificationType {
+    case follow
+    case newPost
+}
+
+struct NotificationModel {
+    let type: NotificationType
+    let username: String?
+    let userId: String?
+    let postImageUrl: String?
+    let postId: String? // Aggiunta della proprietà postId
+    let creationDate: Date
+}
+
 class NotificationsVC: UIViewController, UITableViewDelegate, UITableViewDataSource, NotificationCellDelegate {
+    
+    var userProfileController: UserProfileVC?
+
+    
+    func didTapCell(for notification: NotificationModel) {
+           guard let username = notification.username else { return }
+           navigateToUserProfile(username: username, postId: notification.postId)
+       }
+       
+       private func navigateToUserProfile(username: String, postId: String?) {
+           let userProfileVC = UserProfileVC(collectionViewLayout: UICollectionViewFlowLayout())
+           
+           let profileVC = userProfileVC
+           profileVC.username = username
+           profileVC.selectedPostId = postId // Passa l'identificatore del post
+           navigationController?.pushViewController(profileVC, animated: true)
+       }
+    
     func handleFollowTapped(for cell: NotificationCell) {
         print("hello")
     }
     
     func handlePostTapped(for cell: NotificationCell) {
         print("hello")
+        
     }
+    
     
     // MARK: - Properties
     
@@ -23,11 +57,10 @@ class NotificationsVC: UIViewController, UITableViewDelegate, UITableViewDataSou
         return label
     }()
     
-    var followNotifications = [(username: String, userId: String)]()
+    var notifications: [NotificationModel] = []
     var currentUserId: String? {
         return Auth.auth().currentUser?.uid
     }
-    var observedFollowedUsers = Set<String>()
     private let refresher = UIRefreshControl()
     
     // MARK: - Lifecycle
@@ -36,6 +69,11 @@ class NotificationsVC: UIViewController, UITableViewDelegate, UITableViewDataSou
         super.viewDidLoad()
         configureUI()
         fetchFollowNotifications()
+        //  fetchPostNotifications()
+        fetchFollowedUserPosts()
+        
+        view.backgroundColor = .white
+        
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -48,16 +86,15 @@ class NotificationsVC: UIViewController, UITableViewDelegate, UITableViewDataSou
     private func configureUI() {
         // Rimuove la navigation bar
         navigationController?.setNavigationBarHidden(true, animated: false)
-        
         view.backgroundColor = .white
         
         // Header Label
         view.addSubview(headerLabel)
         headerLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            headerLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 2), // Margine di 2 punti dal bordo superiore sicuro
-            headerLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10), // Allineamento a sinistra con margine
-            headerLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor), // Opzionale
+            headerLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 2),
+            headerLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+            headerLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             headerLabel.heightAnchor.constraint(equalToConstant: 50)
         ])
         
@@ -85,18 +122,18 @@ class NotificationsVC: UIViewController, UITableViewDelegate, UITableViewDataSou
     // MARK: - UITableViewDataSource
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return followNotifications.count
+        return notifications.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier, for: indexPath) as! NotificationCell
-        let notification = followNotifications[indexPath.row]
+        let notification = notifications[indexPath.row]
         cell.configure(with: notification)
         cell.delegate = self
         return cell
     }
     
-    // MARK: - Firebase Listener
+    // MARK: - Firebase Listeners
     
     func fetchFollowNotifications() {
         guard let currentUid = currentUserId else { return }
@@ -106,14 +143,21 @@ class NotificationsVC: UIViewController, UITableViewDelegate, UITableViewDataSou
             guard let self = self else { return }
             let followedUserId = snapshot.key
             
-            if self.observedFollowedUsers.contains(followedUserId) { return }
-            self.observedFollowedUsers.insert(followedUserId)
-            
             Database.database().reference().child("users").child(followedUserId).observeSingleEvent(of: .value) { userSnapshot in
                 guard let userDict = userSnapshot.value as? [String: AnyObject],
                       let username = userDict["username"] as? String else { return }
                 
-                self.followNotifications.append((username: username, userId: followedUserId))
+                let notification = NotificationModel(
+                    type: .follow,
+                    username: username,
+                    userId: followedUserId,
+                    postImageUrl: nil,
+                    postId: nil, // Nessun postId per follow
+                    creationDate: Date()
+                )
+                self.notifications.append(notification)
+                self.notifications.sort(by: { $0.creationDate > $1.creationDate })
+                
                 DispatchQueue.main.async {
                     self.tableView.reloadData()
                 }
@@ -121,11 +165,42 @@ class NotificationsVC: UIViewController, UITableViewDelegate, UITableViewDataSou
         }
     }
     
+    func fetchPostNotifications() {
+        guard let currentUid = currentUserId else { return }
+        let postsRef = Database.database().reference().child("user_posts_sites").child(currentUid)
+        
+        postsRef.observe(.childAdded) { [weak self] snapshot in
+            guard let self = self else { return }
+            guard let postDict = snapshot.value as? [String: AnyObject],
+                  let creationDate = postDict["creationDate"] as? Double,
+                  let imageUrl = postDict["imageUrl"] as? String else { return }
+            
+            let postId = snapshot.key // Ottieni il postId dal nodo corrente
+            
+            let notification = NotificationModel(
+                type: .newPost,
+                username: nil,
+                userId: currentUid,
+                postImageUrl: imageUrl,
+                postId: postId, // Passa il postId
+                creationDate: Date(timeIntervalSince1970: creationDate)
+            )
+            self.notifications.append(notification)
+            self.notifications.sort(by: { $0.creationDate > $1.creationDate })
+            
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
+        }
+    }
+    
     @objc func handleRefresh() {
-        followNotifications.removeAll()
-        observedFollowedUsers.removeAll()
+        notifications.removeAll()
         tableView.reloadData()
         fetchFollowNotifications()
+        //    fetchPostNotifications()
+        fetchFollowedUserPosts()
+        
         refresher.endRefreshing()
     }
     
@@ -162,10 +237,59 @@ class NotificationsVC: UIViewController, UITableViewDelegate, UITableViewDataSou
                     userProfileVC.posts = posts
                     userProfileVC.isFromFeed = false
                     userProfileVC.isFromSearch = false
-                    userProfileVC.isFromFollowLikeVC = true // Indica che proviene dalle notifiche
+                    userProfileVC.isFromFollowLikeVC = true
                     self.navigationController?.pushViewController(userProfileVC, animated: true)
                 }
             }
         }
     }
+    
+    func fetchFollowedUserPosts() {
+        guard let currentUid = currentUserId else { return }
+        let followingRef = Database.database().reference().child("following").child(currentUid)
+        
+        // Recupera le persone seguite
+        followingRef.observeSingleEvent(of: .value) { [weak self] snapshot in
+            guard let self = self, let followingDict = snapshot.value as? [String: Any] else { return }
+            let followedUserIds = Array(followingDict.keys)
+            
+            for userId in followedUserIds {
+                // Recupera i post di ogni utente seguito
+                let userPostsRef = Database.database().reference().child("user_posts_sites").child(userId)
+                
+                userPostsRef.observeSingleEvent(of: .value) { postSnapshot in
+                    guard let postsDict = postSnapshot.value as? [String: AnyObject] else { return }
+                    
+                    for (postId, postData) in postsDict {
+                        guard let postDict = postData as? [String: AnyObject],
+                              let creationDate = postDict["creationDate"] as? Double,
+                              let imageUrl = postDict["imageUrl"] as? String else { continue }
+                        
+                        // Recupera il nome utente
+                        Database.database().reference().child("users").child(userId).observeSingleEvent(of: .value) { userSnapshot in
+                            guard let userDict = userSnapshot.value as? [String: AnyObject],
+                                  let username = userDict["username"] as? String else { return }
+                            
+                            // Crea la notifica
+                            let notification = NotificationModel(
+                                type: .newPost,
+                                username: username,
+                                userId: userId,
+                                postImageUrl: imageUrl,
+                                postId: postId, // Aggiunto il postId
+                                creationDate: Date(timeIntervalSince1970: creationDate)
+                            )
+                            self.notifications.append(notification)
+                            self.notifications.sort(by: { $0.creationDate > $1.creationDate })
+                            
+                            DispatchQueue.main.async {
+                                self.tableView.reloadData()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 }

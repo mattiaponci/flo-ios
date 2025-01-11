@@ -22,6 +22,9 @@ protocol FeedCellDelegate {
 
 
 }
+
+
+
 protocol PhotoCellDelegate {
     func handleUsernameTapped(for cell: PhotoCell)
     func handleOptionsTapped(for cell: PhotoCell)
@@ -59,6 +62,8 @@ protocol NotificationCellDelegate: AnyObject {
     func handleFollowTapped(for cell: NotificationCell)
     func handlePostTapped(for cell: NotificationCell)
     func didTapUsername(username: String)
+    func didTapCell(for notification: NotificationModel)
+
 }
 
 protocol CommentInputAccesoryViewDelegate {

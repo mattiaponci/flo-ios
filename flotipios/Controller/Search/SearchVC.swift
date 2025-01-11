@@ -9,6 +9,10 @@ import FirebaseStorage
 
 private let reuseIdentifier = "SearchUserCell"
 
+protocol SearchVCDelegate: AnyObject {
+    func didSelectWebsiteInSearch(url: URL)
+}
+
 class SearchVC: UIViewController,
                 UITableViewDelegate,
                 UITableViewDataSource,
@@ -17,16 +21,18 @@ class SearchVC: UIViewController,
                 UICollectionViewDataSource,
                 UICollectionViewDelegateFlowLayout,
                 FeedCellDelegate {
-    func handleFlagToLike(for cell: FeedCell) {
-        print("")
-        
-    }
+    
+    
+    
+    
+    
+    weak var delegate: SearchVCDelegate?
     
     
     // MARK: - Proprietà
     
-    weak var delegate: NotificationsVC?
-    
+  //  weak var delegate: NotificationsVC?
+
     var user: User?
     var users = [User]()
     var filteredUsers = [User]()
@@ -136,7 +142,7 @@ class SearchVC: UIViewController,
         view.backgroundColor = .white
         
     }
-    
+   
     // MARK: - fetchRandomSite: chiama la Cloud Function e carica 1 post
     func fetchRandomSite() {
         print("Chiedo al server un post random...")
@@ -388,6 +394,11 @@ class SearchVC: UIViewController,
                 }
             }
         }
+        configureFlagButton(for: cell)
+        handleConfigureLikeButton(for: cell)
+
+
+        
         
         return cell
     }
@@ -417,25 +428,17 @@ class SearchVC: UIViewController,
     }
     
     // MARK: - FeedCellDelegate
-    func handleUsernameTapped(for cell: FeedCell) {
-        print("Username tapped!")
-    }
+   
     
     func handleOptionsTapped(for cell: FeedCell) {
         print("Options tapped!")
     }
     
-    func handleLikeTapped(for cell: FeedCell, isDoubleTap: Bool) {
-        print("Like tapped!")
-    }
     
-    func handleCommentTapped(for cell: FeedCell) {
-        print("Comment tapped!")
-    }
     
-    func handleConfigureLikeButton(for cell: FeedCell) {
-        print("Configure Like Button tapped!")
-    }
+  
+    
+   
     
     func handleShowLikes(for cell: FeedCell) {
         print("Show Likes tapped!")
@@ -451,6 +454,8 @@ class SearchVC: UIViewController,
     
     func handleImageTapped(url: URL) {
         print("Image tapped! URL: \(url)")
+        delegate?.didSelectWebsiteInSearch(url: url)
+
     }
     
     // MARK: - SearchBar
@@ -608,6 +613,158 @@ class SearchVC: UIViewController,
         return UIEdgeInsets(top: 20, left: horizontalInset, bottom: 20, right: horizontalInset)
     }
     
+    // MARK: - FeedCellDelegate
+    func handleUsernameTapped(for cell: FeedCell) {
+        guard let post = cell.post else { return }
+        guard let postOwnerUid = post.ownerUid else {
+            print("Post does not have an owner UID")
+            return
+        }
+        
+        // Verifica se l'utente è quello corrente
+        if postOwnerUid == Auth.auth().currentUser?.uid {
+            print("Navigating to the profile of the current user")
+            
+            // Naviga al profilo dell'utente corrente
+            let userProfileVC = UserProfileVC(collectionViewLayout: UICollectionViewFlowLayout())
+            userProfileVC.user = self.user // Passa i dati dell'utente corrente
+            userProfileVC.isFromSearch = true
+            userProfileVC.isFromFeed = false
+            navigationController?.pushViewController(userProfileVC, animated: true)
+            
+        } else {
+            print("Navigating to the profile of another user with UID: \(postOwnerUid)")
+            
+            // Fetch dell'utente selezionato
+            Database.database().reference().child("users").child(postOwnerUid).observeSingleEvent(of: .value) { snapshot in
+                guard let dictionary = snapshot.value as? [String: AnyObject] else {
+                    print("Failed to fetch user data for UID: \(postOwnerUid)")
+                    return
+                }
+                
+                let user = User(uid: postOwnerUid, dictionary: dictionary)
+                
+                // Naviga al profilo dell'utente selezionato
+                let userProfileVC = UserProfileVC(collectionViewLayout: UICollectionViewFlowLayout())
+                userProfileVC.user = user
+                userProfileVC.isFromSearch = true
+                userProfileVC.isFromFeed = false
+                self.navigationController?.pushViewController(userProfileVC, animated: true)
+            }
+        }
+    }
+  
+    func configureFlagButton(for cell: FeedCell) {
+        guard let post = cell.post else { return }
+        guard let postId = post.postId else { return }
+        guard let currentUid = Auth.auth().currentUser?.uid else { return }
+
+        let flagsRef = Database.database().reference().child("post-flags").child(postId)
+
+        // Controlla lo stato del flag
+        flagsRef.child(currentUid).observeSingleEvent(of: .value) { snapshot in
+            DispatchQueue.main.async {
+                if snapshot.exists() {
+                    cell.savePostButton.setImage(#imageLiteral(resourceName: "flag1"), for: .normal)
+                } else {
+                    cell.savePostButton.setImage(#imageLiteral(resourceName: "flag"), for: .normal)
+                }
+            }
+        }
+    }
     
+    func handleFlagToLike(for cell: FeedCell) {
+        guard let post = cell.post else { return }
+        guard let postId = post.postId else { return }
+        guard let currentUid = Auth.auth().currentUser?.uid else { return }
+
+        let flagsRef = Database.database().reference().child("post-flags").child(postId)
+
+        // Controlla se il flag è già presente
+        flagsRef.child(currentUid).observeSingleEvent(of: .value) { snapshot in
+            if snapshot.exists() {
+                // Rimuovi il flag
+                flagsRef.child(currentUid).removeValue { error, _ in
+                    if let error = error {
+                        print("Failed to remove flag: \(error.localizedDescription)")
+                        return
+                    }
+                    print("Flag removed from post-flags")
+                    DispatchQueue.main.async {
+                        cell.savePostButton.setImage(#imageLiteral(resourceName: "flag"), for: .normal)
+                    }
+                }
+            } else {
+                // Aggiungi il flag
+                flagsRef.child(currentUid).setValue(1) { error, _ in
+                    if let error = error {
+                        print("Failed to add flag: \(error.localizedDescription)")
+                        return
+                    }
+                    print("Flag added to post-flags")
+                    DispatchQueue.main.async {
+                        cell.savePostButton.setImage(#imageLiteral(resourceName: "flag1"), for: .normal)
+                    }
+                }
+            }
+        }
+    }
+    func handleConfigureLikeButton(for cell: FeedCell) {
+        guard let post = cell.post else { return }
+        guard let postId = post.postId else { return }
+        guard let currentUid = Auth.auth().currentUser?.uid else { return }
+
+        USER_LIKES_REF.child(currentUid).observeSingleEvent(of: .value) { (snapshot) in
+            if snapshot.hasChild(postId) {
+                post.didLike = true
+                cell.likeButton.setImage(#imageLiteral(resourceName: "star"), for: .normal)
+            } else {
+                post.didLike = false
+                cell.likeButton.setImage(#imageLiteral(resourceName: "star2"), for: .normal)
+            }
+        }
+    }
+    func handleLikeTapped(for cell: FeedCell, isDoubleTap: Bool) {
+        guard let post = cell.post else { return }
+        guard let postId = post.postId else { return }
+        guard let currentUid = Auth.auth().currentUser?.uid else { return }
+
+        let likesRef = Database.database().reference().child("post-likes").child(postId)
+
+        // Controlla se il like è già presente
+        likesRef.child(currentUid).observeSingleEvent(of: .value) { snapshot in
+            if snapshot.exists() {
+                // Rimuovi il like
+                likesRef.child(currentUid).removeValue { error, _ in
+                    if let error = error {
+                        print("Failed to unlike post: \(error.localizedDescription)")
+                        return
+                    }
+                    print("Post unliked")
+                    DispatchQueue.main.async {
+                        cell.likeButton.setImage(#imageLiteral(resourceName: "star"), for: .normal)
+                    }
+                }
+            } else {
+                // Aggiungi il like
+                likesRef.child(currentUid).setValue(1) { error, _ in
+                    if let error = error {
+                        print("Failed to like post: \(error.localizedDescription)")
+                        return
+                    }
+                    print("Post liked")
+                    DispatchQueue.main.async {
+                        cell.likeButton.setImage(#imageLiteral(resourceName: "star2"), for: .normal)
+                    }
+                }
+            }
+        }
+    }
     
+    func handleCommentTapped(for cell: FeedCell) {
+        guard let post = cell.post else { return }
+        let commentVC = CommentVC(collectionViewLayout: UICollectionViewFlowLayout())
+        commentVC.post = post
+        navigationController?.pushViewController(commentVC, animated: true)
+    }
 }

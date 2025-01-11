@@ -139,17 +139,16 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, TOCropViewC
         forwardButton.addTarget(self, action: #selector(forwardButtonTapped), for: .touchUpInside)
 
         // Configura il titolo "Home" come cliccabile
-        let titleLabel = UILabel()
-        titleLabel.text = "Home"
-        titleLabel.font = UIFont.systemFont(ofSize: 18, weight: .medium)
-        titleLabel.textColor = .black
-        titleLabel.isUserInteractionEnabled = true
-        let titleTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleHomeTapped))
-        titleLabel.addGestureRecognizer(titleTapGesture)
+            let homeButton = UIButton(type: .system)
+            if let homeImage = UIImage(systemName: "house.fill") {
+                homeButton.setImage(homeImage, for: .normal)
+                homeButton.tintColor = .black
+                homeButton.addTarget(self, action: #selector(handleHomeTapped), for: .touchUpInside)
+            }
 
         // Aggiungi i pulsanti e il titolo allo stack
         titleStackView.addArrangedSubview(backButton)
-        titleStackView.addArrangedSubview(titleLabel)
+        titleStackView.addArrangedSubview(homeButton)
         titleStackView.addArrangedSubview(forwardButton)
 
         // Imposta lo stack come titleView
@@ -234,7 +233,16 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, TOCropViewC
     }
 
     func captureWebViewScreenshot() {
-        
+        let zoomScale = webView.scrollView.zoomScale
+
+            // Verifica se lo zoom è attivo
+            if zoomScale > 1.0 {
+                // Mostra un popup per avvisare l'utente
+                let alert = UIAlertController(title: "Zoom Attivo", message: "Disattiva lo zoom per poter utilizzare il crop.", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                self.present(alert, animated: true)
+                return
+            }
        
 
         let snapshotConfig = WKSnapshotConfiguration()
@@ -256,7 +264,8 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, TOCropViewC
             cropViewController.toolbar.rotateButton.isHidden = true
             cropViewController.toolbar.resetButton.isHidden = true
             cropViewController.rotateClockwiseButtonHidden = true // Nasconde il pulsante di rotazione
-
+            cropViewController.cropView.cropBoxResizeEnabled = false
+            cropViewController.cropView.aspectRatio = CGSize(width: 1, height: 1) // Mantieni proporzioni quadrate
             self.present(cropViewController, animated: true)
         }
     }

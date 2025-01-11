@@ -1,90 +1,88 @@
-//
-//  Notification.swift
-//  flotipios
-//
-//  Created by mattia poncini on 29.09.2024.
-//
-
 import Foundation
 
 class Notification {
-    
-    enum NotificationType: Int, Printable {
-        
-        case Like
-        case Comment
-        case Follow
-        case CommentMention
-        case PostMention
-        
+    // MARK: - Notification Type Enum
+    enum NotificationType: Int, CustomStringConvertible {
+        case follow = 0
+        case newPost = 1
+        case like = 2
+        case comment = 3
+
         var description: String {
             switch self {
-            case .Like: return " liked your post"
-            case .Comment: return " commented on your post"
-            case .Follow: return " started following you"
-            case .CommentMention: return " mentioned you in a comment"
-            case .PostMention: return " mentioned you in a post"
+            case .follow: return "started following you"
+            case .newPost: return "posted a new post"
+            case .like: return "liked your post"
+            case .comment: return "commented on your post"
             }
         }
-        
+
         init(index: Int) {
             switch index {
-            case 0: self = .Like
-            case 1: self = .Comment
-            case 2: self = .Follow
-            case 3: self = .CommentMention
-            case 4: self = .PostMention
-            default: self = .Like
+            case 0: self = .follow
+            case 1: self = .newPost
+            case 2: self = .like
+            case 3: self = .comment
+            default: self = .follow
             }
         }
     }
-    
-    var creationDate: Date!
-    var uid: String!
+
+    // MARK: - Properties
+    var creationDate: Date
+    var uid: String
     var postId: String?
     var post: Post?
-    var user: User!
-    var type: Int?
-    var notificationType: NotificationType!
-    var commentId: String?
+    var user: User
+    var notificationType: NotificationType
+    var postImageUrl: String?
     var commentText: String?
-    var didCheck = false
-    
-    init(user: User, post: Post? = nil, dictionary: Dictionary<String, AnyObject>) {
-        
+    var didCheck: Bool
+
+    // MARK: - Initializer
+    init(user: User, post: Post? = nil, dictionary: [String: AnyObject]) {
         self.user = user
-        
-        if let post = post {
-            self.post = post
-        }
-        
-        if let creationDate = dictionary["creationDate"] as? Double {
-            self.creationDate = Date(timeIntervalSince1970: creationDate)
-        }
-        
-        if let type = dictionary["type"] as? Int {
-            self.notificationType = NotificationType(index: type)
-        }
-        
-        if let uid = dictionary["uid"] as? String {
-            self.uid = uid
-        }
-        
-        if let postId = dictionary["postId"] as? String {
-            self.postId = postId
-        }
-        
-        if let commentId = dictionary["commentId"] as? String {
-            self.commentId = commentId
-        }
-        
-        if let checked = dictionary["checked"] as? Int {
-            if checked == 0 {
-                self.didCheck = false
+        self.post = post
+        self.creationDate = Date(timeIntervalSince1970: dictionary["creationDate"] as? Double ?? 0)
+        self.notificationType = NotificationType(index: dictionary["type"] as? Int ?? 0)
+        self.uid = dictionary["uid"] as? String ?? ""
+        self.postId = dictionary["postId"] as? String
+        self.postImageUrl = dictionary["postImageUrl"] as? String
+        self.commentText = dictionary["commentText"] as? String
+        self.didCheck = (dictionary["checked"] as? Int ?? 0) != 0
+    }
+
+    // MARK: - Methods
+    func markAsRead() {
+        self.didCheck = true
+        // Logica per aggiornare lo stato nel database può essere aggiunta qui
+    }
+
+    func isRelatedToPost() -> Bool {
+        return postId != nil || postImageUrl != nil
+    }
+
+    func getFormattedCreationDate() -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: creationDate)
+    }
+
+    func getNotificationDetails() -> String {
+        switch notificationType {
+        case .follow:
+            return "\(user.username) \(notificationType.description)"
+        case .newPost:
+            return "\(user.username) \(notificationType.description)"
+        case .like:
+            return "\(user.username) \(notificationType.description)"
+        case .comment:
+            if let comment = commentText {
+                return "\(user.username) \(notificationType.description): \"\(comment)\""
             } else {
-                self.didCheck = true
+                return "\(user.username) \(notificationType.description)"
             }
         }
     }
 }
-
