@@ -9,12 +9,17 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
+<<<<<<< HEAD
 	<string>com.flotip.flotipios</string>
+=======
+	<string>com.flotip.flotipios1</string>
+>>>>>>> 72ea93f (push notification ok)
 	<key>PROJECT_ID</key>
 	<string>flotip-3aa4d</string>
 	<key>STORAGE_BUCKET</key>
 	<string>flotip-3aa4d.appspot.com</string>
 	<key>IS_ADS_ENABLED</key>
+<<<<<<< HEAD
 	<false/>
 	<key>IS_ANALYTICS_ENABLED</key>
 	<false/>
@@ -30,3 +35,20 @@
 	<string>https://flotip-3aa4d-default-rtdb.firebaseio.com</string>
 </dict>
 </plist>
+=======
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:609917337220:ios:260ebf7635a49b55134cd1</string>
+	<key>DATABASE_URL</key>
+	<string>https://flotip-3aa4d-default-rtdb.firebaseio.com</string>
+</dict>
+</plist>
+>>>>>>> 72ea93f (push notification ok)

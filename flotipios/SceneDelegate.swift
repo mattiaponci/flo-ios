@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 //
 //  SceneDelegate.swift
 //  flotipios
@@ -13,6 +14,8 @@
 //  Copyright © 2020 Stephan Dowless. All rights reserved.
 //
 
+=======
+>>>>>>> 72ea93f (push notification ok)
 import Foundation
 import SwiftUI
 import Firebase
@@ -31,15 +34,25 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate, MessagingDelegate {
         
         // Configura Firebase Messaging Delegate
         Messaging.messaging().delegate = self
+<<<<<<< HEAD
         
 
 
+=======
+        print("DEBUG: Firebase Messaging Delegate configurato")
+        
+>>>>>>> 72ea93f (push notification ok)
         // Richiedi il permesso per le notifiche push
         UNUserNotificationCenter.current().delegate = self
         let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
         UNUserNotificationCenter.current().requestAuthorization(options: authOptions) { granted, error in
             if let error = error {
                 print("Errore nella richiesta di autorizzazione: \(error.localizedDescription)")
+<<<<<<< HEAD
+=======
+            } else {
+                print("DEBUG: Permessi notifiche concessi: \(granted)")
+>>>>>>> 72ea93f (push notification ok)
             }
         }
 
@@ -48,6 +61,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate, MessagingDelegate {
     }
     
     func sceneDidDisconnect(_ scene: UIScene) {
+<<<<<<< HEAD
         // Called as the scene is being released by the system.
     }
 
@@ -65,11 +79,31 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate, MessagingDelegate {
 
     func sceneDidEnterBackground(_ scene: UIScene) {
         // Called as the scene transitions from the foreground to the background.
+=======
+        // Chiamato quando la scena viene rilasciata dal sistema.
+    }
+
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        // Riprendi attività se necessario.
+    }
+
+    func sceneWillResignActive(_ scene: UIScene) {
+        // Pausa attività in caso di interruzione.
+    }
+
+    func sceneWillEnterForeground(_ scene: UIScene) {
+        // Esegui eventuali preparazioni prima che l'app torni in primo piano.
+    }
+
+    func sceneDidEnterBackground(_ scene: UIScene) {
+        // Salva dati o stato quando l'app entra in background.
+>>>>>>> 72ea93f (push notification ok)
     }
     
     // MARK: - MessagingDelegate
 
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+<<<<<<< HEAD
         guard let fcmToken = fcmToken else { return }
         print("FCM token ricevuto: \(fcmToken)")
 
@@ -80,16 +114,33 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate, MessagingDelegate {
   /*  func messaging(_ messaging: Messaging, didReceive remoteMessage: MessagingRemoteMessage) {
         print("Messaggio ricevuto: \(remoteMessage.appData)")
     }*/
+=======
+        print("DEBUG: Metodo messaging(_:didReceiveRegistrationToken:) chiamato")
+        guard let fcmToken = fcmToken else {
+            print("DEBUG: Il token FCM è nil")
+            return
+        }
+        print("DEBUG: FCM token ricevuto: \(fcmToken)")
+    }
+>>>>>>> 72ea93f (push notification ok)
 }
 
 // Estensione per gestire le notifiche push
 extension SceneDelegate: UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+<<<<<<< HEAD
+=======
+        print("DEBUG: Notifica ricevuta in foreground: \(notification.request.content.userInfo)")
+>>>>>>> 72ea93f (push notification ok)
         completionHandler([.alert, .badge, .sound])
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+<<<<<<< HEAD
         print("Notifica ricevuta con risposta: \(response.notification.request.content.userInfo)")
+=======
+        print("DEBUG: Notifica ricevuta con risposta: \(response.notification.request.content.userInfo)")
+>>>>>>> 72ea93f (push notification ok)
         completionHandler()
     }
 }

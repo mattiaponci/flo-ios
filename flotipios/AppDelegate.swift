@@ -36,6 +36,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
             }
         }
     }
+<<<<<<< HEAD
     
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         print("DEBUG: Registered for notifications with device token: ", deviceToken)
@@ -43,6 +44,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         Messaging.messaging().setAPNSToken(deviceToken, type: .unknown)
     }
     
+=======
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        print("DEBUG: Metodo didRegisterForRemoteNotificationsWithDeviceToken chiamato")
+        print("DEBUG: Token ricevuto in formato Data: \(deviceToken)")
+        let tokenString = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
+        print("DEBUG: Token in formato Stringa: \(tokenString)")
+        Messaging.messaging().setAPNSToken(deviceToken, type: .unknown)
+    }
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        print("Errore durante la registrazione per notifiche push: \(error.localizedDescription)")
+    }
+>>>>>>> 72ea93f (push notification ok)
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         guard let fcmToken = fcmToken else {
             print("DEBUG: FCM token is nil")
@@ -85,4 +98,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     func applicationWillTerminate(_ application: UIApplication) {
         // Save data if appropriate.
     }
+<<<<<<< HEAD
+=======
+    
+    
+    
+>>>>>>> 72ea93f (push notification ok)
 }

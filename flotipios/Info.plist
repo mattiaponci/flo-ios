@@ -23,6 +23,10 @@
 	<array>
 		<string>fetch</string>
 		<string>remote-notification</string>
+<<<<<<< HEAD
+=======
+		<string>processing</string>
+>>>>>>> 72ea93f (push notification ok)
 	</array>
 </dict>
 </plist>
