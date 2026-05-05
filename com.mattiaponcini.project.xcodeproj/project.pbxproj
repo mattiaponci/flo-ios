@@ -6,8 +6,15 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		1761885FD17540AEFB6D09C9 /* Pods_com_mattiaponcini_project.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0CB43064443CD24AEB136804 /* Pods_com_mattiaponcini_project.framework */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		0CB43064443CD24AEB136804 /* Pods_com_mattiaponcini_project.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_com_mattiaponcini_project.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		21F37538FDED7A76E8311697 /* Pods-com.mattiaponcini.project.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-com.mattiaponcini.project.release.xcconfig"; path = "Target Support Files/Pods-com.mattiaponcini.project/Pods-com.mattiaponcini.project.release.xcconfig"; sourceTree = "<group>"; };
 		91ADED892FA2B1B5008FF37A /* com.mattiaponcini.project.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = com.mattiaponcini.project.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C713044616714F5959532C1C /* Pods-com.mattiaponcini.project.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-com.mattiaponcini.project.debug.xcconfig"; path = "Target Support Files/Pods-com.mattiaponcini.project/Pods-com.mattiaponcini.project.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -36,17 +43,29 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1761885FD17540AEFB6D09C9 /* Pods_com_mattiaponcini_project.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		67E1EEF38F41D01DB2132457 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				C713044616714F5959532C1C /* Pods-com.mattiaponcini.project.debug.xcconfig */,
+				21F37538FDED7A76E8311697 /* Pods-com.mattiaponcini.project.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
 		91ADED802FA2B1B5008FF37A = {
 			isa = PBXGroup;
 			children = (
 				91ADED8B2FA2B1B5008FF37A /* com.mattiaponcini.project */,
 				91ADED8A2FA2B1B5008FF37A /* Products */,
+				67E1EEF38F41D01DB2132457 /* Pods */,
+				E9A746D43EC028BE5DAA406E /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -58,6 +77,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		E9A746D43EC028BE5DAA406E /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				0CB43064443CD24AEB136804 /* Pods_com_mattiaponcini_project.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -65,9 +92,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 91ADED9C2FA2B1B7008FF37A /* Build configuration list for PBXNativeTarget "com.mattiaponcini.project" */;
 			buildPhases = (
+				D04B567F99E0BE9B1E701C8A /* [CP] Check Pods Manifest.lock */,
 				91ADED852FA2B1B5008FF37A /* Sources */,
 				91ADED862FA2B1B5008FF37A /* Frameworks */,
 				91ADED872FA2B1B5008FF37A /* Resources */,
+				E0FA50FB2EFA9D0B4E64D18C /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -77,8 +106,6 @@
 				91ADED8B2FA2B1B5008FF37A /* com.mattiaponcini.project */,
 			);
 			name = com.mattiaponcini.project;
-			packageProductDependencies = (
-			);
 			productName = com.mattiaponcini.project;
 			productReference = 91ADED892FA2B1B5008FF37A /* com.mattiaponcini.project.app */;
 			productType = "com.apple.product-type.application";
@@ -127,6 +154,52 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		D04B567F99E0BE9B1E701C8A /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-com.mattiaponcini.project-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		E0FA50FB2EFA9D0B4E64D18C /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-com.mattiaponcini.project/Pods-com.mattiaponcini.project-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-com.mattiaponcini.project/Pods-com.mattiaponcini.project-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-com.mattiaponcini.project/Pods-com.mattiaponcini.project-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		91ADED852FA2B1B5008FF37A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -140,25 +213,32 @@
 /* Begin XCBuildConfiguration section */
 		91ADED9D2FA2B1B7008FF37A /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = C713044616714F5959532C1C /* Pods-com.mattiaponcini.project.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = com.mattiaponcini.project/com.mattiaponcini.project.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = JRYP3C4JFR;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = com.mattiaponcini.project/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Flotip;
+				INFOPLIST_KEY_CFBundleName = Flotip;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Serve la fotocamera per scattare la foto profilo.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Serve l'accesso alla libreria foto per scegliere la foto profilo.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.mattia.com-mattiaponcini-project";
+				PRODUCT_BUNDLE_IDENTIFIER = com.mattiaponcini.arcolasco;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -172,25 +252,32 @@
 		};
 		91ADED9E2FA2B1B7008FF37A /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 21F37538FDED7A76E8311697 /* Pods-com.mattiaponcini.project.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = com.mattiaponcini.project/com.mattiaponcini.project.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = JRYP3C4JFR;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = com.mattiaponcini.project/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Flotip;
+				INFOPLIST_KEY_CFBundleName = Flotip;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Serve la fotocamera per scattare la foto profilo.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Serve l'accesso alla libreria foto per scegliere la foto profilo.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.mattia.com-mattiaponcini-project";
+				PRODUCT_BUNDLE_IDENTIFIER = com.mattiaponcini.arcolasco;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -240,7 +327,7 @@
 				DEVELOPMENT_TEAM = JRYP3C4JFR;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -304,7 +391,7 @@
 				DEVELOPMENT_TEAM = JRYP3C4JFR;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;

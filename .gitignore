@@ -1,0 +1,41 @@
+# Xcode
+*.xcuserstate
+xcuserdata/
+*.moved-aside
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xccheckout
+*.xcscmblueprint
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+DerivedData/
+build/
+*.xcodeproj/project.pbxproj.bak*
+
+# CocoaPods
+Pods/
+Podfile.lock
+
+# Firebase / secrets — MAI committare chiavi private
+*.p8
+*.p12
+GoogleService-Info.plist
+
+# Node (Cloud Functions)
+functions/node_modules/
+functions/firebase-debug.log
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Misc
+appicon_preview.png
+flotip_appicon_preview.png
+flotip_icon_1024.png
+AppIcon-1024.png

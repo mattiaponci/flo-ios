@@ -1,0 +1,46 @@
+rules_version = '2';
+
+// =====================================================================
+// Cloud Storage Security Rules — Flotip (project: arcolasco)
+// ---------------------------------------------------------------------
+// Path usati dall'app (verificati nel codice Swift):
+//   - profile_photos/{uid}/avatar.jpg      → AuthService.swift
+//   - posts/{uid}/{postId}.jpg             → PostService.swift
+//   - library/{uid}/{itemId}.jpg           → LibraryService.swift
+// =====================================================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // -----------------------------------------------------------------
+    // Foto profilo — leggibili da tutti gli utenti loggati (servono per
+    // mostrare l'avatar dell'autore nei post). Scrive SOLO il proprietario.
+    // -----------------------------------------------------------------
+    match /profile_photos/{uid}/{file=**} {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null
+                   && request.auth.uid == uid;
+    }
+
+    // -----------------------------------------------------------------
+    // Immagini dei post (feed pubblico) — leggibili da chiunque sia
+    // loggato. Scrive solo l'autore (path namespacciato per UID).
+    // -----------------------------------------------------------------
+    match /posts/{uid}/{file=**} {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null
+                   && request.auth.uid == uid;
+    }
+
+    // -----------------------------------------------------------------
+    // Libreria personale — completamente privata: solo il proprietario
+    // legge e scrive nella propria cartella.
+    // -----------------------------------------------------------------
+    match /library/{uid}/{file=**} {
+      allow read:  if request.auth != null
+                   && request.auth.uid == uid;
+      allow write: if request.auth != null
+                   && request.auth.uid == uid;
+    }
+  }
+}

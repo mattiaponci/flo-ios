@@ -2,51 +2,135 @@
 //  SceneDelegate.swift
 //  com.mattiaponcini.project
 //
-//  Created by mattia poncini on 29.04.2026.
+//  Decide il root view controller in base allo stato di Firebase Auth.
 //
 
 import UIKit
+import FirebaseCore
+import FirebaseAuth
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
 
+    /// Handle del listener Firebase Auth — ricevuto al login/logout.
+    private var authStateHandle: AuthStateDidChangeListenerHandle?
 
-    func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-        // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
-        // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
-        // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
-        guard let _ = (scene as? UIWindowScene) else { return }
+    /// True finché lo splash è visibile. Mentre è true, gli aggiornamenti
+    /// del listener auth vengono memorizzati ma non applicati al root —
+    /// vengono eseguiti tutti insieme quando lo splash termina.
+    private var splashActive = true
+    private var pendingUser: FirebaseAuth.User??
+
+    func scene(_ scene: UIScene,
+               willConnectTo session: UISceneSession,
+               options connectionOptions: UIScene.ConnectionOptions) {
+        guard let windowScene = (scene as? UIWindowScene) else { return }
+
+        let window = UIWindow(windowScene: windowScene)
+        // Forza light mode in tutta l'app (sfondo bianco, testi neri).
+        window.overrideUserInterfaceStyle = .light
+        self.window = window
+
+        // Safety net: se per qualche ragione FirebaseApp non è ancora configurato
+        // (es. cambia ordine di init), lo configuriamo qui — è idempotente.
+        if FirebaseApp.app() == nil {
+            FirebaseApp.configure()
+        }
+
+        // Splash programmatico con il logo Flotip animato
+        let splash = SplashViewController()
+        splash.onFinish = { [weak self] in
+            self?.splashFinished()
+        }
+        window.rootViewController = splash
+        window.makeKeyAndVisible()
+
+        startAuthListener()
     }
+
+    /// Chiamato dallo splash quando finisce l'animazione di entrata.
+    private func splashFinished() {
+        splashActive = false
+        // Se il listener auth ha già scattato, applica adesso quello stato.
+        if let user = pendingUser {
+            pendingUser = nil
+            updateRootViewController(for: user)
+        }
+    }
+
+    // MARK: - Auth State Listener
+
+    private func startAuthListener() {
+        authStateHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                // Se lo splash è ancora visibile, accumula l'ultimo stato e
+                // applicalo solo dopo che lo splash è terminato.
+                if self.splashActive {
+                    self.pendingUser = user
+                } else {
+                    self.updateRootViewController(for: user)
+                }
+            }
+        }
+    }
+
+    private func updateRootViewController(for user: FirebaseAuth.User?) {
+        guard let window = window else { return }
+
+        if let uid = user?.uid {
+            // Avvia il listener Firestore del feed: filtra "only following"
+            // — vedi PostService.startObservingFeed(for:) per il dettaglio
+            // del chunking e del merge real-time.
+            PostService.shared.startObservingFeed(for: uid)
+
+            // Push notifications: richiediamo il permesso (idempotente: se
+            // l'utente ha già risposto in passato, iOS non mostra di nuovo
+            // il prompt) e ci registriamo per le remote notifications così
+            // FCM può recuperare il token APNs dal device.
+            PushNotificationService.shared.requestAuthorizationIfNeeded()
+
+            if window.rootViewController is MainTabBarController { return }
+            transition(to: MainTabBarController())
+        } else {
+            // Stop al listener su logout
+            PostService.shared.stopObservingFeed()
+            AppStore.shared.setPosts([])
+
+            if let nav = window.rootViewController as? UINavigationController,
+               nav.viewControllers.first is LoginViewController {
+                nav.popToRootViewController(animated: false)
+                return
+            }
+            transition(to: makeLoginRoot())
+        }
+    }
+
+    private func transition(to newRoot: UIViewController) {
+        guard let window = window else { return }
+        UIView.transition(with: window,
+                          duration: 0.3,
+                          options: .transitionCrossDissolve,
+                          animations: { window.rootViewController = newRoot },
+                          completion: nil)
+    }
+
+    private func makeLoginRoot() -> UIViewController {
+        return UINavigationController(rootViewController: LoginViewController())
+    }
+
+    // MARK: - Lifecycle
 
     func sceneDidDisconnect(_ scene: UIScene) {
-        // Called as the scene is being released by the system.
-        // This occurs shortly after the scene enters the background, or when its session is discarded.
-        // Release any resources associated with this scene that can be re-created the next time the scene connects.
-        // The scene may re-connect later, as its session was not necessarily discarded (see `application:didDiscardSceneSessions` instead).
+        if let handle = authStateHandle {
+            Auth.auth().removeStateDidChangeListener(handle)
+            authStateHandle = nil
+        }
     }
 
-    func sceneDidBecomeActive(_ scene: UIScene) {
-        // Called when the scene has moved from an inactive state to an active state.
-        // Use this method to restart any tasks that were paused (or not yet started) when the scene was inactive.
-    }
-
-    func sceneWillResignActive(_ scene: UIScene) {
-        // Called when the scene will move from an active state to an inactive state.
-        // This may occur due to temporary interruptions (ex. an incoming phone call).
-    }
-
-    func sceneWillEnterForeground(_ scene: UIScene) {
-        // Called as the scene transitions from the background to the foreground.
-        // Use this method to undo the changes made on entering the background.
-    }
-
-    func sceneDidEnterBackground(_ scene: UIScene) {
-        // Called as the scene transitions from the foreground to the background.
-        // Use this method to save data, release shared resources, and store enough scene-specific state information
-        // to restore the scene back to its current state.
-    }
-
-
+    func sceneDidBecomeActive(_ scene: UIScene) {}
+    func sceneWillResignActive(_ scene: UIScene) {}
+    func sceneWillEnterForeground(_ scene: UIScene) {}
+    func sceneDidEnterBackground(_ scene: UIScene) {}
 }
-
