@@ -131,6 +131,19 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func sceneDidBecomeActive(_ scene: UIScene) {}
     func sceneWillResignActive(_ scene: UIScene) {}
-    func sceneWillEnterForeground(_ scene: UIScene) {}
-    func sceneDidEnterBackground(_ scene: UIScene) {}
+
+    /// Riprendiamo i listener Firestore del feed quando l'app torna in
+    /// foreground. La pausa avviene in `sceneDidEnterBackground` per
+    /// risparmiare reads mentre nessuno guarda lo schermo.
+    func sceneWillEnterForeground(_ scene: UIScene) {
+        PostService.shared.resumeObservingFeedIfNeeded()
+    }
+
+    /// Sospende i listener Firestore del feed quando l'app va in background:
+    /// ogni post nuovo dai followed users costerebbe 1 read di snapshot
+    /// che l'utente non vede comunque. Vedi
+    /// `PostService.pauseObservingFeedForBackground()` per il dettaglio.
+    func sceneDidEnterBackground(_ scene: UIScene) {
+        PostService.shared.pauseObservingFeedForBackground()
+    }
 }

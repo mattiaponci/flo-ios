@@ -27,8 +27,12 @@
  *     Cloud Messaging → Apple app configuration.
  */
 
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const {
+  onDocumentCreated,
+  onDocumentDeleted,
+} = require("firebase-functions/v2/firestore");
 const { setGlobalOptions } = require("firebase-functions/v2");
+const { FieldValue } = require("firebase-admin/firestore");
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
 
@@ -153,6 +157,50 @@ exports.notifyFollowRequest = onDocumentCreated(
       }
     }
 
+    return null;
+  }
+);
+
+/**
+ * Trigger: onLikeCreated / onLikeDeleted
+ *   posts/{postId}/likes/{userId}
+ *
+ * Mantiene `posts/{postId}.likesCount` denormalizzato così il client può
+ * fare 1 read per snapshot del post invece di leggere l'intera subcollection
+ * `likes` ad ogni apertura. Su un post con 1.000 like questo passa da
+ * 1.000 read a 1 read per ogni utente che apre il post.
+ *
+ * Idempotenza: il client crea/cancella il doc like con set/delete (ID =
+ * uid del liker) — un re-tap sullo stesso like non duplica il trigger.
+ * Usiamo FieldValue.increment(±1) per essere safe rispetto a race
+ * concorrenti fra utenti diversi che mettono like nello stesso momento.
+ */
+exports.onLikeCreated = onDocumentCreated(
+  "posts/{postId}/likes/{userId}",
+  async (event) => {
+    const { postId } = event.params;
+    try {
+      await db.doc(`posts/${postId}`).update({
+        likesCount: FieldValue.increment(1),
+      });
+    } catch (err) {
+      logger.error(`onLikeCreated: increment failed postId=${postId}`, err);
+    }
+    return null;
+  }
+);
+
+exports.onLikeDeleted = onDocumentDeleted(
+  "posts/{postId}/likes/{userId}",
+  async (event) => {
+    const { postId } = event.params;
+    try {
+      await db.doc(`posts/${postId}`).update({
+        likesCount: FieldValue.increment(-1),
+      });
+    } catch (err) {
+      logger.error(`onLikeDeleted: decrement failed postId=${postId}`, err);
+    }
     return null;
   }
 );

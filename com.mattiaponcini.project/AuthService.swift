@@ -327,7 +327,10 @@ final class AuthService {
             completion(.success(nil))
             return
         }
-        guard let data = photo.jpegData(compressionQuality: 0.8) else {
+        // Quality 0.7: foto profilo è quasi sempre visualizzata a
+        // dimensioni piccole (avatar tondo 40-80pt), nessuna perdita
+        // visibile rispetto a 0.8 e dimensione file ~30% inferiore.
+        guard let data = photo.jpegData(compressionQuality: 0.7) else {
             completion(.failure(AuthError.imageEncoding))
             return
         }

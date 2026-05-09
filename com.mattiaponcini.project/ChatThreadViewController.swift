@@ -27,6 +27,14 @@ final class ChatThreadViewController: UIViewController {
     private var messages: [ChatMessage] = []
     private var listener: ListenerRegistration?
 
+    /// Stato della paginazione "scroll-up per messaggi più vecchi".
+    /// `isLoadingOlder` evita più richieste sovrapposte mentre stiamo
+    /// fetchando una pagina precedente. `hasReachedTop` viene impostato
+    /// quando una pagina torna vuota (= storia esaurita) così smettiamo
+    /// di chiamare Firestore ad ogni piccolo scroll vicino allo zero.
+    private var isLoadingOlder = false
+    private var hasReachedTop = false
+
     // MARK: - UI
 
     private let topBar: UIView = {
@@ -248,9 +256,80 @@ final class ChatThreadViewController: UIViewController {
         listener = ChatService.shared.observeMessages(conversationId: cid) {
             [weak self] msgs in
             DispatchQueue.main.async {
-                self?.messages = msgs
-                self?.tableView.reloadData()
-                self?.scrollToBottom(animated: true)
+                guard let self = self else { return }
+                // Il listener torna sempre l'ULTIMA pagina (limit toLast 50).
+                // Se l'utente ha già scrollato indietro caricando pagine più
+                // vecchie, queste vivono in `self.messages` PRIMA dei msgs
+                // del listener. Le preserviamo facendo merge per id.
+                self.mergeListenerPage(msgs)
+                self.tableView.reloadData()
+                self.scrollToBottom(animated: true)
+            }
+        }
+    }
+
+    /// Merge della pagina in arrivo dal listener (ultima pagina) con i
+    /// messaggi più vecchi già caricati via `loadOlderMessages`. Dedup per
+    /// id, ordinamento per createdAt crescente. Gestisce anche il caso
+    /// "il messaggio era ottimistico" se in futuro lo aggiungiamo: l'id
+    /// del server vince comunque sull'eventuale duplicato locale.
+    private func mergeListenerPage(_ latestPage: [ChatMessage]) {
+        // Copia la storia precedente (messaggi più vecchi del primo della
+        // nuova pagina). Per identificare la cesura usiamo il createdAt
+        // del primo msg della pagina; tutto ciò che è strettamente
+        // precedente resta dalla cache locale.
+        guard let firstNew = latestPage.first else {
+            // Nessun messaggio dal listener: niente da fare (tieni la
+            // cache così com'è). Non azzeriamo per evitare flicker.
+            return
+        }
+        let older = self.messages.filter { $0.createdAt < firstNew.createdAt }
+        var byId: [String: ChatMessage] = [:]
+        for m in older + latestPage {
+            if let id = m.id { byId[id] = m }
+        }
+        self.messages = byId.values.sorted { $0.createdAt < $1.createdAt }
+    }
+
+    /// Carica una pagina di messaggi più vecchi del primo attualmente in
+    /// lista. Triggerato dallo scroll vicino al top in `scrollViewDidScroll`.
+    /// Mantiene il content offset stabile post-prepend così l'utente non
+    /// vede uno "scatto" quando le righe vecchie arrivano.
+    private func loadOlderMessagesIfNeeded() {
+        guard !isLoadingOlder, !hasReachedTop,
+              let cid = conversation.id,
+              let oldest = messages.first else { return }
+        isLoadingOlder = true
+        let oldestDate = oldest.createdAt
+
+        ChatService.shared.loadOlderMessages(
+            conversationId: cid,
+            olderThan: oldestDate
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                self.isLoadingOlder = false
+                guard case .success(let older) = result, !older.isEmpty else {
+                    if case .success(let older) = result, older.isEmpty {
+                        self.hasReachedTop = true
+                    }
+                    return
+                }
+                // Salva l'offset corrente per ripristinarlo dopo l'insert.
+                let oldContentHeight = self.tableView.contentSize.height
+                let oldOffsetY = self.tableView.contentOffset.y
+
+                self.messages = older + self.messages
+                self.tableView.reloadData()
+                self.tableView.layoutIfNeeded()
+
+                // Ripristina la posizione visiva (offset = nuovo content
+                // height - vecchio content height + offset precedente).
+                let newContentHeight = self.tableView.contentSize.height
+                self.tableView.setContentOffset(
+                    CGPoint(x: 0, y: newContentHeight - oldContentHeight + oldOffsetY),
+                    animated: false
+                )
             }
         }
     }
@@ -360,6 +439,15 @@ extension ChatThreadViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView,
                    numberOfRowsInSection section: Int) -> Int {
         return messages.count
+    }
+
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        // Threshold: quando il top dei contenuti è entro 200pt dal top del
+        // viewport, chiediamo la pagina precedente. Soglia conservativa per
+        // pre-fetchare prima che l'utente raggiunga lo zero assoluto.
+        if scrollView.contentOffset.y < 200 {
+            loadOlderMessagesIfNeeded()
+        }
     }
 
     func tableView(_ tableView: UITableView,

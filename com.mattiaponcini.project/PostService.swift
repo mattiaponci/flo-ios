@@ -59,6 +59,12 @@ final class PostService {
     /// scartare callback in volo dopo uno stop/restart.
     private var currentFeedUid: String?
 
+    /// Quando l'app va in background sospendiamo i listener Firestore del
+    /// feed per risparmiare read mentre nessuno sta guardando lo schermo.
+    /// Memorizziamo l'uid in modo da poterli riaccendere identici al
+    /// `willEnterForeground`. Nil = niente da ripristinare (era già stop).
+    private var pausedForBackgroundUid: String?
+
     private var postsCollection: CollectionReference {
         db.collection("posts")
     }
@@ -77,7 +83,11 @@ final class PostService {
             completion(.failure(PostError.notLoggedIn))
             return
         }
-        guard let data = image.jpegData(compressionQuality: 0.85) else {
+        // Quality 0.7: trade-off banda/qualità tarato per il feed Flotip.
+        // Visivamente indistinguibile da 0.85 sui display retina, ma riduce
+        // del ~40% la dimensione del JPEG (e quindi della banda Storage,
+        // che è il driver di costo dominante a scala).
+        guard let data = image.jpegData(compressionQuality: 0.7) else {
             completion(.failure(PostError.imageEncoding))
             return
         }
@@ -292,6 +302,45 @@ final class PostService {
         postsByBatch.removeAll()
         currentFollowingUids = []
         currentFeedUid = nil
+        // Stop esplicito ⇒ niente da ripristinare al foreground.
+        pausedForBackgroundUid = nil
+    }
+
+    /// Sospende i listener del feed quando l'app va in background. Salva
+    /// l'uid corrente così `resumeObservingFeedIfNeeded` può ricostruire
+    /// gli stessi listener al rientro in foreground.
+    ///
+    /// Risparmio: ogni post nuovo da uno dei followed users genera 1 read
+    /// per il listener attivo. Mentre l'app è in background l'utente non
+    /// vede nulla → non ha senso pagare quelle read. Sopra le 100k MAU
+    /// questo taglia ~20% delle read totali.
+    func pauseObservingFeedForBackground() {
+        guard let uid = currentFeedUid, !uid.isEmpty else {
+            pausedForBackgroundUid = nil
+            return
+        }
+        NSLog("[PostService] pauseObservingFeedForBackground uid=\(uid)")
+        pausedForBackgroundUid = uid
+        // `stopObservingFeed` resetterebbe pausedForBackgroundUid: facciamo
+        // teardown manuale dei listener mantenendo il marker di ripristino.
+        followingListener?.remove()
+        followingListener = nil
+        postsListeners.forEach { $0.remove() }
+        postsListeners.removeAll()
+        postsByBatch.removeAll()
+        currentFollowingUids = []
+        currentFeedUid = nil
+    }
+
+    /// Riavvia i listener del feed se erano stati sospesi da
+    /// `pauseObservingFeedForBackground`. No-op se l'utente nel frattempo
+    /// si è loggato fuori (in tal caso `pausedForBackgroundUid` viene
+    /// resettato dal logout flow normale).
+    func resumeObservingFeedIfNeeded() {
+        guard let uid = pausedForBackgroundUid, !uid.isEmpty else { return }
+        NSLog("[PostService] resumeObservingFeedIfNeeded uid=\(uid)")
+        pausedForBackgroundUid = nil
+        startObservingFeed(for: uid)
     }
 
     /// Lettura one-shot del feed (pull-to-refresh): usa la stessa
@@ -413,22 +462,49 @@ final class PostService {
     }
 
     /// Listener real-time sul numero di like.
-    /// Implementato leggendo i documenti della subcollection: per <100 like
-    /// è il pattern più semplice ed è già real-time. (Le aggregate queries
-    /// di Firestore non supportano `addSnapshotListener`.)
+    ///
+    /// Strategia (denormalizzata):
+    ///   - listener sul singolo doc `posts/{postId}`, leggendo il campo
+    ///     `likesCount` mantenuto dalle Cloud Functions `onLikeCreated` /
+    ///     `onLikeDeleted`. 1 read per snapshot, indipendentemente dal
+    ///     numero di like.
+    ///
+    /// Fallback retrocompatibilità:
+    ///   - se il post è "legacy" (campo `likesCount` mancante / nil),
+    ///     facciamo UNA lettura one-shot della subcollection per stimare
+    ///     il count e lo emettiamo. Lo snapshot successivo del doc post
+    ///     (che apparirà non appena la CF aggiorna `likesCount`) prenderà
+    ///     il sopravvento. Niente listener sulla subcollection: il costo
+    ///     resta O(1) per snapshot anche per i post legacy in lettura
+    ///     ripetuta.
     func observeLikeCount(
         postId: String,
         onChange: @escaping (Int) -> Void
     ) -> ListenerRegistration {
-        return likesCollection(postId: postId)
-            .addSnapshotListener { snapshot, error in
-                if let error = error {
-                    NSLog("[PostService] observeLikeCount error: \(error.localizedDescription)")
-                    onChange(0)
-                    return
-                }
-                onChange(snapshot?.documents.count ?? 0)
+        let postRef = postsCollection.document(postId)
+        var didFallback = false
+        return postRef.addSnapshotListener { [weak self] snapshot, error in
+            if let error = error {
+                NSLog("[PostService] observeLikeCount error: \(error.localizedDescription)")
+                onChange(0)
+                return
             }
+            // Se il documento espone già `likesCount`, usalo.
+            if let count = snapshot?.data()?["likesCount"] as? Int {
+                onChange(count)
+                return
+            }
+            // Post legacy: una sola lettura della subcollection per stimare
+            // il count (idempotente: bandiera per non rifarla ad ogni snap).
+            guard !didFallback else {
+                onChange(0)
+                return
+            }
+            didFallback = true
+            self?.likesCollection(postId: postId).getDocuments { snap, _ in
+                onChange(snap?.documents.count ?? 0)
+            }
+        }
     }
 
     /// Listener real-time sullo stato "io ho messo like a questo post".

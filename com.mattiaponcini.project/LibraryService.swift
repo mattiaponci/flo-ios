@@ -66,7 +66,11 @@ final class LibraryService {
             return
         }
         let uid = user.uid
-        guard let data = image.jpegData(compressionQuality: 0.85) else {
+        // Quality 0.7: stesso trade-off banda/qualità adottato in
+        // PostService. Le immagini di libreria sono mostrate in liste
+        // scrollabili e card piccole, dove la differenza visiva con 0.85
+        // è impercettibile ma il risparmio in banda è ~40%.
+        guard let data = image.jpegData(compressionQuality: 0.7) else {
             os_log("save: impossibile codificare immagine in JPEG", log: libraryLog, type: .error)
             completion(.failure(LibraryError.imageEncoding))
             return

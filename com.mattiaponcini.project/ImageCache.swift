@@ -44,15 +44,26 @@ final class ImageCache {
         return c
     }()
 
+    /// Cache disco/RAM esposta come property così possiamo usarla anche
+    /// fuori dalla URLSession (es. inserire manualmente le risposte
+    /// Firebase Storage prive di header Cache-Control).
+    fileprivate let urlCache: URLCache = URLCache(
+        memoryCapacity: 80 * 1024 * 1024,    // 80 MB RAM
+        diskCapacity: 500 * 1024 * 1024,     // 500 MB disco
+        diskPath: "FlotipImageCache"
+    )
+
     /// URLSession dedicata per immagini, con cache disco/RAM ampia. Tutte
     /// le richieste HTTP fatte da `loadImage` passano da qui, così Firebase
     /// Storage downloadURL viene servito da disco al secondo accesso.
-    private let session: URLSession = {
-        let cache = URLCache(memoryCapacity: 50 * 1024 * 1024,
-                             diskCapacity: 200 * 1024 * 1024,
-                             diskPath: "FlotipImageCache")
+    ///
+    /// Nota: `useProtocolCachePolicy` rispetta gli header Cache-Control del
+    /// server. Firebase Storage di default invia header che permettono il
+    /// caching, ma in caso di risposta priva di Cache-Control noi forziamo
+    /// l'inserimento in cache via `storeCachedResponse` (vedi loadImage).
+    private lazy var session: URLSession = {
         let cfg = URLSessionConfiguration.default
-        cfg.urlCache = cache
+        cfg.urlCache = urlCache
         cfg.requestCachePolicy = .useProtocolCachePolicy
         cfg.httpMaximumConnectionsPerHost = 8
         return URLSession(configuration: cfg)
@@ -133,6 +144,24 @@ final class ImageCache {
             guard let data = data, let image = UIImage(data: data) else {
                 DispatchQueue.main.async { completion(nil) }
                 return
+            }
+            // Forza-cache se il server (es. Firebase Storage senza
+            // Cache-Control esplicito) non ci dice di cacheare. Senza
+            // questo step la URLCache scarta la risposta e al prossimo
+            // accesso ri-paghiamo la banda. `storeCachedResponse` qui sotto
+            // è idempotente: in caso il sistema l'avesse già messa in
+            // cache, sovrascriviamo la stessa entry.
+            if let response = response,
+               let httpResponse = response as? HTTPURLResponse,
+               (httpResponse.value(forHTTPHeaderField: "Cache-Control") ?? "").isEmpty,
+               let self = self {
+                let cached = CachedURLResponse(
+                    response: response,
+                    data: data,
+                    userInfo: nil,
+                    storagePolicy: .allowed
+                )
+                self.urlCache.storeCachedResponse(cached, for: request)
             }
             // Cost stima per il NSCache: pixelBytes (≈ memoria reale del
             // pixel buffer). Se size è zero usiamo la lunghezza del data

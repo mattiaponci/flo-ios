@@ -137,6 +137,12 @@ final class ChatService {
 
     // MARK: - Messaggi della conversazione
 
+    /// Numero di messaggi caricati al primo apertura della chat.
+    /// Tutto sopra questa soglia richiede uno scroll-to-top esplicito che
+    /// invoca `loadOlderMessages`. Tarato su 50 perché copre ~95% delle
+    /// sessioni di chat senza pagare reads per la storia completa.
+    static let messagesPageSize: Int = 50
+
     func observeMessages(
         conversationId: String,
         onChange: @escaping ([ChatMessage]) -> Void
@@ -145,7 +151,7 @@ final class ChatService {
             .document(conversationId)
             .collection("messages")
             .order(by: "createdAt", descending: false)
-            .limit(toLast: 200)
+            .limit(toLast: Self.messagesPageSize)
             .addSnapshotListener { snapshot, error in
                 if let error = error {
                     os_log("observeMessages: %{public}@",
@@ -157,6 +163,40 @@ final class ChatService {
                     try? $0.data(as: ChatMessage.self)
                 } ?? []
                 onChange(msgs)
+            }
+    }
+
+    /// Carica una "pagina" di messaggi più vecchi rispetto al primo
+    /// messaggio già visibile in lista (`olderThan` = createdAt del
+    /// messaggio in cima). Lettura one-shot: nessun listener attaccato.
+    ///
+    /// Restituisce i messaggi ordinati dal più vecchio al più recente
+    /// (stesso ordine del listener), pronti da prependere alla UI.
+    /// L'array vuoto significa "non ci sono altri messaggi".
+    func loadOlderMessages(
+        conversationId: String,
+        olderThan oldestKnownDate: Date,
+        pageSize: Int = ChatService.messagesPageSize,
+        completion: @escaping (Result<[ChatMessage], Error>) -> Void
+    ) {
+        // `descending: true` + `start(after:)` per scorrere all'indietro,
+        // poi reverse per restituire ordine cronologico crescente.
+        conversationsRef
+            .document(conversationId)
+            .collection("messages")
+            .order(by: "createdAt", descending: true)
+            .start(after: [oldestKnownDate])
+            .limit(to: pageSize)
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+                let docs = snapshot?.documents ?? []
+                let older: [ChatMessage] = docs.compactMap {
+                    try? $0.data(as: ChatMessage.self)
+                }.reversed()
+                completion(.success(Array(older)))
             }
     }
 

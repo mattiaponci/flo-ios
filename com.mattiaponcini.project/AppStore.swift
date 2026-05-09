@@ -21,6 +21,15 @@ struct Post: Codable, Identifiable {
     var authorName: String
     var authorPhotoURL: String?
     var createdAt: Date
+    /// Contatore like denormalizzato. Mantenuto dalle Cloud Functions
+    /// `onLikeCreated` / `onLikeDeleted` via FieldValue.increment(±1).
+    /// I post legacy non hanno il campo: il client tratta nil come
+    /// "fallback alla subcollection likes" (lettura una tantum del count
+    /// vero, vedi `PostService.observeLikeCount`).
+    /// Default `= nil` così i due call site che costruiscono Post in
+    /// memoria (LibraryViewController, ChatThreadViewController) non
+    /// devono cambiare firma.
+    var likesCount: Int? = nil
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -31,6 +40,7 @@ struct Post: Codable, Identifiable {
         case authorName
         case authorPhotoURL
         case createdAt
+        case likesCount
     }
 }
 
