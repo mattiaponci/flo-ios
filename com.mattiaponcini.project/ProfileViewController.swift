@@ -875,7 +875,10 @@ extension ProfileViewController: UICollectionViewDataSource, UICollectionViewDel
         // like è nil per ora (caricarlo per ogni cella richiederebbe N
         // listener aggiuntivi).
         let post = posts[indexPath.item]
-        cell.configure(imageURL: post.imageURL,
+        // Grid 3-colonne: la thumb 1080px è abbondantemente sufficiente
+        // (cella ~120pt × 3x = 360px richiesti). Risparmia banda Storage
+        // sulle visite al profilo.
+        cell.configure(imageURL: post.previewImageURL,
                        likesCount: nil,
                        showOverlay: true)
         return cell

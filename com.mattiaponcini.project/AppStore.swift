@@ -13,6 +13,14 @@ import FirebaseFirestore
 struct Post: Codable, Identifiable {
     @DocumentID var id: String?
     var imageURL: String
+    /// Thumbnail 600px (lato lungo), JPEG quality 70. Generata
+    /// asincronamente dalla Cloud Function `onPostImageFinalized` subito
+    /// dopo l'upload originale. Nil per i post legacy o nei pochi
+    /// secondi tra l'upload e il completamento della CF: il client
+    /// fallback all'`imageURL` originale (nessun broken state visivo).
+    /// Usata da feed e grid profilo; il fullscreen detail usa sempre
+    /// `imageURL` (originale).
+    var imageURLThumb: String? = nil
     /// URL della pagina web da cui è stato catturato lo screenshot.
     /// Opzionale: i post legacy non hanno questo campo.
     var sourceURL: String?
@@ -31,9 +39,15 @@ struct Post: Codable, Identifiable {
     /// devono cambiare firma.
     var likesCount: Int? = nil
 
+    /// URL preferito per anteprime (feed, grid profilo): thumb se
+    /// disponibile, altrimenti l'originale. Centralizzato qui così
+    /// callsite resta una proprietà semplice da consumare.
+    var previewImageURL: String { imageURLThumb ?? imageURL }
+
     enum CodingKeys: String, CodingKey {
         case id
         case imageURL
+        case imageURLThumb
         case sourceURL
         case caption
         case authorId

@@ -994,8 +994,11 @@ final class FeedCell: UICollectionViewCell {
         let trimmed = post.caption.trimmingCharacters(in: .whitespacesAndNewlines)
         captionLabel.text = trimmed.isEmpty ? Self.placeholderCaption : trimmed
 
-        // 3) Foto.
-        if let url = URL(string: post.imageURL) {
+        // 3) Foto. Usa `previewImageURL`: la thumb 1080px generata dalla
+        //    Cloud Function `onPostImageFinalized` se disponibile,
+        //    altrimenti fallback all'originale (post legacy o pochi
+        //    secondi tra upload e completamento CF).
+        if let url = URL(string: post.previewImageURL) {
             loadImage(from: url)
         }
 

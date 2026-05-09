@@ -628,7 +628,10 @@ extension PublicProfileViewController: UICollectionViewDataSource, UICollectionV
         let cell = collectionView.dequeueReusableCell(
             withReuseIdentifier: ProfileTikTokGridCell.reuseID,
             for: indexPath) as! ProfileTikTokGridCell
-        cell.configure(imageURL: posts[indexPath.item].imageURL,
+        // Grid 3-colonne: usiamo la thumb 1080px se disponibile
+        // (vedi `Post.previewImageURL`), fallback all'originale per i
+        // post legacy / appena pubblicati.
+        cell.configure(imageURL: posts[indexPath.item].previewImageURL,
                        likesCount: nil,
                        showOverlay: true)
         return cell
