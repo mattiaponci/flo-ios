@@ -187,7 +187,7 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         let button = UIButton(type: .system)
         button.setTitle("Sign Up", for: .normal)
         button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1)
+        button.backgroundColor = UIColor(red: 232/255, green: 211/255, blue: 134/255, alpha: 1)
         button.layer.cornerRadius = 5
         button.isEnabled = false
         button.addTarget(self, action: #selector(handleSignUp), for: .touchUpInside)
@@ -196,7 +196,7 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
     
     let checkbox: UISwitch = {
         let checkbox = UISwitch()
-        checkbox.onTintColor = .systemBlue
+        checkbox.onTintColor = UIColor(red: 217/255, green: 183/255, blue: 67/255, alpha: 1)
         checkbox.addTarget(self, action: #selector(handleCheckboxToggle), for: .valueChanged)
         return checkbox
     }()
@@ -209,7 +209,7 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
         ])
         
         attributedText.append(NSAttributedString(string: "Terms & Conditions", attributes: [
-            NSAttributedString.Key.foregroundColor: UIColor.systemBlue,
+            NSAttributedString.Key.foregroundColor: UIColor(red: 217/255, green: 183/255, blue: 67/255, alpha: 1),
             NSAttributedString.Key.underlineStyle: NSUnderlineStyle.single.rawValue,
             NSAttributedString.Key.font: UIFont.systemFont(ofSize: 14)
         ]))
@@ -325,8 +325,8 @@ class SignUpVC: UIViewController, UIImagePickerControllerDelegate, UINavigationC
     func updateSignUpButtonState(isFormValid: Bool) {
         signUpButton.isEnabled = isFormValid
         signUpButton.backgroundColor = isFormValid ?
-            UIColor(red: 17/255, green: 154/255, blue: 237/255, alpha: 1) :
-            UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1)
+            UIColor(red: 217/255, green: 183/255, blue: 67/255, alpha: 1) :
+            UIColor(red: 232/255, green: 211/255, blue: 134/255, alpha: 1)
     }
     
     func isDateOfBirthValid() -> Bool {

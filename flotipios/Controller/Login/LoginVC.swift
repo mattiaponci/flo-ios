@@ -66,7 +66,7 @@ class LoginVC: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle("Login", for: .normal)
         button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1)
+        button.backgroundColor = UIColor(red: 232/255, green: 211/255, blue: 134/255, alpha: 1)
         button.layer.cornerRadius = 5
         button.isEnabled = false
         button.heightAnchor.constraint(equalToConstant: 40).isActive = true
@@ -77,7 +77,7 @@ class LoginVC: UIViewController {
     let dontHaveAccountButton: UIButton = {
         let button = UIButton(type: .system)
         let attributedTitle = NSMutableAttributedString(string: "Don't have an account?  ", attributes: [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 14), NSAttributedString.Key.foregroundColor: UIColor.lightGray])
-        attributedTitle.append(NSAttributedString(string: "Sign Up", attributes: [NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 14), NSAttributedString.Key.foregroundColor: UIColor(red: 17/255, green: 154/255, blue: 237/255, alpha: 1)]))
+        attributedTitle.append(NSAttributedString(string: "Sign Up", attributes: [NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 14), NSAttributedString.Key.foregroundColor: UIColor(red: 217/255, green: 183/255, blue: 67/255, alpha: 1)]))
         button.addTarget(self, action: #selector(handleShowSignUp), for: .touchUpInside)
         button.isEnabled = true
         button.setAttributedTitle(attributedTitle, for: .normal)
@@ -87,7 +87,7 @@ class LoginVC: UIViewController {
     let forgotPassword: UIButton = {
         let button = UIButton(type: .system)
         let attributedTitle = NSMutableAttributedString(string: "Forgot  ", attributes: [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 14), NSAttributedString.Key.foregroundColor: UIColor.lightGray])
-        attributedTitle.append(NSAttributedString(string: "Password?", attributes: [NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 14), NSAttributedString.Key.foregroundColor: UIColor(red: 17/255, green: 154/255, blue: 237/255, alpha: 1)]))
+        attributedTitle.append(NSAttributedString(string: "Password?", attributes: [NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 14), NSAttributedString.Key.foregroundColor: UIColor(red: 217/255, green: 183/255, blue: 67/255, alpha: 1)]))
         button.addTarget(self, action: #selector(handleForgotPassword), for: .touchUpInside)
         button.isEnabled = true
         button.setAttributedTitle(attributedTitle, for: .normal)
@@ -180,13 +180,13 @@ class LoginVC: UIViewController {
         // Validazione per login button
         guard emailTextField.hasText, passwordTextField.hasText, isValidEmail(email) else {
             loginButton.isEnabled = false
-            loginButton.backgroundColor = UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1)
+            loginButton.backgroundColor = UIColor(red: 232/255, green: 211/255, blue: 134/255, alpha: 1)
             return
         }
 
         emailErrorLabel.isHidden = true
         loginButton.isEnabled = true
-        loginButton.backgroundColor = UIColor(red: 17/255, green: 154/255, blue: 237/255, alpha: 1)
+        loginButton.backgroundColor = UIColor(red: 217/255, green: 183/255, blue: 67/255, alpha: 1)
     }
     
     @objc func dismissKeyboard() {

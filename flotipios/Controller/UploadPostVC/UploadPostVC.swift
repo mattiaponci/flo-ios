@@ -50,7 +50,7 @@ class UploadPostVC: UIViewController, UITextViewDelegate {
     
     let actionButton: UIButton = {
         let button = UIButton(type: .system)
-        button.backgroundColor = UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1)
+        button.backgroundColor = UIColor(red: 232/255, green: 211/255, blue: 134/255, alpha: 1)
         button.setTitle("Share", for: .normal)
         button.setTitleColor(.white, for: .normal)
         button.layer.cornerRadius = 5
@@ -91,12 +91,12 @@ class UploadPostVC: UIViewController, UITextViewDelegate {
     func textViewDidChange(_ textView: UITextView) {
         guard !textView.text.isEmpty else {
             actionButton.isEnabled = false
-            actionButton.backgroundColor = UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1)
+            actionButton.backgroundColor = UIColor(red: 232/255, green: 211/255, blue: 134/255, alpha: 1)
             return
         }
         
         actionButton.isEnabled = true
-        actionButton.backgroundColor = UIColor(red: 17/255, green: 154/255, blue: 237/255, alpha: 1)
+        actionButton.backgroundColor = UIColor(red: 217/255, green: 183/255, blue: 67/255, alpha: 1)
     }
     
     // MARK: - Handlers

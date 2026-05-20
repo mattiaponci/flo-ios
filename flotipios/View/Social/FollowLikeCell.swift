@@ -68,7 +68,7 @@ class FollowLikeCell: UITableViewCell {
         let button = UIButton(type: .system)
         button.setTitle("Loading", for: .normal)
         button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = UIColor(red: 17/255, green: 154/255, blue: 237/255, alpha: 1)
+        button.backgroundColor = UIColor(red: 217/255, green: 183/255, blue: 67/255, alpha: 1)
         button.addTarget(self, action: #selector(handleFollowTapped), for: .touchUpInside)
         button.layer.cornerRadius = 3
         return button

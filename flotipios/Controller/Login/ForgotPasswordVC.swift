@@ -29,7 +29,7 @@ class ForgotPasswordVC: UIViewController {
         button.setTitle("Reset Password", for: .normal)
         button.setTitleColor(.white, for: .normal)
         // Colore blu più scuro
-        button.backgroundColor = UIColor(red: 50/255, green: 100/255, blue: 200/255, alpha: 1)
+        button.backgroundColor = UIColor(red: 217/255, green: 183/255, blue: 67/255, alpha: 1)
         button.layer.cornerRadius = 5
         button.heightAnchor.constraint(equalToConstant: 40).isActive = true
         button.addTarget(self, action: #selector(handleResetPassword), for: .touchUpInside)

@@ -77,7 +77,7 @@ class SecondViewController: UIViewController, CropViewControllerDelegate, UIText
         postButton = UIButton(type: .system)
         postButton.setTitle("Post", for: .normal)
         postButton.setTitleColor(.white, for: .normal)
-        postButton.backgroundColor = UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1) // Colore di sfondo chiaro
+        postButton.backgroundColor = UIColor(red: 232/255, green: 211/255, blue: 134/255, alpha: 1) // Colore di sfondo chiaro
         postButton.layer.cornerRadius = 5
         postButton.addTarget(self, action: #selector(postButtonTapped), for: .touchUpInside)
         postButton.translatesAutoresizingMaskIntoConstraints = false
@@ -198,7 +198,7 @@ class SecondViewController: UIViewController, CropViewControllerDelegate, UIText
         postButton.isEnabled = hasText
 
         // Cambia il colore del bottone
-        postButton.backgroundColor = hasText ? UIColor.systemBlue : UIColor(red: 149/255, green: 204/255, blue: 244/255, alpha: 1)
+        postButton.backgroundColor = hasText ? UIColor(red: 217/255, green: 183/255, blue: 67/255, alpha: 1) : UIColor(red: 232/255, green: 211/255, blue: 134/255, alpha: 1)
     }
 
     func handleUploadsavesitePost() {
